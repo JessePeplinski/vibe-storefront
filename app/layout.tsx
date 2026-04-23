@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ClerkProvider,
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton
-} from "@clerk/nextjs";
+import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
+import { AuthButtons } from "@/components/auth-buttons";
 import { Store } from "lucide-react";
 import "@/app/globals.css";
 
@@ -44,16 +39,7 @@ export default function RootLayout({
                   <UserButton />
                 </Show>
                 <Show when="signed-out">
-                  <SignInButton mode="modal">
-                    <button className="px-3 py-2 text-sm font-bold text-slate-700 transition hover:text-slate-950">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="bg-slate-950 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800">
-                      Sign up
-                    </button>
-                  </SignUpButton>
+                  <AuthButtons />
                 </Show>
               </div>
             </nav>

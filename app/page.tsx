@@ -1,5 +1,6 @@
-import { Show, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { LockKeyhole, Sparkles } from "lucide-react";
+import { AuthButtons } from "@/components/auth-buttons";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
 import { StorefrontStudio } from "@/components/storefront-studio";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
@@ -60,16 +61,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <SignInButton mode="modal">
-                    <button className="inline-flex items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <button className="border border-slate-300 px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-950">
-                      Create account
-                    </button>
-                  </SignUpButton>
+                  <AuthButtons variant="panel" />
                 </div>
               </section>
             </div>
