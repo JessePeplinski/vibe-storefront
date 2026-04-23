@@ -1,0 +1,5 @@
+.env
+.env.*
+.clerk/
+.playwright-mcp/
+tsconfig.tsbuildinfo
