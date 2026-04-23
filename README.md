@@ -46,3 +46,7 @@ npm run build
 ```
 
 The Codex SDK route runs in the Node.js runtime because the SDK spawns the local Codex CLI. Set `CODEX_API_KEY` in Vercel before testing generation in a deployed environment.
+
+## Deployment
+
+- Deployment checklist: [`docs/deployment-checklist.md`](docs/deployment-checklist.md)
