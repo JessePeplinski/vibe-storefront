@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { Codex } from "@openai/codex-sdk";
@@ -9,8 +10,32 @@ import {
 } from "@/lib/storefront-schema";
 
 const storefrontJsonSchema = zodToJsonSchema(storefrontContentSchema, {
+  $refStrategy: "none",
   target: "openAi"
 });
+
+function resolveCodexBinaryPath(): string | undefined {
+  if (process.env.CODEX_PATH_OVERRIDE) {
+    return process.env.CODEX_PATH_OVERRIDE;
+  }
+
+  if (process.platform !== "darwin" || process.arch !== "arm64") {
+    return undefined;
+  }
+
+  const binaryPath = join(
+    process.cwd(),
+    "node_modules",
+    "@openai",
+    "codex-darwin-arm64",
+    "vendor",
+    "aarch64-apple-darwin",
+    "codex",
+    "codex"
+  );
+
+  return existsSync(binaryPath) ? binaryPath : undefined;
+}
 
 function buildPrompt(idea: string): string {
   return [
@@ -42,6 +67,7 @@ export async function generateStorefront(
   await mkdir(codexHome, { recursive: true });
 
   const codex = new Codex({
+    codexPathOverride: resolveCodexBinaryPath(),
     env: {
       CODEX_HOME: codexHome,
       CODEX_API_KEY: requireEnv("CODEX_API_KEY"),
