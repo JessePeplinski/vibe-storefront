@@ -19,7 +19,18 @@ function resolveCodexBinaryPath(): string | undefined {
     return process.env.CODEX_PATH_OVERRIDE;
   }
 
-  if (process.platform !== "darwin" || process.arch !== "arm64") {
+  const vendorTargets: Partial<Record<NodeJS.Platform, Partial<Record<string, string>>>> = {
+    darwin: {
+      arm64: "aarch64-apple-darwin"
+    },
+    linux: {
+      arm64: "aarch64-unknown-linux-musl",
+      x64: "x86_64-unknown-linux-musl"
+    }
+  };
+  const targetTriple = vendorTargets[process.platform]?.[process.arch];
+
+  if (!targetTriple) {
     return undefined;
   }
 
@@ -27,9 +38,9 @@ function resolveCodexBinaryPath(): string | undefined {
     process.cwd(),
     "node_modules",
     "@openai",
-    "codex-darwin-arm64",
+    `codex-${process.platform}-${process.arch}`,
     "vendor",
-    "aarch64-apple-darwin",
+    targetTriple,
     "codex",
     "codex"
   );
