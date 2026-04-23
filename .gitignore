@@ -4,6 +4,7 @@ out
 coverage
 .vercel
 .env
+.env.prod
 .env*.local
 *.tsbuildinfo
 dist
