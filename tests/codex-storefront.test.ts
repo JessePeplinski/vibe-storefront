@@ -3,6 +3,7 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => {
   return {
+    Codex: vi.fn(),
     run: vi.fn(),
     startThread: vi.fn()
   };
@@ -10,18 +11,20 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@openai/codex-sdk", () => {
   return {
-    Codex: vi.fn().mockImplementation(function MockCodex() {
-      return {
-      startThread: mocks.startThread
-      };
-    })
+    Codex: mocks.Codex
   };
 });
 
 describe("generateStorefront", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.CODEX_PATH_OVERRIDE = "/tmp/test-codex";
     process.env.CODEX_API_KEY = "test-codex-key";
+    mocks.Codex.mockImplementation(function MockCodex() {
+      return {
+        startThread: mocks.startThread
+      };
+    });
     mocks.startThread.mockReturnValue({
       run: mocks.run
     });
@@ -38,6 +41,11 @@ describe("generateStorefront", () => {
     );
 
     expect(storefront).toEqual(sampleStorefrontContent);
+    expect(mocks.Codex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        codexPathOverride: "/tmp/test-codex"
+      })
+    );
     expect(mocks.startThread).toHaveBeenCalledWith({
       workingDirectory: "/tmp",
       skipGitRepoCheck: true
