@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
     createStorefront: vi.fn(),
     generateStorefront: vi.fn(),
     getStorefrontByAnonymousSession: vi.fn(),
+    getStorefrontByOwnerAndIdea: vi.fn(),
     listStorefrontsForOwner: vi.fn()
   };
 });
@@ -23,6 +24,7 @@ vi.mock("@/lib/codex-storefront", () => ({
 vi.mock("@/lib/storefronts", () => ({
   createStorefront: mocks.createStorefront,
   getStorefrontByAnonymousSession: mocks.getStorefrontByAnonymousSession,
+  getStorefrontByOwnerAndIdea: mocks.getStorefrontByOwnerAndIdea,
   listStorefrontsForOwner: mocks.listStorefrontsForOwner
 }));
 
@@ -31,6 +33,7 @@ describe("storefront API", () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
+    mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(null);
   });
 
   it("rejects unauthenticated list requests", async () => {
@@ -71,6 +74,10 @@ describe("storefront API", () => {
     expect(mocks.generateStorefront).toHaveBeenCalledWith(
       "small-batch hot sauce from Brooklyn"
     );
+    expect(mocks.getStorefrontByOwnerAndIdea).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "small-batch hot sauce from Brooklyn"
+    });
     expect(mocks.createStorefront).toHaveBeenCalledWith({
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
@@ -79,6 +86,44 @@ describe("storefront API", () => {
     expect(payload.shareUrl).toBe(
       "https://vibe.example/s/brooklyn-ember-co-abc123"
     );
+  });
+
+  it("returns an existing storefront for a repeated Clerk user prompt", async () => {
+    const existingStorefront = {
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-abc123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    };
+
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(existingStorefront);
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "  small-batch   hot sauce from Brooklyn  " })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.getStorefrontByOwnerAndIdea).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "small-batch   hot sauce from Brooklyn"
+    });
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      storefront: existingStorefront,
+      shareUrl: "https://vibe.example/s/brooklyn-ember-co-abc123",
+      status: "existing_prompt_storefront"
+    });
   });
 
   it("generates one storefront for an anonymous guest and sets a session cookie", async () => {

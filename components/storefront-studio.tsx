@@ -26,7 +26,7 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
-  status?: "created" | "existing_guest_storefront";
+  status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
 };
 
 type CreateStorefrontErrorResponse = {
@@ -175,7 +175,9 @@ export function StorefrontStudio({
     ? result?.status === "existing_guest_storefront"
       ? `${result.storefront.content.name} is already ready.`
       : "Guest storefront ready."
-    : "Storefront saved.";
+    : result?.status === "existing_prompt_storefront"
+      ? `You already generated this idea. ${result.storefront.content.name} is ready.`
+      : "Storefront saved.";
   const recentStorefrontsTitle = isGuestMode
     ? "Guest storefront"
     : "Recent storefronts";

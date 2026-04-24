@@ -30,6 +30,10 @@ function parseStorefront(row: StorefrontRow): StorefrontRecord {
   };
 }
 
+export function normalizeStorefrontIdea(idea: string): string {
+  return idea.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 function storefrontOwnerFields(params: StorefrontOwner) {
   if ("ownerClerkUserId" in params) {
     return {
@@ -103,6 +107,35 @@ export async function listPublishedStorefronts(): Promise<StorefrontRecord[]> {
   }
 
   return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
+}
+
+export async function getStorefrontByOwnerAndIdea(
+  params: StorefrontOwner & {
+    idea: string;
+  }
+): Promise<StorefrontRecord | null> {
+  const supabase = createSupabaseServiceClient();
+  const normalizedIdea = normalizeStorefrontIdea(params.idea);
+  const query = supabase
+    .from("storefronts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const { data, error } =
+    "ownerClerkUserId" in params
+      ? await query.eq("owner_clerk_user_id", params.ownerClerkUserId)
+      : await query.eq("anonymous_session_id", params.anonymousSessionId);
+
+  if (error) {
+    throw new Error(`Unable to load matching storefront: ${error.message}`);
+  }
+
+  const storefronts = ((data ?? []) as StorefrontRow[]).map(parseStorefront);
+  return (
+    storefronts.find(
+      (storefront) => normalizeStorefrontIdea(storefront.idea) === normalizedIdea
+    ) ?? null
+  );
 }
 
 export async function getStorefrontByAnonymousSession(

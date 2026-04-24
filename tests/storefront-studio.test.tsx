@@ -359,6 +359,42 @@ describe("StorefrontStudio", () => {
     );
   });
 
+  it("frames repeated signed-in prompts as reusing the existing storefront", async () => {
+    const selectedIdea = STARTER_IDEAS[0];
+    const existingStorefront = storefront({
+      slug: "carryclean-co-abc123",
+      idea: selectedIdea
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        storefront: existingStorefront,
+        shareUrl: "https://vibe.example/s/carryclean-co-abc123",
+        status: "existing_prompt_storefront"
+      })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StorefrontStudio />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Generate storefront for ${selectedIdea}`
+      })
+    );
+
+    expect(
+      await screen.findByText(
+        "You already generated this idea. Brooklyn Ember Co. is ready."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /open share url/i })
+    ).toHaveAttribute("href", "/s/carryclean-co-abc123");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
+    ).toBeInTheDocument();
+  });
+
   it("lets a guest generate one storefront and then disables more generation", async () => {
     const selectedIdea = STARTER_IDEAS[0];
     const createdStorefront = storefront({
