@@ -13,6 +13,23 @@ type StorefrontRow = Omit<StorefrontRecord, "content"> & {
   content: unknown;
 };
 
+type StorefrontOwner =
+  | {
+      ownerClerkUserId: string;
+      anonymousSessionId?: never;
+      systemKey?: never;
+    }
+  | {
+      anonymousSessionId: string;
+      ownerClerkUserId?: never;
+      systemKey?: never;
+    }
+  | {
+      systemKey: string;
+      ownerClerkUserId?: never;
+      anonymousSessionId?: never;
+    };
+
 function parseStorefront(row: StorefrontRow): StorefrontRecord {
   return {
     ...row,
@@ -20,18 +37,44 @@ function parseStorefront(row: StorefrontRow): StorefrontRecord {
   };
 }
 
-export async function createStorefront(params: {
-  ownerClerkUserId: string;
-  idea: string;
-  content: StorefrontContent;
-}): Promise<StorefrontRecord> {
+function storefrontOwnerFields(params: StorefrontOwner) {
+  if ("ownerClerkUserId" in params) {
+    return {
+      owner_clerk_user_id: params.ownerClerkUserId,
+      anonymous_session_id: null,
+      system_key: null
+    };
+  }
+
+  if ("anonymousSessionId" in params) {
+    return {
+      owner_clerk_user_id: null,
+      anonymous_session_id: params.anonymousSessionId,
+      system_key: null
+    };
+  }
+
+  return {
+    owner_clerk_user_id: null,
+    anonymous_session_id: null,
+    system_key: params.systemKey
+  };
+}
+
+export async function createStorefront(
+  params: StorefrontOwner & {
+    idea: string;
+    content: StorefrontContent;
+    slug?: string;
+  }
+): Promise<StorefrontRecord> {
   const supabase = createSupabaseServiceClient();
-  const slug = buildStorefrontSlug(params.content.name);
+  const slug = params.slug ?? buildStorefrontSlug(params.content.name);
 
   const { data, error } = await supabase
     .from("storefronts")
     .insert({
-      owner_clerk_user_id: params.ownerClerkUserId,
+      ...storefrontOwnerFields(params),
       idea: params.idea,
       slug,
       content: params.content,
@@ -62,6 +105,23 @@ export async function listStorefrontsForOwner(
   }
 
   return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
+}
+
+export async function getStorefrontByAnonymousSession(
+  anonymousSessionId: string
+): Promise<StorefrontRecord | null> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("storefronts")
+    .select("*")
+    .eq("anonymous_session_id", anonymousSessionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to load guest storefront: ${error.message}`);
+  }
+
+  return data ? parseStorefront(data as StorefrontRow) : null;
 }
 
 export async function getPublicStorefrontBySlug(

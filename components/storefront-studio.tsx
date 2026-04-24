@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Bot,
@@ -8,8 +9,10 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  LogIn,
   Send,
   Sparkles,
+  UserPlus,
   WandSparkles
 } from "lucide-react";
 import { StorefrontCard } from "@/components/storefront-card";
@@ -21,19 +24,31 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
+  status?: "created" | "existing_guest_storefront";
+};
+
+type CreateStorefrontErrorResponse = {
+  error: string;
+  storefront?: StorefrontRecord;
+  shareUrl?: string;
+  status?: "existing_guest_storefront";
 };
 
 type StorefrontStudioProps = {
   initialStorefronts?: StorefrontRecord[];
+  mode?: "signed-in" | "guest";
 };
 
 export function StorefrontStudio({
-  initialStorefronts = []
+  initialStorefronts = [],
+  mode = "signed-in"
 }: StorefrontStudioProps) {
+  const { openSignIn, openSignUp } = useClerk();
   const [idea, setIdea] = useState<string>(STARTER_IDEAS[0]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
+  const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
   const [selectedStorefront, setSelectedStorefront] =
@@ -55,10 +70,25 @@ export function StorefrontStudio({
     }
   }, []);
 
+  function showCreatedStorefront(created: CreateStorefrontResponse) {
+    setResult(created);
+    setRecentStorefronts((currentStorefronts) => [
+      created.storefront,
+      ...currentStorefronts.filter(
+        (storefront) => storefront.id !== created.storefront.id
+      )
+    ]);
+    setSelectedStorefront(created.storefront);
+  }
+
   async function generateFromIdea(nextIdea: string) {
     const trimmedIdea = nextIdea.trim();
 
-    if (!trimmedIdea || isGenerating) {
+    if (
+      !trimmedIdea ||
+      isGenerating ||
+      (mode === "guest" && guestGenerationUsed)
+    ) {
       return;
     }
 
@@ -76,21 +106,36 @@ export function StorefrontStudio({
       });
       const payload = (await response.json()) as
         | CreateStorefrontResponse
-        | { error: string };
+        | CreateStorefrontErrorResponse;
 
       if (!response.ok) {
+        if (
+          response.status === 409 &&
+          "error" in payload &&
+          "storefront" in payload &&
+          payload.storefront &&
+          "shareUrl" in payload &&
+          payload.shareUrl
+        ) {
+          setGuestGenerationUsed(true);
+          showCreatedStorefront({
+            storefront: payload.storefront,
+            shareUrl: payload.shareUrl,
+            status: payload.status
+          });
+          setError(payload.error);
+          return;
+        }
+
         throw new Error("error" in payload ? payload.error : "Generation failed");
       }
 
       const created = payload as CreateStorefrontResponse;
-      setResult(created);
-      setRecentStorefronts((currentStorefronts) => [
-        created.storefront,
-        ...currentStorefronts.filter(
-          (storefront) => storefront.id !== created.storefront.id
-        )
-      ]);
-      setSelectedStorefront(created.storefront);
+      showCreatedStorefront(created);
+
+      if (mode === "guest") {
+        setGuestGenerationUsed(true);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
@@ -112,6 +157,20 @@ export function StorefrontStudio({
   const selectedStorefrontName =
     selectedStorefront?.content.name ?? "selected storefront";
   const hasCopiedPreviewHref = copiedPreviewHref === previewHref;
+  const isGuestMode = mode === "guest";
+  const generationDisabled =
+    isGenerating || (isGuestMode && guestGenerationUsed);
+  const studioTitle = isGuestMode
+    ? "Generate a guest storefront"
+    : "Build the next storefront";
+  const resultStatusText = isGuestMode
+    ? result?.status === "existing_guest_storefront"
+      ? `${result.storefront.content.name} is already ready.`
+      : "Guest storefront ready."
+    : "Storefront saved.";
+  const recentStorefrontsTitle = isGuestMode
+    ? "Guest storefront"
+    : "Recent storefronts";
 
   async function handleCopyPreviewLink() {
     if (!previewHref) {
@@ -133,7 +192,7 @@ export function StorefrontStudio({
               Studio
             </p>
             <h1 className="mt-2 text-3xl font-black leading-tight text-white">
-              Build the next storefront
+              {studioTitle}
             </h1>
           </div>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-teal-300 text-slate-950">
@@ -160,7 +219,7 @@ export function StorefrontStudio({
                   <button
                     aria-label={`Generate storefront for ${starterIdea}`}
                     className="inline-flex min-h-12 items-center gap-2 border border-white/10 bg-[#2b2925] px-3 py-2 text-left text-sm font-bold leading-5 text-stone-100 transition hover:border-teal-200 hover:bg-[#35322d] disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isGenerating}
+                    disabled={generationDisabled}
                     key={starterIdea}
                     onClick={() => void generateFromIdea(starterIdea)}
                     type="button"
@@ -187,7 +246,7 @@ export function StorefrontStudio({
               {error && <p className="font-bold text-red-200">{error}</p>}
               {result && !isGenerating && (
                 <div className="text-emerald-100">
-                  <p className="font-bold">Storefront saved.</p>
+                  <p className="font-bold">{resultStatusText}</p>
                   <Link
                     className="mt-2 inline-flex items-center gap-1 font-bold underline"
                     href={`/s/${result.storefront.slug}`}
@@ -197,6 +256,26 @@ export function StorefrontStudio({
                     Open share URL
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                   </Link>
+                  {isGuestMode && guestGenerationUsed && (
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <button
+                        className="inline-flex items-center justify-center gap-2 bg-white px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-stone-100"
+                        onClick={() => openSignIn()}
+                        type="button"
+                      >
+                        <LogIn className="h-4 w-4" aria-hidden />
+                        Sign in for more
+                      </button>
+                      <button
+                        className="inline-flex items-center justify-center gap-2 border border-white/20 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+                        onClick={() => openSignUp()}
+                        type="button"
+                      >
+                        <UserPlus className="h-4 w-4" aria-hidden />
+                        Create account
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -223,7 +302,7 @@ export function StorefrontStudio({
 
           <button
             className="inline-flex w-full items-center justify-center gap-2 bg-teal-300 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:bg-stone-500 disabled:text-stone-200"
-            disabled={isGenerating}
+            disabled={generationDisabled}
             type="submit"
           >
             {isGenerating ? (
@@ -243,7 +322,7 @@ export function StorefrontStudio({
             className="text-xs font-black uppercase tracking-[0.18em] text-stone-400"
             id="recent-storefronts-title"
           >
-            Recent storefronts
+            {recentStorefrontsTitle}
           </h2>
           {recentStorefronts.length > 0 ? (
             <div className="mt-3 grid gap-3">
@@ -258,7 +337,9 @@ export function StorefrontStudio({
             </div>
           ) : (
             <p className="mt-3 border border-dashed border-white/15 p-4 text-sm leading-6 text-stone-300">
-              Saved storefronts will appear here.
+              {isGuestMode
+                ? "Your guest storefront will appear here."
+                : "Saved storefronts will appear here."}
             </p>
           )}
         </section>

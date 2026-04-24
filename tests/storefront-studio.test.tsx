@@ -5,7 +5,16 @@ import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
+const clerkMocks = vi.hoisted(() => ({
+  openSignIn: vi.fn(),
+  openSignUp: vi.fn()
+}));
+
 const clipboardWriteTextMock = vi.fn();
+
+vi.mock("@clerk/nextjs", () => ({
+  useClerk: () => clerkMocks
+}));
 
 function storefrontContent(
   name: string,
@@ -22,6 +31,8 @@ function storefront(overrides: Partial<StorefrontRecord> = {}): StorefrontRecord
   return {
     id: "storefront-id",
     owner_clerk_user_id: "user_123",
+    anonymous_session_id: null,
+    system_key: null,
     slug: "brooklyn-ember-co-abc123",
     idea: "small-batch hot sauce from Brooklyn",
     content: sampleStorefrontContent,
@@ -53,6 +64,8 @@ function createStorageMock(): Storage {
 
 describe("StorefrontStudio", () => {
   beforeEach(() => {
+    clerkMocks.openSignIn.mockReset();
+    clerkMocks.openSignUp.mockReset();
     clipboardWriteTextMock.mockReset();
     clipboardWriteTextMock.mockResolvedValue(undefined);
     Object.defineProperty(window, "localStorage", {
@@ -291,5 +304,104 @@ describe("StorefrontStudio", () => {
       "href",
       "/s/tiny-lamp-labs-abc123"
     );
+  });
+
+  it("lets a guest generate one storefront and then disables more generation", async () => {
+    const selectedIdea = STARTER_IDEAS[0];
+    const createdStorefront = storefront({
+      id: "guest-storefront-id",
+      owner_clerk_user_id: null,
+      anonymous_session_id: "00000000-0000-4000-8000-000000000001",
+      slug: "guest-hot-sauce-abc123",
+      idea: selectedIdea
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        storefront: createdStorefront,
+        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123"
+      })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StorefrontStudio mode="guest" />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Generate storefront for ${selectedIdea}`
+      })
+    );
+
+    expect(
+      await screen.findByText("Guest storefront ready.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /open share url/i })
+    ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(
+      screen.getByRole("button", { name: "Sign in for more" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create account" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generate storefront" })
+    ).toBeDisabled();
+
+    const guestStorefront = screen.getByRole("region", {
+      name: "Guest storefront"
+    });
+    expect(
+      within(guestStorefront).getByRole("button", {
+        name: "Preview Brooklyn Ember Co."
+      })
+    ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign in for more" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(clerkMocks.openSignIn).toHaveBeenCalledTimes(1);
+    expect(clerkMocks.openSignUp).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the existing storefront when a guest has already generated one", async () => {
+    const existingStorefront = storefront({
+      id: "guest-storefront-id",
+      owner_clerk_user_id: null,
+      anonymous_session_id: "00000000-0000-4000-8000-000000000001",
+      slug: "guest-hot-sauce-abc123"
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: vi.fn().mockResolvedValue({
+        error:
+          "This browser already generated Brooklyn Ember Co.; open it below or sign in to create more storefronts.",
+        storefront: existingStorefront,
+        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
+        status: "existing_guest_storefront"
+      })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StorefrontStudio mode="guest" />);
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
+
+    expect(
+      await screen.findByText(
+        "This browser already generated Brooklyn Ember Co.; open it below or sign in to create more storefronts."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Brooklyn Ember Co. is already ready.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /open share url/i })
+    ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generate storefront" })
+    ).toBeDisabled();
   });
 });
