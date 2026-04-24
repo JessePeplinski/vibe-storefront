@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { ArrowRight, Quote, Sparkles } from "lucide-react";
+import { MockCheckoutButton } from "@/components/mock-checkout-button";
 import type { StorefrontContent } from "@/lib/storefront-schema";
 
 type StorefrontRendererProps = {
@@ -80,19 +81,27 @@ export function StorefrontRenderer({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"
-                type="button"
-              >
-                {content.cta.label}
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </button>
+              {isLanding ? (
+                <MockCheckoutButton
+                  label={content.cta.label}
+                  price={content.product.price}
+                  productName={content.product.name}
+                />
+              ) : (
+                <button
+                  className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"
+                  type="button"
+                >
+                  {content.cta.label}
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </button>
+              )}
               <span className="max-w-sm text-sm font-medium text-black/60">
                 {content.cta.sublabel}
               </span>
             </div>
           </div>
-          {!compact && (
+          {!compact && !isLanding && (
             <div className="grid gap-3 sm:grid-cols-3">
               {Object.entries(content.theme.palette).map(([name, color]) => (
                 <div
