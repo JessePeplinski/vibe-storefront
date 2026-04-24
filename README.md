@@ -4,7 +4,8 @@ Vibe Storefront is a Next.js App Router prototype for turning product ideas into
 
 ## Live Test URL
 
-- Production: https://vibe-storefront-two.vercel.app
+- Production: https://vibe-storefront.com
+- Vercel fallback: https://vibe-storefront-two.vercel.app
 
 Use the production URL for deployed smoke testing. Generation requires the Vercel Production environment to have valid Clerk, Supabase, and `CODEX_API_KEY` values.
 
@@ -42,6 +43,25 @@ Use Clerk development keys locally. Production/demo keys belong only in Vercel e
 
 Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables RLS, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key. Clerk users can create repeat storefronts; signed-out visitors are limited to one guest storefront by an HttpOnly cookie and database uniqueness constraint. Local generate/save/share testing should use the local Supabase stack.
 
+## Authentication
+
+The app uses Clerk's prebuilt sign-in and sign-up components at `/sign-in` and `/sign-up`. Local development should use a Clerk development instance. Production should use a Clerk production instance with live Clerk environment variables set in Vercel.
+
+Google sign-in is configured in Clerk as a Google SSO connection. Development instances can use Clerk's shared OAuth credentials, but production Google sign-in requires custom Google OAuth credentials from Google Cloud. Store those OAuth credentials in Clerk only; do not add them to Vercel environment variables, `.env.local`, `.env.prod`, or source control.
+
+Production Google OAuth setup:
+
+1. In Clerk, open the production app's Google SSO connection and enable sign-up/sign-in with custom credentials.
+2. In Google Cloud Console, create an OAuth client for a Web application.
+3. Add the production domains as authorized JavaScript origins:
+   - `https://vibe-storefront.com`
+   - `https://vibe-storefront-two.vercel.app`
+4. Add Clerk's exact Authorized Redirect URI as the Google authorized redirect URI. For the current production Clerk domain, this is `https://clerk.vibe-storefront.com/v1/oauth_callback`.
+5. Paste the Google OAuth client values into Clerk and save the SSO connection.
+6. On the Google OAuth consent screen, make sure the app is available to the intended audience. If the app remains in testing mode, add the Google accounts that should be allowed to sign in as test users.
+
+After setup, verify Google sign-in from `https://vibe-storefront.com/sign-in`. Reaching Google's account chooser confirms the Clerk-to-Google OAuth handoff is configured.
+
 ## Development
 
 ```bash
@@ -78,7 +98,8 @@ The Codex SDK route runs in the Node.js runtime because the SDK spawns the local
 ## Deployment
 
 - Vercel project: `vibe-storefront`
-- Production URL: https://vibe-storefront-two.vercel.app
+- Production URL: https://vibe-storefront.com
+- Vercel fallback URL: https://vibe-storefront-two.vercel.app
 - Production branch: `main`
 - Node.js runtime in Vercel: 24.x
 - Deployment checklist: [`docs/deployment-checklist.md`](docs/deployment-checklist.md)
