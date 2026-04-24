@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Copy, ExternalLink, Eye, Pencil } from "lucide-react";
+import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
 type StorefrontCardProps = {
@@ -38,11 +39,9 @@ export function StorefrontCard({
         isSelected ? "border-teal-300 shadow-lg" : "border-black/10"
       }`}
     >
-      <div
-        className="mb-4 h-24 border border-black/10"
-        style={{
-          background: `linear-gradient(135deg, ${storefront.content.theme.palette.primary}, ${storefront.content.theme.palette.accent})`
-        }}
+      <StorefrontPreviewImage
+        className="mb-4 h-24"
+        content={storefront.content}
       />
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">

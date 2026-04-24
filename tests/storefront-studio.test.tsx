@@ -296,7 +296,13 @@ describe("StorefrontStudio", () => {
       name: /generating with codex/i
     });
     expect(generatingButton).toBeDisabled();
-    expect(within(generatingButton).getByText("0:15")).toBeInTheDocument();
+    expect(within(generatingButton).getByText("0:00")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: "Generation progress" })
+    ).toHaveTextContent("Estimated step 1 of 4");
+    expect(
+      screen.getByRole("status", { name: "Generation progress" })
+    ).toHaveTextContent("Usually takes 1-3 minutes");
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(

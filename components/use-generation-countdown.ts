@@ -1,27 +1,57 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CODEX_GENERATION_ESTIMATE_SECONDS } from "@/lib/codex-config";
+import {
+  STOREFRONT_GENERATION_ESTIMATE_LABEL,
+  STOREFRONT_GENERATION_ESTIMATE_SECONDS
+} from "@/lib/codex-config";
 
 const MILLIS_PER_SECOND = 1000;
 
-function formatCountdown(seconds: number): string {
+export type GenerationPhase = {
+  label: string;
+  startsAtSecond: number;
+};
+
+export const GENERATION_PHASES: GenerationPhase[] = [
+  {
+    label: "Write storefront copy",
+    startsAtSecond: 0
+  },
+  {
+    label: "Create product image",
+    startsAtSecond: 30
+  },
+  {
+    label: "Upload image",
+    startsAtSecond: 110
+  },
+  {
+    label: "Save share page",
+    startsAtSecond: 125
+  }
+];
+
+function formatElapsedTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
 
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-type GenerationCountdown = {
-  countdownText: string | null;
-  resetCountdown: () => void;
+type GenerationProgress = {
+  currentPhaseIndex: number;
+  elapsedText: string | null;
+  estimateText: string;
+  phases: GenerationPhase[];
+  resetProgress: () => void;
 };
 
-export function useGenerationCountdown(
+export function useGenerationProgress(
   isActive: boolean
-): GenerationCountdown {
+): GenerationProgress {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const resetCountdown = useCallback(() => setElapsedSeconds(0), []);
+  const resetProgress = useCallback(() => setElapsedSeconds(0), []);
 
   useEffect(() => {
     if (!isActive) {
@@ -37,25 +67,29 @@ export function useGenerationCountdown(
 
   if (!isActive) {
     return {
-      countdownText: null,
-      resetCountdown
+      currentPhaseIndex: 0,
+      elapsedText: null,
+      estimateText: STOREFRONT_GENERATION_ESTIMATE_LABEL,
+      phases: GENERATION_PHASES,
+      resetProgress
     };
   }
 
-  const remainingSeconds = Math.max(
-    CODEX_GENERATION_ESTIMATE_SECONDS - elapsedSeconds,
+  const cappedElapsedSeconds = Math.min(
+    elapsedSeconds,
+    STOREFRONT_GENERATION_ESTIMATE_SECONDS
+  );
+  const currentPhaseIndex = GENERATION_PHASES.reduce(
+    (activeIndex, phase, index) =>
+      cappedElapsedSeconds >= phase.startsAtSecond ? index : activeIndex,
     0
   );
 
-  if (remainingSeconds === 0) {
-    return {
-      countdownText: "Finishing up...",
-      resetCountdown
-    };
-  }
-
   return {
-    countdownText: formatCountdown(remainingSeconds),
-    resetCountdown
+    currentPhaseIndex,
+    elapsedText: formatElapsedTime(elapsedSeconds),
+    estimateText: STOREFRONT_GENERATION_ESTIMATE_LABEL,
+    phases: GENERATION_PHASES,
+    resetProgress
   };
 }

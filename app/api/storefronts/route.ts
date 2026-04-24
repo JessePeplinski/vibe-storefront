@@ -3,15 +3,21 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { generateStorefront } from "@/lib/codex-storefront";
 import { appBaseUrl } from "@/lib/env";
+import { deleteProductImage, generateProductImage } from "@/lib/product-images";
+import { buildStorefrontSlug } from "@/lib/slug";
 import {
   createStorefront,
   getStorefrontByAnonymousSession,
   getStorefrontByOwnerAndIdea,
   listStorefrontsForOwner
 } from "@/lib/storefronts";
+import type {
+  StorefrontContent,
+  StorefrontRecord
+} from "@/lib/storefront-schema";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 const GUEST_COOKIE_NAME = "vibe_storefront_guest_id";
 const GUEST_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
@@ -24,6 +30,41 @@ const guestSessionSchema = z.string().uuid();
 
 function shareUrlForSlug(slug: string): string {
   return `${appBaseUrl()}/s/${slug}`;
+}
+
+async function generateStorefrontWithProductImage(
+  idea: string
+): Promise<{ content: StorefrontContent; slug: string }> {
+  const content = await generateStorefront(idea);
+  const slug = buildStorefrontSlug(content.name);
+  const image = await generateProductImage({ content, idea, slug });
+
+  return {
+    content: {
+      ...content,
+      product: {
+        ...content.product,
+        image
+      }
+    },
+    slug
+  };
+}
+
+async function cleanupProductImageAfterFailedInsert(
+  content: StorefrontContent
+): Promise<void> {
+  const storagePath = content.product.image?.storagePath;
+
+  if (!storagePath) {
+    return;
+  }
+
+  try {
+    await deleteProductImage(storagePath);
+  } catch {
+    // The original persistence error is more useful to return to the client.
+  }
 }
 
 function getGuestSessionId(request: NextRequest): string {
@@ -50,6 +91,17 @@ function jsonWithGuestCookie(
     secure: process.env.NODE_ENV === "production"
   });
   return response;
+}
+
+async function createGeneratedStorefront(
+  params: Parameters<typeof createStorefront>[0]
+): Promise<StorefrontRecord> {
+  try {
+    return await createStorefront(params);
+  } catch (caught) {
+    await cleanupProductImageAfterFailedInsert(params.content);
+    throw caught;
+  }
 }
 
 export async function GET() {
@@ -90,11 +142,14 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const content = await generateStorefront(parsed.data.idea);
-      const storefront = await createStorefront({
+      const { content, slug } = await generateStorefrontWithProductImage(
+        parsed.data.idea
+      );
+      const storefront = await createGeneratedStorefront({
         ownerClerkUserId: userId,
         idea: parsed.data.idea,
-        content
+        content,
+        slug
       });
 
       return NextResponse.json(
@@ -124,11 +179,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const content = await generateStorefront(parsed.data.idea);
-    const storefront = await createStorefront({
+    const { content, slug } = await generateStorefrontWithProductImage(
+      parsed.data.idea
+    );
+    const storefront = await createGeneratedStorefront({
       anonymousSessionId: guestSessionId,
       idea: parsed.data.idea,
-      content
+      content,
+      slug
     });
 
     return jsonWithGuestCookie(
