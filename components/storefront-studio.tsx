@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { StorefrontCard } from "@/components/storefront-card";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
+import { useGenerationCountdown } from "@/components/use-generation-countdown";
+import { DEFAULT_CODEX_MODEL } from "@/lib/codex-config";
 import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
@@ -59,6 +61,7 @@ export function StorefrontStudio({
   const [copiedPreviewHref, setCopiedPreviewHref] = useState<string | null>(
     null
   );
+  const { countdownText, resetCountdown } = useGenerationCountdown(isGenerating);
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -97,6 +100,7 @@ export function StorefrontStudio({
 
     setError(null);
     setGeneratingStarterIdea(starterIdea ?? null);
+    resetCountdown();
     setIsGenerating(true);
 
     try {
@@ -198,6 +202,9 @@ export function StorefrontStudio({
             <h1 className="mt-2 text-3xl font-black leading-tight text-white">
               {studioTitle}
             </h1>
+            <p className="mt-2 text-sm font-bold text-stone-300">
+              Model: {DEFAULT_CODEX_MODEL}
+            </p>
           </div>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-teal-300 text-slate-950">
             <Sparkles className="h-5 w-5" aria-hidden />
@@ -224,10 +231,12 @@ export function StorefrontStudio({
           {(isGenerating || result || error) && (
             <div className="ml-12 border border-white/10 bg-black/25 p-3 text-sm">
               {isGenerating && (
-                <p className="inline-flex items-center gap-2 font-bold text-teal-100">
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  Codex is building the storefront
-                </p>
+                <div className="font-bold text-teal-100">
+                  <p className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Codex is building the storefront
+                  </p>
+                </div>
               )}
               {error && <p className="font-bold text-red-200">{error}</p>}
               {result && !isGenerating && (
@@ -321,12 +330,22 @@ export function StorefrontStudio({
             disabled={generationDisabled}
             type="submit"
           >
+            <span>
+              {isGenerating ? "Generating with Codex" : "Generate with Codex"}
+            </span>
+            {isGenerating && countdownText && (
+              <span
+                aria-live="polite"
+                className="min-w-10 whitespace-nowrap text-center font-black tabular-nums text-slate-950/80"
+              >
+                {countdownText}
+              </span>
+            )}
             {isGenerating ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             ) : (
               <Send className="h-4 w-4" aria-hidden />
             )}
-            {isGenerating ? "Generating with Codex" : "Generate storefront"}
           </button>
         </form>
 

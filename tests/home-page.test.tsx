@@ -1,4 +1,11 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
@@ -51,25 +58,37 @@ describe("home page", () => {
   });
 
   it("lets signed-out visitors generate from the hero and view the created storefront", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        storefront: {
-          id: "guest-storefront-id",
-          owner_clerk_user_id: null,
-          anonymous_session_id: "00000000-0000-4000-8000-000000000001",
-          system_key: null,
-          slug: "guest-hot-sauce-abc123",
-          idea: "small-batch hot sauce from Brooklyn",
-          content: sampleStorefrontContent,
-          published: true,
-          created_at: "2026-04-23T00:00:00.000Z",
-          updated_at: "2026-04-23T00:00:00.000Z"
-        },
-        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
-        status: "created"
-      })
+    const createdStorefront = {
+      id: "guest-storefront-id",
+      owner_clerk_user_id: null,
+      anonymous_session_id: "00000000-0000-4000-8000-000000000001",
+      system_key: null,
+      slug: "guest-hot-sauce-abc123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    };
+    let resolveFetch!: (response: {
+      ok: boolean;
+      json: () => Promise<{
+        storefront: typeof createdStorefront;
+        shareUrl: string;
+        status: "created";
+      }>;
+    }) => void;
+    const fetchPromise = new Promise<{
+      ok: boolean;
+      json: () => Promise<{
+        storefront: typeof createdStorefront;
+        shareUrl: string;
+        status: "created";
+      }>;
+    }>((resolve) => {
+      resolveFetch = resolve;
     });
+    const fetchMock = vi.fn().mockReturnValue(fetchPromise);
     vi.stubGlobal("fetch", fetchMock);
     const Page = (await import("@/app/(app)/page")).default;
 
@@ -89,8 +108,9 @@ describe("home page", () => {
       "Enter your product idea"
     );
     expect(
-      screen.getByRole("button", { name: /generate with studio/i })
+      screen.getByRole("button", { name: /generate with codex/i })
     ).not.toBeDisabled();
+    expect(screen.getByText("Model: gpt-5.3-codex")).toBeInTheDocument();
 
     const exampleIdeas = screen.getByRole("group", {
       name: "Example product ideas"
@@ -106,6 +126,12 @@ describe("home page", () => {
     );
 
     expect(screen.getByLabelText("Product idea")).toHaveValue("");
+    const generatingButton = await screen.findByRole("button", {
+      name: /generating with codex/i
+    });
+    expect(generatingButton).toBeDisabled();
+    expect(within(generatingButton).getByText("0:15")).toBeInTheDocument();
+    expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/storefronts",
@@ -114,6 +140,19 @@ describe("home page", () => {
         method: "POST"
       })
     );
+
+    await act(async () => {
+      resolveFetch({
+        ok: true,
+        json: async () => ({
+          storefront: createdStorefront,
+          shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
+          status: "created"
+        })
+      });
+      await fetchPromise;
+    });
+
     expect(
       await screen.findByRole("link", { name: /view your storefront/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
