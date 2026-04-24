@@ -3,6 +3,7 @@ node_modules
 out
 coverage
 .vercel
+.playwright-mcp/
 .env
 .env.prod
 .env*.local
