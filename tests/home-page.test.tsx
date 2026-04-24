@@ -7,7 +7,6 @@ import {
   within
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
@@ -62,7 +61,6 @@ describe("home page", () => {
       id: "guest-storefront-id",
       owner_clerk_user_id: null,
       anonymous_session_id: "00000000-0000-4000-8000-000000000001",
-      system_key: null,
       slug: "guest-hot-sauce-abc123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContent,
@@ -97,10 +95,15 @@ describe("home page", () => {
     expect(
       screen.getByRole("heading", { name: "Generate a storefront" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /see example/i })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: /see all storefronts/i })
+    ).toHaveAttribute(
       "href",
-      EXAMPLE_STOREFRONT_PATH
+      "/storefronts"
     );
+    expect(
+      screen.queryByRole("link", { name: /see example/i })
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Storefront canvas")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Product idea")).toHaveValue("");
     expect(screen.getByLabelText("Product idea")).toHaveAttribute(
@@ -169,7 +172,6 @@ describe("home page", () => {
           id: "guest-storefront-id",
           owner_clerk_user_id: null,
           anonymous_session_id: "00000000-0000-4000-8000-000000000001",
-          system_key: null,
           slug: "guest-hot-sauce-abc123",
           idea: "small-batch hot sauce from Brooklyn",
           content: sampleStorefrontContent,

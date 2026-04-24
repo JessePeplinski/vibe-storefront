@@ -11,7 +11,6 @@ import {
   WandSparkles
 } from "lucide-react";
 import { useGenerationCountdown } from "@/components/use-generation-countdown";
-import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -236,9 +235,9 @@ export function LandingIdeaTeaser() {
 
       <Link
         className="mt-3 inline-flex w-full items-center justify-center gap-2 border border-slate-300 px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-950"
-        href={EXAMPLE_STOREFRONT_PATH}
+        href="/storefronts"
       >
-        See example
+        See all storefronts
         <ExternalLink className="h-4 w-4" aria-hidden />
       </Link>
     </section>
