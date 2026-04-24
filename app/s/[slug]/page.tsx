@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
+import { appBaseUrl } from "@/lib/env";
 import { getPublicStorefrontBySlug } from "@/lib/storefronts";
 
 type PublicStorefrontPageProps = {
@@ -19,9 +20,25 @@ export async function generateMetadata({
     };
   }
 
+  const title = `${storefront.content.name} | Vibe Storefront`;
+  const description = storefront.content.tagline;
+  const publicUrl = `${appBaseUrl()}/s/${storefront.slug}`;
+
   return {
-    title: `${storefront.content.name} | Vibe Storefront`,
-    description: storefront.content.tagline
+    title,
+    description,
+    openGraph: {
+      title: storefront.content.name,
+      description,
+      siteName: "Vibe Storefront",
+      type: "website",
+      url: publicUrl
+    },
+    twitter: {
+      card: "summary",
+      title: storefront.content.name,
+      description
+    }
   };
 }
 
