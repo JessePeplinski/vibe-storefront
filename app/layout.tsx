@@ -34,7 +34,7 @@ export default function RootLayout({
                     className="px-3 py-2 text-sm font-bold text-slate-700 transition hover:text-slate-950"
                     href="/dashboard"
                   >
-                    My storefronts
+                    Studio
                   </Link>
                   <UserButton />
                 </Show>
