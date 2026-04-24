@@ -10,6 +10,22 @@ vi.mock("@/lib/storefronts", () => ({
   getPublicStorefrontBySlug: mocks.getPublicStorefrontBySlug
 }));
 
+const productImage = {
+  alt: "The Borough Blend product image for Brooklyn Ember Co.",
+  generatedAt: "2026-04-24T00:00:00.000Z",
+  model: "gpt-image-2",
+  storagePath: "storefronts/brooklyn-ember-co-abc123/product.webp",
+  url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/brooklyn-ember-co-abc123/product.webp"
+};
+
+const sampleStorefrontContentWithImage = {
+  ...sampleStorefrontContent,
+  product: {
+    ...sampleStorefrontContent.product,
+    image: productImage
+  }
+};
+
 describe("public storefront page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,6 +41,31 @@ describe("public storefront page", () => {
       created_at: "2026-04-23T00:00:00.000Z",
       updated_at: "2026-04-23T00:00:00.000Z"
     });
+  });
+
+  it("renders a saved generated product image on the public storefront", async () => {
+    mocks.getPublicStorefrontBySlug.mockResolvedValueOnce({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-abc123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const Page = (await import("@/app/s/[slug]/page")).default;
+
+    render(
+      await Page({
+        params: Promise.resolve({ slug: "brooklyn-ember-co-abc123" })
+      })
+    );
+
+    expect(
+      screen.getByRole("img", { name: productImage.alt })
+    ).toBeInTheDocument();
   });
 
   it("renders saved public storefront content", async () => {
@@ -91,6 +132,40 @@ describe("public storefront page", () => {
         card: "summary",
         title: "Brooklyn Ember Co.",
         description: sampleStorefrontContent.tagline
+      }
+    });
+  });
+
+  it("uses generated product images for public share metadata", async () => {
+    mocks.getPublicStorefrontBySlug.mockResolvedValueOnce({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-abc123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { generateMetadata } = await import("@/app/s/[slug]/page");
+
+    await expect(
+      generateMetadata({
+        params: Promise.resolve({ slug: "brooklyn-ember-co-abc123" })
+      })
+    ).resolves.toMatchObject({
+      openGraph: {
+        images: [
+          {
+            alt: productImage.alt,
+            url: productImage.url
+          }
+        ]
+      },
+      twitter: {
+        card: "summary_large_image",
+        images: [productImage.url]
       }
     });
   });

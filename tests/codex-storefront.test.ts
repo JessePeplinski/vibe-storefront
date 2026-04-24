@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sampleStorefrontContent } from "@/lib/storefront-schema";
+import {
+  sampleStorefrontContent,
+  storefrontContentSchema
+} from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => {
   return {
@@ -34,7 +37,9 @@ describe("generateStorefront", () => {
   });
 
   it("calls Codex with the user idea and a structured output schema", async () => {
-    const { generateStorefront } = await import("@/lib/codex-storefront");
+    const { __testables, generateStorefront } = await import(
+      "@/lib/codex-storefront"
+    );
 
     const storefront = await generateStorefront(
       "small-batch hot sauce from Brooklyn"
@@ -58,6 +63,17 @@ describe("generateStorefront", () => {
         })
       })
     );
+    const outputSchema = __testables.storefrontJsonSchema as {
+      properties: {
+        product: {
+          properties: {
+            image?: unknown;
+          };
+        };
+      };
+    };
+
+    expect(outputSchema.properties.product.properties.image).toBeUndefined();
   });
 
   it("rejects underspecified ideas before calling Codex", async () => {
@@ -67,5 +83,30 @@ describe("generateStorefront", () => {
       "Enter a more specific product idea."
     );
     expect(mocks.run).not.toHaveBeenCalled();
+  });
+
+  it("accepts persisted storefront content with or without product image metadata", () => {
+    expect(storefrontContentSchema.parse(sampleStorefrontContent)).toEqual(
+      sampleStorefrontContent
+    );
+
+    const image = {
+      alt: "The Borough Blend product image for Brooklyn Ember Co.",
+      generatedAt: "2026-04-24T00:00:00.000Z",
+      model: "gpt-image-2",
+      storagePath: "storefronts/brooklyn-ember-co-abc123/product.webp",
+      url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/brooklyn-ember-co-abc123/product.webp"
+    };
+    const contentWithImage = {
+      ...sampleStorefrontContent,
+      product: {
+        ...sampleStorefrontContent.product,
+        image
+      }
+    };
+
+    expect(storefrontContentSchema.parse(contentWithImage)).toEqual(
+      contentWithImage
+    );
   });
 });

@@ -5,7 +5,10 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 const mocks = vi.hoisted(() => {
   return {
     auth: vi.fn(),
+    buildStorefrontSlug: vi.fn(),
     createStorefront: vi.fn(),
+    deleteProductImage: vi.fn(),
+    generateProductImage: vi.fn(),
     generateStorefront: vi.fn(),
     getStorefrontByAnonymousSession: vi.fn(),
     getStorefrontByOwnerAndIdea: vi.fn(),
@@ -21,6 +24,15 @@ vi.mock("@/lib/codex-storefront", () => ({
   generateStorefront: mocks.generateStorefront
 }));
 
+vi.mock("@/lib/product-images", () => ({
+  deleteProductImage: mocks.deleteProductImage,
+  generateProductImage: mocks.generateProductImage
+}));
+
+vi.mock("@/lib/slug", () => ({
+  buildStorefrontSlug: mocks.buildStorefrontSlug
+}));
+
 vi.mock("@/lib/storefronts", () => ({
   createStorefront: mocks.createStorefront,
   getStorefrontByAnonymousSession: mocks.getStorefrontByAnonymousSession,
@@ -28,11 +40,30 @@ vi.mock("@/lib/storefronts", () => ({
   listStorefrontsForOwner: mocks.listStorefrontsForOwner
 }));
 
+const productImage = {
+  alt: "The Borough Blend product image for Brooklyn Ember Co.",
+  generatedAt: "2026-04-24T00:00:00.000Z",
+  model: "gpt-image-2",
+  storagePath: "storefronts/brooklyn-ember-co-image123/product.webp",
+  url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/brooklyn-ember-co-image123/product.webp"
+};
+
+const sampleStorefrontContentWithImage = {
+  ...sampleStorefrontContent,
+  product: {
+    ...sampleStorefrontContent.product,
+    image: productImage
+  }
+};
+
 describe("storefront API", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
+    mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
+    mocks.deleteProductImage.mockResolvedValue(undefined);
+    mocks.generateProductImage.mockResolvedValue(productImage);
     mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(null);
   });
 
@@ -54,9 +85,9 @@ describe("storefront API", () => {
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
       anonymous_session_id: null,
-      slug: "brooklyn-ember-co-abc123",
+      slug: "brooklyn-ember-co-image123",
       idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContent,
+      content: sampleStorefrontContentWithImage,
       published: true,
       created_at: "2026-04-23T00:00:00.000Z",
       updated_at: "2026-04-23T00:00:00.000Z"
@@ -78,13 +109,20 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn"
     });
+    expect(mocks.buildStorefrontSlug).toHaveBeenCalledWith("Brooklyn Ember Co.");
+    expect(mocks.generateProductImage).toHaveBeenCalledWith({
+      content: sampleStorefrontContent,
+      idea: "small-batch hot sauce from Brooklyn",
+      slug: "brooklyn-ember-co-image123"
+    });
     expect(mocks.createStorefront).toHaveBeenCalledWith({
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContent
+      content: sampleStorefrontContentWithImage,
+      slug: "brooklyn-ember-co-image123"
     });
     expect(payload.shareUrl).toBe(
-      "https://vibe.example/s/brooklyn-ember-co-abc123"
+      "https://vibe.example/s/brooklyn-ember-co-image123"
     );
   });
 
@@ -118,6 +156,7 @@ describe("storefront API", () => {
       idea: "small-batch   hot sauce from Brooklyn"
     });
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
     expect(payload).toMatchObject({
       storefront: existingStorefront,
@@ -137,9 +176,9 @@ describe("storefront API", () => {
       id: "guest-storefront-id",
       owner_clerk_user_id: null,
       anonymous_session_id: guestSessionId,
-      slug: "guest-hot-sauce-abc123",
+      slug: "brooklyn-ember-co-image123",
       idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContent,
+      content: sampleStorefrontContentWithImage,
       published: true,
       created_at: "2026-04-23T00:00:00.000Z",
       updated_at: "2026-04-23T00:00:00.000Z"
@@ -160,13 +199,19 @@ describe("storefront API", () => {
     expect(mocks.generateStorefront).toHaveBeenCalledWith(
       "small-batch hot sauce from Brooklyn"
     );
+    expect(mocks.generateProductImage).toHaveBeenCalledWith({
+      content: sampleStorefrontContent,
+      idea: "small-batch hot sauce from Brooklyn",
+      slug: "brooklyn-ember-co-image123"
+    });
     expect(mocks.createStorefront).toHaveBeenCalledWith({
       anonymousSessionId: guestSessionId,
       idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContent
+      content: sampleStorefrontContentWithImage,
+      slug: "brooklyn-ember-co-image123"
     });
     expect(payload.shareUrl).toBe(
-      "https://vibe.example/s/guest-hot-sauce-abc123"
+      "https://vibe.example/s/brooklyn-ember-co-image123"
     );
     expect(response.headers.get("set-cookie")).toContain(
       `vibe_storefront_guest_id=${guestSessionId}`
@@ -210,9 +255,54 @@ describe("storefront API", () => {
       status: "existing_guest_storefront"
     });
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
     expect(response.headers.get("set-cookie")).toContain(
       `vibe_storefront_guest_id=${guestSessionId}`
     );
+  });
+
+  it("fails creation when product image generation fails", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateProductImage.mockRejectedValue(
+      new Error("Unable to generate product image: quota exceeded")
+    );
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      error: "Unable to generate product image: quota exceeded"
+    });
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+  });
+
+  it("deletes an uploaded product image if the database insert fails", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.createStorefront.mockRejectedValue(
+      new Error("Unable to save storefront: duplicate slug")
+    );
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      error: "Unable to save storefront: duplicate slug"
+    });
+    expect(mocks.deleteProductImage).toHaveBeenCalledWith(productImage.storagePath);
   });
 });

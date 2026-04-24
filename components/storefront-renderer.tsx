@@ -20,6 +20,10 @@ type StorefrontStyle = CSSProperties & {
   "--sf-text": string;
 };
 
+function cssImageUrl(url: string): string {
+  return `url("${url.replace(/"/g, '\\"')}")`;
+}
+
 export function StorefrontRenderer({
   compact = false,
   content,
@@ -28,6 +32,7 @@ export function StorefrontRenderer({
   variant = "framed"
 }: StorefrontRendererProps) {
   const isLanding = variant === "landing";
+  const productImage = content.product.image;
   const style: StorefrontStyle = {
     "--sf-bg": content.theme.palette.background,
     "--sf-surface": content.theme.palette.surface,
@@ -123,25 +128,39 @@ export function StorefrontRenderer({
         <aside className="flex min-w-0 flex-col justify-between gap-5 bg-[var(--sf-surface)] p-5 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] sm:p-6">
           <div className="space-y-4">
             <div
-              className={`overflow-hidden bg-[var(--sf-secondary)] text-white ${
+              className={`relative overflow-hidden bg-[var(--sf-secondary)] text-white ${
                 compact ? "aspect-[4/3] p-3" : "aspect-[4/3] p-4"
               }`}
             >
+              {productImage && (
+                <div
+                  aria-label={productImage.alt}
+                  className="absolute inset-0 bg-cover bg-center"
+                  role="img"
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.48)), ${cssImageUrl(
+                      productImage.url
+                    )}`
+                  }}
+                />
+              )}
               <div
-                className={`flex h-full min-w-0 flex-col justify-between border border-white/25 ${
-                  compact ? "p-3" : "p-4"
-                }`}
+                className={`relative flex h-full min-w-0 flex-col justify-between border border-white/25 ${
+                  productImage ? "bg-black/20" : ""
+                } ${compact ? "p-3" : "p-4"}`}
               >
                 <div className="flex items-start justify-between gap-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-white/70">
                   <span className="max-w-[75%]">{content.theme.mood}</span>
                   <span>{content.product.price}</span>
                 </div>
                 <div>
-                  <div
-                    className={`mb-3 rounded-full bg-[var(--sf-accent)] ${
-                      compact ? "h-9 w-9" : "h-14 w-14"
-                    }`}
-                  />
+                  {!productImage && (
+                    <div
+                      className={`mb-3 rounded-full bg-[var(--sf-accent)] ${
+                        compact ? "h-9 w-9" : "h-14 w-14"
+                      }`}
+                    />
+                  )}
                   <h2
                     className={`max-w-full font-black leading-[1.02] ${
                       compact ? "text-lg" : "text-2xl sm:text-3xl"
