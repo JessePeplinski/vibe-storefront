@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
-import { appBaseUrl } from "@/lib/env";
 import { getPublicStorefrontBySlug } from "@/lib/storefronts";
 
 type PublicStorefrontPageProps = {
@@ -37,11 +36,11 @@ export default async function PublicStorefrontPage({
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen">
       <StorefrontRenderer
         content={storefront.content}
         idea={storefront.idea}
-        publicUrl={`${appBaseUrl()}/s/${storefront.slug}`}
+        variant="landing"
       />
     </main>
   );

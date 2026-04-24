@@ -40,6 +40,9 @@ describe("public storefront page", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(sampleStorefrontContent.hero.body)).toBeInTheDocument();
     expect(screen.getByText("Reserve a bottle")).toBeInTheDocument();
-    expect(screen.getByText("Generated from: small-batch hot sauce from Brooklyn")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Built with vibe-storefront.com" })
+    ).toHaveAttribute("href", "https://vibe-storefront.com");
+    expect(screen.getByText("Source prompt: small-batch hot sauce from Brooklyn")).toBeInTheDocument();
   });
 });
