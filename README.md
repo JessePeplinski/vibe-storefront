@@ -14,7 +14,8 @@ Use the production URL for deployed smoke testing. Generation requires the Verce
 - Next.js 16, TypeScript, Tailwind CSS
 - Clerk for auth
 - Supabase Postgres with RLS
-- `@openai/codex-sdk` and `@openai/codex` for runtime generation
+- `@openai/codex-sdk` and `@openai/codex` for storefront copy generation
+- OpenAI Image API with `gpt-image-2` for generated product imagery
 - Vitest and Testing Library
 
 ## Environment
@@ -35,13 +36,17 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 CODEX_API_KEY=
 CODEX_MODEL=gpt-5.3-codex
+OPENAI_API_KEY=
+OPENAI_IMAGE_MODEL=gpt-image-2
 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Use Clerk development keys locally. Production/demo keys belong only in Vercel environment variables or an ignored local reference file such as `.env.prod`.
+Use Clerk development keys locally. `OPENAI_API_KEY` is optional when it points to the same OpenAI project as `CODEX_API_KEY`; the app falls back to `CODEX_API_KEY` for image generation. Production/demo keys belong only in Vercel environment variables or an ignored local reference file such as `.env.prod`.
 
 Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables RLS, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key. Clerk users can create repeat storefronts; signed-out visitors are limited to one guest storefront by an HttpOnly cookie and database uniqueness constraint. Local generate/save/share testing should use the local Supabase stack.
+
+Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`, and each storefront stores the durable public image URL in `content.product.image`.
 
 ## Authentication
 
@@ -74,6 +79,24 @@ npm run dev
 
 Open `http://localhost:3000`. Local Supabase Studio runs at `http://127.0.0.1:54323`.
 
+## Product Image Backfill
+
+Existing storefronts can be backfilled after the storage migration is applied:
+
+```bash
+npm run backfill:product-images -- --env .env.local
+npm run backfill:product-images -- --env .env.local --write
+```
+
+For production, use the ignored production env reference and pass the explicit confirmation flag:
+
+```bash
+npm run backfill:product-images -- --env .env.prod
+npm run backfill:product-images -- --env .env.prod --write --confirm-production
+```
+
+The command skips storefronts that already have `content.product.image`.
+
 ## Local Smoke Test
 
 After the dev server is running:
@@ -95,7 +118,7 @@ npm test
 npm run build
 ```
 
-The Codex SDK route runs in the Node.js runtime because the SDK spawns the local Codex CLI. In deployed Vercel environments, the route uses `/tmp` for Codex runtime state and resolves the packaged platform Codex binary when available. If generation fails with quota errors, check the OpenAI project tied to `CODEX_API_KEY` before changing persistence code.
+The Codex SDK route runs in the Node.js runtime because the SDK spawns the local Codex CLI. In deployed Vercel environments, the route uses `/tmp` for Codex runtime state and resolves the packaged platform Codex binary when available. If generation fails with quota errors, check the OpenAI project tied to `CODEX_API_KEY` and `OPENAI_API_KEY` before changing persistence code.
 
 ## Deployment
 
