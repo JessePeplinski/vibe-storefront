@@ -80,7 +80,7 @@ After the dev server is running:
 
 1. Sign in with a Clerk development user.
 2. Open the signed-out homepage in a private browser window.
-3. Confirm `See example` opens the seeded public storefront.
+3. Confirm `See all storefronts` opens the public storefront gallery.
 4. Generate one guest storefront from the homepage input and confirm the success state links to the new share URL.
 5. Reload the homepage, submit again as the same guest, and confirm the existing share URL is returned without another generation.
 6. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation still creates saved storefronts.

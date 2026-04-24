@@ -18,7 +18,6 @@ describe("public storefront page", () => {
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
       anonymous_session_id: null,
-      system_key: null,
       slug: "brooklyn-ember-co-abc123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContent,

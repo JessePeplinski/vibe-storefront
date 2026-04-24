@@ -17,17 +17,10 @@ type StorefrontOwner =
   | {
       ownerClerkUserId: string;
       anonymousSessionId?: never;
-      systemKey?: never;
     }
   | {
       anonymousSessionId: string;
       ownerClerkUserId?: never;
-      systemKey?: never;
-    }
-  | {
-      systemKey: string;
-      ownerClerkUserId?: never;
-      anonymousSessionId?: never;
     };
 
 function parseStorefront(row: StorefrontRow): StorefrontRecord {
@@ -41,23 +34,13 @@ function storefrontOwnerFields(params: StorefrontOwner) {
   if ("ownerClerkUserId" in params) {
     return {
       owner_clerk_user_id: params.ownerClerkUserId,
-      anonymous_session_id: null,
-      system_key: null
-    };
-  }
-
-  if ("anonymousSessionId" in params) {
-    return {
-      owner_clerk_user_id: null,
-      anonymous_session_id: params.anonymousSessionId,
-      system_key: null
+      anonymous_session_id: null
     };
   }
 
   return {
     owner_clerk_user_id: null,
-    anonymous_session_id: null,
-    system_key: params.systemKey
+    anonymous_session_id: params.anonymousSessionId
   };
 }
 
@@ -98,6 +81,21 @@ export async function listStorefrontsForOwner(
     .from("storefronts")
     .select("*")
     .eq("owner_clerk_user_id", ownerClerkUserId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Unable to load storefronts: ${error.message}`);
+  }
+
+  return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
+}
+
+export async function listPublishedStorefronts(): Promise<StorefrontRecord[]> {
+  const supabase = createSupabasePublicClient();
+  const { data, error } = await supabase
+    .from("storefronts")
+    .select("*")
+    .eq("published", true)
     .order("created_at", { ascending: false });
 
   if (error) {
