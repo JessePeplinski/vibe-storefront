@@ -97,11 +97,11 @@ describe("StorefrontStudio", () => {
     render(<StorefrontStudio />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Product idea")).toHaveValue(
+      expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
         "solar-powered picnic coolers for city parks"
       );
     });
-    expect(screen.getByText("Example storefront")).toBeInTheDocument();
+    expect(screen.queryByText(/preview/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Generated from:/i)).not.toBeInTheDocument();
     expect(window.localStorage.getItem(DRAFT_IDEA_STORAGE_KEY)).toBeNull();
   });
@@ -109,24 +109,20 @@ describe("StorefrontStudio", () => {
   it("starts with an empty product idea prompt", () => {
     render(<StorefrontStudio />);
 
-    expect(screen.getByLabelText("Product idea")).toHaveValue("");
-    expect(screen.getByLabelText("Product idea")).toHaveAttribute(
+    expect(screen.getByLabelText("Generate your storefront")).toHaveValue("");
+    expect(screen.getByLabelText("Generate your storefront")).toHaveAttribute(
       "placeholder",
-      "Enter your product idea"
+      "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers."
     );
     expect(
-      screen.getByRole("button", { name: "Generate with Codex" })
+      screen.getByRole("button", { name: "Generate storefront" })
     ).not.toBeDisabled();
-    expect(screen.getByText("Model: gpt-5.3-codex")).toBeInTheDocument();
-    expect(
-      within(
-        screen.getByRole("group", { name: "Example product ideas" })
-      ).getAllByRole("button")
-    ).toHaveLength(STARTER_IDEAS.length);
-
+    expect(screen.queryByText(/Model:/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Example product ideas" }))
+      .not.toBeInTheDocument();
   });
 
-  it("previews the newest initial recent storefront and lets another item take over the canvas", async () => {
+  it("renders initial storefronts with copy and live actions", async () => {
     const newestStorefront = storefront({
       id: "desk-bloom-id",
       slug: "desk-bloom-abc123",
@@ -153,34 +149,16 @@ describe("StorefrontStudio", () => {
     );
 
     const recentStorefronts = screen.getByRole("region", {
-      name: "Recent storefronts"
-    });
-    const newestPreviewButton = within(recentStorefronts).getByRole("button", {
-      name: "Preview Desk Bloom"
-    });
-    const olderPreviewButton = within(recentStorefronts).getByRole("button", {
-      name: "Preview Lamp Loom"
+      name: "Your storefronts"
     });
 
-    expect(screen.getByText("Selected preview")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Desk Bloom" })
-    ).toBeInTheDocument();
-    expect(screen.queryByText("background")).not.toBeInTheDocument();
-    expect(screen.getByText("Built with vibe-storefront.com")).toBeInTheDocument();
-    expect(
-      screen.getByText("Source prompt: modular desk planters for office workers")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open live" })).toHaveAttribute(
-      "href",
-      "/s/desk-bloom-abc123"
-    );
-    expect(screen.getByRole("link", { name: "Open live" })).toHaveAttribute(
-      "target",
-      "_blank"
-    );
-    expect(newestPreviewButton).toHaveAttribute("aria-pressed", "true");
-    expect(olderPreviewButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByText("Latest preview")).not.toBeInTheDocument();
+    expect(within(recentStorefronts).queryByRole("button", { name: /Preview/ }))
+      .not.toBeInTheDocument();
+    expect(within(recentStorefronts).getByText("Desk Bloom"))
+      .toBeInTheDocument();
+    expect(within(recentStorefronts).getByText("Lamp Loom"))
+      .toBeInTheDocument();
     expect(
       within(recentStorefronts).getAllByText("Created Apr 23, 2026")
     ).toHaveLength(2);
@@ -199,17 +177,6 @@ describe("StorefrontStudio", () => {
         name: "Open live storefront for Desk Bloom"
       })
     ).toHaveAttribute("target", "_blank");
-    expect(
-      within(recentStorefronts).getByRole("button", {
-        name: "Edit Desk Bloom"
-      })
-    ).toBeDisabled();
-    expect(
-      within(recentStorefronts).getByRole("button", {
-        name: "Edit Desk Bloom"
-      })
-    ).toHaveAttribute("title", "Editing coming soon");
-
     fireEvent.click(
       within(recentStorefronts).getByRole("button", {
         name: "Copy live link for Desk Bloom"
@@ -226,36 +193,14 @@ describe("StorefrontStudio", () => {
       ).toHaveTextContent("Copied");
     });
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Copy selected live link for Desk Bloom"
-      })
-    );
-    expect(clipboardWriteTextMock).toHaveBeenCalledWith(
-      `${window.location.origin}/s/desk-bloom-abc123`
-    );
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", {
-          name: "Copy selected live link for Desk Bloom"
-        })
-      ).toHaveTextContent("Copied");
-    });
-
-    fireEvent.click(olderPreviewButton);
-
     expect(
-      screen.getByRole("heading", { level: 2, name: "Lamp Loom" })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open live" })).toHaveAttribute(
-      "href",
-      "/s/lamp-loom-def456"
-    );
-    expect(newestPreviewButton).toHaveAttribute("aria-pressed", "false");
-    expect(olderPreviewButton).toHaveAttribute("aria-pressed", "true");
+      within(recentStorefronts).getByRole("link", {
+        name: "Open live storefront for Lamp Loom"
+      })
+    ).toHaveAttribute("href", "/s/lamp-loom-def456");
   });
 
-  it("submits a starter idea and adds the saved storefront to recent results", async () => {
+  it("submits an idea and adds the saved storefront to recent results", async () => {
     const selectedIdea = STARTER_IDEAS[1];
     const createdStorefront = storefront({
       id: "lamp-kit-id",
@@ -282,16 +227,16 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    const starterButton = screen.getByRole("button", {
-      name: `Generate storefront for ${selectedIdea}`
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: selectedIdea }
     });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
-    fireEvent.click(starterButton);
-
-    expect(screen.getByLabelText("Product idea")).toHaveValue("");
-    expect(starterButton).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
+      selectedIdea
+    );
     const generatingButton = await screen.findByRole("button", {
-      name: /generating with codex/i
+      name: /generating storefront/i
     });
     expect(generatingButton).toBeDisabled();
     expect(within(generatingButton).getByText("0:00")).toBeInTheDocument();
@@ -323,7 +268,6 @@ describe("StorefrontStudio", () => {
     });
 
     expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
-    expect(starterButton).toHaveAttribute("aria-busy", "false");
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/tiny-lamp-labs-abc123");
@@ -332,13 +276,10 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("target", "_blank");
 
     const recentStorefronts = screen.getByRole("region", {
-      name: "Recent storefronts"
+      name: "Your storefronts"
     });
-    expect(
-      within(recentStorefronts).getByRole("button", {
-        name: "Preview Brooklyn Ember Co."
-      })
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(recentStorefronts).queryByRole("button", { name: /Preview/ }))
+      .not.toBeInTheDocument();
     expect(
       within(recentStorefronts).getByRole("link", {
         name: "Open live storefront for Brooklyn Ember Co."
@@ -349,18 +290,8 @@ describe("StorefrontStudio", () => {
         name: "Copy live link for Brooklyn Ember Co."
       })
     ).toBeInTheDocument();
-    expect(
-      within(recentStorefronts).getByRole("button", {
-        name: "Edit Brooklyn Ember Co."
-      })
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open live" })).toHaveAttribute(
-      "href",
-      "/s/tiny-lamp-labs-abc123"
-    );
+    expect(within(recentStorefronts).getByText("Brooklyn Ember Co."))
+      .toBeInTheDocument();
   });
 
   it("frames repeated signed-in prompts as reusing the existing storefront", async () => {
@@ -380,11 +311,10 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${selectedIdea}`
-      })
-    );
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: selectedIdea }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
     expect(
       await screen.findByText(
@@ -394,9 +324,7 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/carryclean-co-abc123");
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
   });
 
   it("lets a guest generate one storefront and then disables more generation", async () => {
@@ -418,11 +346,10 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio mode="guest" />);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${selectedIdea}`
-      })
-    );
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: selectedIdea }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
     expect(
       await screen.findByText("Guest storefront ready.")
@@ -437,17 +364,16 @@ describe("StorefrontStudio", () => {
       screen.queryByRole("button", { name: "Create account" })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Generate with Codex" })
+      screen.getByRole("button", { name: "Generate storefront" })
     ).toBeDisabled();
 
     const guestStorefront = screen.getByRole("region", {
       name: "Guest storefront"
     });
-    expect(
-      within(guestStorefront).getByRole("button", {
-        name: "Preview Brooklyn Ember Co."
-      })
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(within(guestStorefront).queryByRole("button", { name: /Preview/ }))
+      .not.toBeInTheDocument();
+    expect(within(guestStorefront).getByText("Brooklyn Ember Co."))
+      .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Sign in for more" }));
 
@@ -475,11 +401,10 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio mode="guest" />);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${STARTER_IDEAS[0]}`
-      })
-    );
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: STARTER_IDEAS[0] }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
     expect(
       await screen.findByText(
@@ -492,11 +417,9 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Generate with Codex" })
+      screen.getByRole("button", { name: "Generate storefront" })
     ).toBeDisabled();
   });
 });
