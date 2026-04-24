@@ -12,7 +12,6 @@ import {
   LogIn,
   Send,
   Sparkles,
-  UserPlus,
   WandSparkles
 } from "lucide-react";
 import { GenerationProgress } from "@/components/generation-progress";
@@ -46,7 +45,7 @@ export function StorefrontStudio({
   initialStorefronts = [],
   mode = "signed-in"
 }: StorefrontStudioProps) {
-  const { openSignIn, openSignUp } = useClerk();
+  const { openSignIn } = useClerk();
   const [idea, setIdea] = useState("");
   const [generatingStarterIdea, setGeneratingStarterIdea] = useState<
     string | null
@@ -261,7 +260,7 @@ export function StorefrontStudio({
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                   </Link>
                   {isGuestMode && guestGenerationUsed && (
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <div className="mt-3">
                       <button
                         className="inline-flex items-center justify-center gap-2 bg-white px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-stone-100"
                         onClick={() => openSignIn()}
@@ -269,14 +268,6 @@ export function StorefrontStudio({
                       >
                         <LogIn className="h-4 w-4" aria-hidden />
                         Sign in for more
-                      </button>
-                      <button
-                        className="inline-flex items-center justify-center gap-2 border border-white/20 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/10"
-                        onClick={() => openSignUp()}
-                        type="button"
-                      >
-                        <UserPlus className="h-4 w-4" aria-hidden />
-                        Create account
                       </button>
                     </div>
                   )}

@@ -10,9 +10,7 @@ Create `.env.local` from `.env.example` and fill every value:
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -34,9 +32,9 @@ Clerk:
 - Open the Clerk Dashboard for the app.
 - Use development keys locally: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...` and `CLERK_SECRET_KEY=sk_test_...`.
 - Use production keys in Vercel: `pk_live_...` and `sk_live_...`.
-- Keep the sign-in/sign-up URLs set to `/sign-in` and `/sign-up`.
+- Keep the sign-in URL set to `/sign-in`; Clerk handles account creation from the same flow.
 - For production Google sign-in, configure a Google SSO connection in Clerk with custom OAuth credentials using Clerk's [Google social connection guide](https://clerk.com/docs/authentication/social-connections/google):
-  - In Clerk, open SSO connections, add or edit Google for all users, and enable sign-up/sign-in plus custom credentials.
+  - In Clerk, open SSO connections, add or edit Google for all users, and enable sign-in/account creation plus custom credentials.
   - In Google Cloud Console, create a Web application OAuth client.
   - Add `https://vibe-storefront-two.vercel.app` and any custom production domain as authorized JavaScript origins.
   - Paste Clerk's exact Authorized Redirect URI into Google's Authorized Redirect URIs.
@@ -139,7 +137,7 @@ npm run backfill:product-images -- --env .env.prod --write --confirm-production
 Verify on the deployed URL:
 
 - Signed-out homepage renders.
-- Clerk sign-in/sign-up works, including Google sign-in from `/sign-in`.
+- Clerk sign-in works, including account creation and Google sign-in from `/sign-in`.
 - Signed-in generation succeeds.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.

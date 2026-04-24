@@ -13,8 +13,7 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
 const clerkMocks = vi.hoisted(() => ({
-  openSignIn: vi.fn(),
-  openSignUp: vi.fn()
+  openSignIn: vi.fn()
 }));
 
 const clipboardWriteTextMock = vi.fn();
@@ -71,7 +70,6 @@ function createStorageMock(): Storage {
 describe("StorefrontStudio", () => {
   beforeEach(() => {
     clerkMocks.openSignIn.mockReset();
-    clerkMocks.openSignUp.mockReset();
     clipboardWriteTextMock.mockReset();
     clipboardWriteTextMock.mockResolvedValue(undefined);
     Object.defineProperty(window, "localStorage", {
@@ -436,8 +434,8 @@ describe("StorefrontStudio", () => {
       screen.getByRole("button", { name: "Sign in for more" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Create account" })
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Create account" })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Generate with Codex" })
     ).toBeDisabled();
@@ -452,10 +450,8 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.click(screen.getByRole("button", { name: "Sign in for more" }));
-    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(clerkMocks.openSignIn).toHaveBeenCalledTimes(1);
-    expect(clerkMocks.openSignUp).toHaveBeenCalledTimes(1);
   });
 
   it("shows the existing storefront when a guest has already generated one", async () => {

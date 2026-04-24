@@ -26,9 +26,7 @@ Copy `.env.example` to `.env.local` and fill in:
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -50,13 +48,13 @@ Generated product images are uploaded server-side to the public Supabase Storage
 
 ## Authentication
 
-The app uses Clerk's prebuilt sign-in and sign-up components at `/sign-in` and `/sign-up`. Local development should use a Clerk development instance. Production should use a Clerk production instance with live Clerk environment variables set in Vercel.
+The app uses Clerk's prebuilt sign-in component at `/sign-in`; account creation is handled from the same Clerk flow. Local development should use a Clerk development instance. Production should use a Clerk production instance with live Clerk environment variables set in Vercel.
 
 Google sign-in is configured in Clerk as a Google SSO connection. Development instances can use Clerk's shared OAuth credentials, but production Google sign-in requires custom Google OAuth credentials from Google Cloud. Store those OAuth credentials in Clerk only; do not add them to Vercel environment variables, `.env.local`, `.env.prod`, or source control.
 
 Production Google OAuth setup:
 
-1. In Clerk, open the production app's Google SSO connection and enable sign-up/sign-in with custom credentials.
+1. In Clerk, open the production app's Google SSO connection and enable sign-in and account creation with custom credentials.
 2. In Google Cloud Console, create an OAuth client for a Web application.
 3. Add the production domains as authorized JavaScript origins:
    - `https://vibe-storefront.com`
