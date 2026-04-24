@@ -47,7 +47,9 @@ export type StorefrontContent = z.infer<typeof storefrontContentSchema>;
 
 export type StorefrontRecord = {
   id: string;
-  owner_clerk_user_id: string;
+  owner_clerk_user_id: string | null;
+  anonymous_session_id: string | null;
+  system_key: string | null;
   slug: string;
   idea: string;
   content: StorefrontContent;
