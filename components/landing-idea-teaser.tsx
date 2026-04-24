@@ -2,50 +2,118 @@
 
 import { FormEvent, useState } from "react";
 import { useClerk } from "@clerk/nextjs";
-import { ArrowRight, LockKeyhole, WandSparkles } from "lucide-react";
-import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
+import Link from "next/link";
+import {
+  ArrowRight,
+  ExternalLink,
+  Loader2,
+  Sparkles,
+  WandSparkles
+} from "lucide-react";
+import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
+import { STARTER_IDEAS } from "@/lib/studio-ideas";
+import type { StorefrontRecord } from "@/lib/storefront-schema";
+
+type CreateStorefrontResponse = {
+  storefront: StorefrontRecord;
+  shareUrl: string;
+  status?: "created" | "existing_guest_storefront";
+};
+
+type CreateStorefrontErrorResponse = {
+  error: string;
+  storefront?: StorefrontRecord;
+  shareUrl?: string;
+  status?: "existing_guest_storefront";
+};
 
 export function LandingIdeaTeaser() {
   const { openSignIn, openSignUp } = useClerk();
   const [idea, setIdea] = useState<string>(STARTER_IDEAS[0]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
+  const [existingGuestStorefront, setExistingGuestStorefront] = useState(false);
 
-  function storeDraftIdea() {
+  async function generateFromIdea() {
     const trimmedIdea = idea.trim();
 
-    if (trimmedIdea.length < 6) {
-      return false;
+    if (isGenerating || result || trimmedIdea.length < 6) {
+      return;
     }
 
-    window.localStorage.setItem(DRAFT_IDEA_STORAGE_KEY, trimmedIdea);
-    return true;
+    setError(null);
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch("/api/storefronts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ idea: trimmedIdea })
+      });
+      const payload = (await response.json()) as
+        | CreateStorefrontResponse
+        | CreateStorefrontErrorResponse;
+
+      if (!response.ok) {
+        if (
+          response.status === 409 &&
+          "error" in payload &&
+          payload.storefront &&
+          payload.shareUrl
+        ) {
+          setResult({
+            storefront: payload.storefront,
+            shareUrl: payload.shareUrl,
+            status: payload.status
+          });
+          setExistingGuestStorefront(true);
+          setError(payload.error);
+          return;
+        }
+
+        throw new Error("error" in payload ? payload.error : "Generation failed");
+      }
+
+      setResult(payload as CreateStorefrontResponse);
+      setExistingGuestStorefront(false);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Generation failed");
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
-  function handleSignIn(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (storeDraftIdea()) {
-      openSignIn();
-    }
+    void generateFromIdea();
   }
 
-  function handleSignUp() {
-    if (storeDraftIdea()) {
-      openSignUp();
-    }
-  }
+  const createdStorefrontPath = result
+    ? `/s/${result.storefront.slug}`
+    : undefined;
+  const generationDisabled = isGenerating || Boolean(result);
+  const resultHeading = existingGuestStorefront
+    ? `${result?.storefront.content.name} is already ready.`
+    : "Storefront ready.";
+  const resultLinkText = existingGuestStorefront
+    ? "Open existing storefront"
+    : "View your storefront";
 
   return (
     <section className="border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-slate-950 text-white">
-          <LockKeyhole className="h-5 w-5" aria-hidden />
+          <Sparkles className="h-5 w-5" aria-hidden />
         </div>
         <div>
           <h2 className="text-lg font-black text-slate-950">
-            Start in Studio
+            Generate a storefront
           </h2>
           <p className="text-sm leading-5 text-slate-500">
-            Saved storefronts are tied to your Clerk user.
+            Try one guest generation, then open the live URL.
           </p>
         </div>
       </div>
@@ -54,6 +122,7 @@ export function LandingIdeaTeaser() {
         {STARTER_IDEAS.map((starterIdea) => (
           <button
             className="inline-flex min-h-12 items-center gap-2 border border-slate-200 px-3 py-2 text-left text-sm font-bold leading-5 text-slate-800 transition hover:border-slate-950 hover:bg-slate-50"
+            disabled={generationDisabled}
             key={starterIdea}
             onClick={() => setIdea(starterIdea)}
             type="button"
@@ -67,7 +136,7 @@ export function LandingIdeaTeaser() {
         ))}
       </div>
 
-      <form className="space-y-3" onSubmit={handleSignIn}>
+      <form className="space-y-3" onSubmit={handleSubmit}>
         <label className="block">
           <span className="text-sm font-bold text-slate-700">
             Product idea
@@ -79,25 +148,69 @@ export function LandingIdeaTeaser() {
             minLength={6}
             name="idea"
             onChange={(event) => setIdea(event.target.value)}
+            placeholder="small-batch hot sauce from Brooklyn"
             required
             value={idea}
           />
         </label>
         <button
-          className="inline-flex w-full items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+          className="inline-flex w-full items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          disabled={generationDisabled}
           type="submit"
         >
-          Continue in Studio
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </button>
-        <button
-          className="w-full border border-slate-300 px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-950"
-          onClick={handleSignUp}
-          type="button"
-        >
-          Create account
+          {isGenerating ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          )}
+          {isGenerating ? "Generating with Codex" : "Generate with Studio"}
         </button>
       </form>
+
+      {error && (
+        <p className="mt-3 border border-red-200 bg-red-50 p-3 text-sm font-bold leading-5 text-red-700">
+          {error}
+        </p>
+      )}
+
+      {createdStorefrontPath && (
+        <div className="mt-4 border border-emerald-200 bg-emerald-50 p-3">
+          <p className="text-sm font-black text-emerald-950">
+            {resultHeading}
+          </p>
+          <Link
+            className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-emerald-700 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-800"
+            href={createdStorefrontPath}
+          >
+            {resultLinkText}
+            <ExternalLink className="h-4 w-4" aria-hidden />
+          </Link>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <button
+              className="border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
+              onClick={() => openSignIn()}
+              type="button"
+            >
+              Sign in for more
+            </button>
+            <button
+              className="border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
+              onClick={() => openSignUp()}
+              type="button"
+            >
+              Create account
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Link
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 border border-slate-300 px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-950"
+        href={EXAMPLE_STOREFRONT_PATH}
+      >
+        See example
+        <ExternalLink className="h-4 w-4" aria-hidden />
+      </Link>
     </section>
   );
 }

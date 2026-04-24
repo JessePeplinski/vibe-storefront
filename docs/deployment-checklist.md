@@ -76,9 +76,24 @@ Then verify:
 Promote the verified branch to `main`, because production deploys should only come from `main`:
 
 ```bash
-git checkout -b main
+git checkout main
+git merge --no-ff feat/guest-storefront-demo
 git push -u origin main
 ```
+
+Apply Supabase migrations to the production database before or immediately after the Vercel deploy. Production does not automatically receive local migrations just because the app is deployed.
+
+Recommended CLI flow:
+
+```bash
+npx -y supabase login
+npx -y supabase link --project-ref <production-project-ref>
+npx -y supabase migration list --linked
+npx -y supabase db push
+npx -y supabase migration list --linked
+```
+
+For this feature, production must include `20260424020403_add_guest_storefronts.sql` before guest generation will work. If using the Supabase SQL Editor instead of the CLI, run that migration SQL once against the production project and confirm the migration history/schema afterward.
 
 Create a new Vercel project connected to `JessePeplinski/vibe-storefront`.
 
