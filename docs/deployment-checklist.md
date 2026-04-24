@@ -102,7 +102,7 @@ npx -y supabase db push
 npx -y supabase migration list --linked
 ```
 
-For this feature, production must include `20260424020403_add_guest_storefronts.sql` for guest generation and `20260424120000_remove_homepage_example_storefront.sql` for the public storefront gallery cleanup. If using the Supabase SQL Editor instead of the CLI, run those migration SQL files once against the production project and confirm the migration history/schema afterward.
+For this feature, production must include `20260424020403_add_guest_storefronts.sql` for guest generation and `20260424101511_remove_homepage_example_storefront.sql` for the public storefront gallery cleanup. If using the Supabase SQL Editor instead of the CLI, run those migration SQL files once against the production project and confirm the migration history/schema afterward.
 
 Create a new Vercel project connected to `JessePeplinski/vibe-storefront`.
 
