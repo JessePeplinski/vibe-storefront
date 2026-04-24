@@ -6,6 +6,7 @@ import { appBaseUrl } from "@/lib/env";
 import {
   createStorefront,
   getStorefrontByAnonymousSession,
+  getStorefrontByOwnerAndIdea,
   listStorefrontsForOwner
 } from "@/lib/storefronts";
 
@@ -76,6 +77,19 @@ export async function POST(request: NextRequest) {
 
   try {
     if (userId) {
+      const existingStorefront = await getStorefrontByOwnerAndIdea({
+        ownerClerkUserId: userId,
+        idea: parsed.data.idea
+      });
+
+      if (existingStorefront) {
+        return NextResponse.json({
+          storefront: existingStorefront,
+          shareUrl: shareUrlForSlug(existingStorefront.slug),
+          status: "existing_prompt_storefront"
+        });
+      }
+
       const content = await generateStorefront(parsed.data.idea);
       const storefront = await createStorefront({
         ownerClerkUserId: userId,
