@@ -33,6 +33,13 @@ Clerk:
 - Use development keys locally: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...` and `CLERK_SECRET_KEY=sk_test_...`.
 - Use production keys in Vercel: `pk_live_...` and `sk_live_...`.
 - Keep the sign-in/sign-up URLs set to `/sign-in` and `/sign-up`.
+- For production Google sign-in, configure a Google SSO connection in Clerk with custom OAuth credentials using Clerk's [Google social connection guide](https://clerk.com/docs/authentication/social-connections/google):
+  - In Clerk, open SSO connections, add or edit Google for all users, and enable sign-up/sign-in plus custom credentials.
+  - In Google Cloud Console, create a Web application OAuth client.
+  - Add `https://vibe-storefront-two.vercel.app` and any custom production domain as authorized JavaScript origins.
+  - Paste Clerk's exact Authorized Redirect URI into Google's Authorized Redirect URIs.
+  - Save the Google Client ID and Client Secret in Clerk only; do not add them to Vercel env vars or commit them.
+  - Before public testing, confirm the Google OAuth app is published for the intended audience, not limited to test users.
 
 Supabase:
 
@@ -50,6 +57,8 @@ OpenAI:
 - Leave `CODEX_MODEL=gpt-5.3-codex` unless the app is intentionally retargeted.
 
 ## 3. Local Verification
+
+Start Docker Desktop or another Docker-compatible container runtime before starting the local Supabase stack.
 
 Run:
 
@@ -117,7 +126,7 @@ Redeploy production after `NEXT_PUBLIC_APP_URL` is set.
 Verify on the deployed URL:
 
 - Signed-out homepage renders.
-- Clerk sign-in/sign-up works.
+- Clerk sign-in/sign-up works, including Google sign-in from `/sign-in`.
 - Signed-in generation succeeds.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.
