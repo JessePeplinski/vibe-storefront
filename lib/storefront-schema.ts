@@ -2,7 +2,22 @@ import { z } from "zod";
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
-export const storefrontContentSchema = z.object({
+export const storefrontProductImageSchema = z.object({
+  url: z.string().url(),
+  storagePath: z.string().min(1).max(300),
+  alt: z.string().min(3).max(160),
+  model: z.string().min(3).max(60),
+  generatedAt: z.string().datetime()
+});
+
+const storefrontProductSchema = z.object({
+  name: z.string().min(2).max(70),
+  description: z.string().min(60).max(360),
+  price: z.string().min(2).max(24),
+  highlights: z.array(z.string().min(3).max(90)).min(3).max(5)
+});
+
+export const codexStorefrontContentSchema = z.object({
   name: z.string().min(2).max(60),
   tagline: z.string().min(8).max(120),
   hero: z.object({
@@ -10,12 +25,7 @@ export const storefrontContentSchema = z.object({
     headline: z.string().min(12).max(100),
     body: z.string().min(40).max(260)
   }),
-  product: z.object({
-    name: z.string().min(2).max(70),
-    description: z.string().min(60).max(360),
-    price: z.string().min(2).max(24),
-    highlights: z.array(z.string().min(3).max(90)).min(3).max(5)
-  }),
+  product: storefrontProductSchema,
   theme: z.object({
     mood: z.string().min(3).max(60),
     palette: z.object({
@@ -43,7 +53,17 @@ export const storefrontContentSchema = z.object({
     .max(3)
 });
 
+export const storefrontContentSchema = codexStorefrontContentSchema.extend({
+  product: storefrontProductSchema.extend({
+    image: storefrontProductImageSchema.optional()
+  })
+});
+
+export type CodexStorefrontContent = z.infer<
+  typeof codexStorefrontContentSchema
+>;
 export type StorefrontContent = z.infer<typeof storefrontContentSchema>;
+export type StorefrontProductImage = z.infer<typeof storefrontProductImageSchema>;
 
 export type StorefrontRecord = {
   id: string;

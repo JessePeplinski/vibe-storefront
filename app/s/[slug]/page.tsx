@@ -23,6 +23,7 @@ export async function generateMetadata({
   const title = `${storefront.content.name} | Vibe Storefront`;
   const description = storefront.content.tagline;
   const publicUrl = `${appBaseUrl()}/s/${storefront.slug}`;
+  const image = storefront.content.product.image;
 
   return {
     title,
@@ -30,14 +31,23 @@ export async function generateMetadata({
     openGraph: {
       title: storefront.content.name,
       description,
+      images: image
+        ? [
+            {
+              alt: image.alt,
+              url: image.url
+            }
+          ]
+        : undefined,
       siteName: "Vibe Storefront",
       type: "website",
       url: publicUrl
     },
     twitter: {
-      card: "summary",
+      card: image ? "summary_large_image" : "summary",
       title: storefront.content.name,
-      description
+      description,
+      images: image ? [image.url] : undefined
     }
   };
 }
