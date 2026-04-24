@@ -3,15 +3,17 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
-  within
+  waitFor
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { STARTER_IDEAS } from "@/lib/studio-ideas";
-import { sampleStorefrontContent } from "@/lib/storefront-schema";
+import {
+  sampleStorefrontContent,
+  type StorefrontRecord
+} from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
+  listPublishedStorefronts: vi.fn(),
   openSignIn: vi.fn()
 }));
 
@@ -24,6 +26,71 @@ vi.mock("@clerk/nextjs", () => ({
     openSignIn: mocks.openSignIn
   })
 }));
+
+vi.mock("@/lib/storefronts", () => ({
+  listPublishedStorefronts: mocks.listPublishedStorefronts
+}));
+
+const productImage = {
+  alt: "Ember Table product image for Ember Table",
+  generatedAt: "2026-04-24T00:00:00.000Z",
+  model: "gpt-image-2",
+  storagePath: "storefronts/ember-table-abc123/product.webp",
+  url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/ember-table-abc123/product.webp"
+};
+
+function exampleStorefront(
+  overrides: Partial<StorefrontRecord> = {}
+): StorefrontRecord {
+  return {
+    id: "example-storefront-id",
+    owner_clerk_user_id: null,
+    anonymous_session_id: "00000000-0000-4000-8000-000000000001",
+    slug: "ember-table-abc123",
+    idea: "tableside coffee heaters",
+    content: {
+      ...sampleStorefrontContent,
+      name: "Ember Table",
+      product: {
+        ...sampleStorefrontContent.product,
+        image: productImage
+      },
+      tagline: "Generated commerce pages that make product ideas feel real."
+    },
+    published: true,
+    created_at: "2026-04-23T00:00:00.000Z",
+    updated_at: "2026-04-23T00:00:00.000Z",
+    ...overrides
+  };
+}
+
+const latestStorefronts = [
+  exampleStorefront(),
+  exampleStorefront({
+    id: "example-storefront-id-2",
+    idea: "modular desk planters",
+    slug: "desk-bloom-def456",
+    content: {
+      ...sampleStorefrontContent,
+      name: "Desk Bloom",
+      tagline: "Tiny green spaces for focused workdays."
+    }
+  }),
+  exampleStorefront({
+    id: "example-storefront-id-3",
+    idea: "plant-based trail snacks",
+    slug: "trail-crave-ghi789",
+    content: {
+      ...sampleStorefrontContent,
+      name: "Trail Crave",
+      tagline: "Plant-powered snack packs for weekend hikers."
+    }
+  })
+];
+
+const typedIdea = "insulated lunch bowls for hybrid workers";
+const ideaPlaceholder =
+  "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers.";
 
 function createStorageMock(): Storage {
   const store = new Map<string, string>();
@@ -48,6 +115,7 @@ describe("home page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.auth.mockResolvedValue({ userId: null });
+    mocks.listPublishedStorefronts.mockResolvedValue(latestStorefronts);
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: createStorageMock()
@@ -55,7 +123,7 @@ describe("home page", () => {
   });
 
   it("lets signed-out visitors generate from the hero and view the created storefront", async () => {
-    const createdStorefront = {
+    const createdStorefront: StorefrontRecord = {
       id: "guest-storefront-id",
       owner_clerk_user_id: null,
       anonymous_session_id: "00000000-0000-4000-8000-000000000001",
@@ -90,48 +158,65 @@ describe("home page", () => {
 
     render(await Page());
 
+    expect(mocks.listPublishedStorefronts).toHaveBeenCalledWith(3);
     expect(
-      screen.getByRole("heading", { name: "Generate a storefront" })
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Validate product ideas with a storefront."
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Turn a raw product concept into a basic landing page powered by Codex 5.3 and Image API 2."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Models:/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Generate your storefront")
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /see all storefronts/i })
-    ).toHaveAttribute(
-      "href",
-      "/storefronts"
-    );
+    ).toHaveAttribute("href", "/storefronts");
     expect(
-      screen.queryByRole("link", { name: /see example/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: /browse gallery/i })
+    ).toHaveAttribute("href", "/storefronts");
+    expect(
+      screen.getAllByRole("link", { name: "Open storefront" }).map((link) =>
+        link.getAttribute("href")
+      )
+    ).toEqual([
+      "/s/ember-table-abc123",
+      "/s/desk-bloom-def456",
+      "/s/trail-crave-ghi789"
+    ]);
+    expect(screen.getByText("Ember Table")).toBeInTheDocument();
+    expect(screen.getByText("Desk Bloom")).toBeInTheDocument();
+    expect(screen.getByText("Trail Crave")).toBeInTheDocument();
     expect(screen.queryByText("Storefront canvas")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Product idea")).toHaveValue("");
-    expect(screen.getByLabelText("Product idea")).toHaveAttribute(
+    expect(screen.getByLabelText("Generate your storefront")).toHaveValue("");
+    expect(screen.getByLabelText("Generate your storefront")).toHaveAttribute(
       "placeholder",
-      "Enter your product idea"
+      ideaPlaceholder
     );
     expect(
-      screen.getByRole("button", { name: /generate with codex/i })
+      screen.getByRole("button", { name: "Generate storefront" })
     ).not.toBeDisabled();
-    expect(screen.getByText("Model: gpt-5.3-codex")).toBeInTheDocument();
 
-    const exampleIdeas = screen.getByRole("group", {
-      name: "Example product ideas"
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: typedIdea }
     });
-    expect(within(exampleIdeas).getAllByRole("button")).toHaveLength(
-      STARTER_IDEAS.length
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${STARTER_IDEAS[0]}`
-      })
+    expect(screen.queryByRole("group", { name: "Example product ideas" }))
+      .not.toBeInTheDocument();
+    expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
+      typedIdea
     );
-
-    expect(screen.getByLabelText("Product idea")).toHaveValue("");
     const generatingButton = await screen.findByRole("button", {
-      name: /generating with codex/i
+      name: /building storefront/i
     });
     expect(generatingButton).toBeDisabled();
-    expect(within(generatingButton).getByText("0:00")).toBeInTheDocument();
+    expect(generatingButton).toHaveTextContent("0:00");
     expect(
       screen.getByRole("status", { name: "Generation progress" })
     ).toHaveTextContent("Estimated step 1 of 4");
@@ -143,7 +228,7 @@ describe("home page", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/storefronts",
       expect.objectContaining({
-        body: JSON.stringify({ idea: STARTER_IDEAS[0] }),
+        body: JSON.stringify({ idea: typedIdea }),
         method: "POST"
       })
     );
@@ -191,11 +276,10 @@ describe("home page", () => {
     const Page = (await import("@/app/(app)/page")).default;
 
     render(await Page());
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${STARTER_IDEAS[0]}`
-      })
-    );
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: typedIdea }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
     expect(
       await screen.findByText(
