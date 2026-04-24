@@ -64,6 +64,8 @@ After setup, verify Google sign-in from `https://vibe-storefront.com/sign-in`. R
 
 ## Development
 
+Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman. Start the container runtime before running the Supabase CLI.
+
 ```bash
 npm install
 npx -y supabase start
