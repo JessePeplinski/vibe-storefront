@@ -58,6 +58,8 @@ OpenAI:
 
 ## 3. Local Verification
 
+Start Docker Desktop or another Docker-compatible container runtime before starting the local Supabase stack.
+
 Run:
 
 ```bash
