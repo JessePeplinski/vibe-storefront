@@ -94,13 +94,21 @@ export async function listStorefrontsForOwner(
   return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
 }
 
-export async function listPublishedStorefronts(): Promise<StorefrontRecord[]> {
+export async function listPublishedStorefronts(
+  limit?: number
+): Promise<StorefrontRecord[]> {
   const supabase = createSupabasePublicClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("storefronts")
     .select("*")
     .eq("published", true)
     .order("created_at", { ascending: false });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(`Unable to load storefronts: ${error.message}`);
