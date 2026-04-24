@@ -6,11 +6,12 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { DEFAULT_CODEX_MODEL } from "@/lib/codex-config";
 import { requireEnv } from "@/lib/env";
 import {
+  codexStorefrontContentSchema,
   type StorefrontContent,
   storefrontContentSchema
 } from "@/lib/storefront-schema";
 
-const storefrontJsonSchema = zodToJsonSchema(storefrontContentSchema, {
+const storefrontJsonSchema = zodToJsonSchema(codexStorefrontContentSchema, {
   $refStrategy: "none",
   target: "openAi"
 });

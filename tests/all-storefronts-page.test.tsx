@@ -17,6 +17,14 @@ vi.mock("@/lib/storefronts", () => ({
   listPublishedStorefronts: mocks.listPublishedStorefronts
 }));
 
+const productImage = {
+  alt: "Ember Table product image for Ember Table",
+  generatedAt: "2026-04-24T00:00:00.000Z",
+  model: "gpt-image-2",
+  storagePath: "storefronts/ember-table-abc123/product.webp",
+  url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/ember-table-abc123/product.webp"
+};
+
 function storefront(
   overrides: Partial<StorefrontRecord> = {}
 ): StorefrontRecord {
@@ -34,10 +42,17 @@ function storefront(
   };
 }
 
-function storefrontContent(name: string): StorefrontRecord["content"] {
+function storefrontContent(
+  name: string,
+  image?: StorefrontRecord["content"]["product"]["image"]
+): StorefrontRecord["content"] {
   return {
     ...sampleStorefrontContent,
     name,
+    product: {
+      ...sampleStorefrontContent.product,
+      image
+    },
     tagline: `${name} makes generated commerce pages feel real.`
   };
 }
@@ -66,7 +81,7 @@ describe("all storefronts page", () => {
         owner_clerk_user_id: "user_full",
         slug: "ember-table-abc123",
         idea: "tableside coffee heaters",
-        content: storefrontContent("Ember Table")
+        content: storefrontContent("Ember Table", productImage)
       }),
       storefront({
         id: "partial-name-id",
@@ -107,6 +122,9 @@ describe("all storefronts page", () => {
     expect(screen.getByText("By Ava")).toBeInTheDocument();
     expect(screen.getByText("By Signed-in user")).toBeInTheDocument();
     expect(screen.getByText("By guest")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: productImage.alt })
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Created Apr 23, 2026")).toHaveLength(3);
     expect(screen.getByText("Created Apr 22, 2026")).toBeInTheDocument();
     expect(

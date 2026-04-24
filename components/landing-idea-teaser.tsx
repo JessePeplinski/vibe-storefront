@@ -10,7 +10,8 @@ import {
   Sparkles,
   WandSparkles
 } from "lucide-react";
-import { useGenerationCountdown } from "@/components/use-generation-countdown";
+import { GenerationProgress } from "@/components/generation-progress";
+import { useGenerationProgress } from "@/components/use-generation-countdown";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -37,7 +38,13 @@ export function LandingIdeaTeaser() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [existingGuestStorefront, setExistingGuestStorefront] = useState(false);
-  const { countdownText, resetCountdown } = useGenerationCountdown(isGenerating);
+  const {
+    currentPhaseIndex,
+    elapsedText,
+    estimateText,
+    phases,
+    resetProgress
+  } = useGenerationProgress(isGenerating);
 
   async function generateFromIdea(nextIdea = idea, starterIdea?: string) {
     const trimmedIdea = nextIdea.trim();
@@ -48,7 +55,7 @@ export function LandingIdeaTeaser() {
 
     setError(null);
     setGeneratingStarterIdea(starterIdea ?? null);
-    resetCountdown();
+    resetProgress();
     setIsGenerating(true);
 
     try {
@@ -180,12 +187,12 @@ export function LandingIdeaTeaser() {
           <span>
             {isGenerating ? "Generating with Codex" : "Generate with Codex"}
           </span>
-          {isGenerating && countdownText && (
+          {isGenerating && elapsedText && (
             <span
               aria-live="polite"
               className="min-w-10 whitespace-nowrap text-center font-black tabular-nums text-white/90"
             >
-              {countdownText}
+              {elapsedText}
             </span>
           )}
           {isGenerating ? (
@@ -194,6 +201,14 @@ export function LandingIdeaTeaser() {
             <ArrowRight className="h-4 w-4" aria-hidden />
           )}
         </button>
+        {isGenerating && elapsedText && (
+          <GenerationProgress
+            currentPhaseIndex={currentPhaseIndex}
+            elapsedText={elapsedText}
+            estimateText={estimateText}
+            phases={phases}
+          />
+        )}
       </form>
 
       {error && (
