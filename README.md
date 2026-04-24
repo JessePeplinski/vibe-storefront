@@ -1,6 +1,6 @@
 # Vibe Storefront
 
-Vibe Storefront is a Next.js App Router demo for the Codex Solutions Architect take-home. A signed-in user enters a plain-English product idea, the server calls the OpenAI Codex SDK for structured storefront content, saves it to Supabase, and returns a public share URL.
+Vibe Storefront is a Next.js App Router demo for the Codex Solutions Architect take-home. A visitor enters a plain-English product idea, the server calls the OpenAI Codex SDK for structured storefront content, saves it to Supabase, and returns a public share URL. Signed-out visitors can generate one guest storefront before signing in.
 
 ## Live Test URL
 
@@ -40,7 +40,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 Use Clerk development keys locally. Production/demo keys belong only in Vercel environment variables or an ignored local reference file such as `.env.prod`.
 
-Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables RLS, allows public reads only for published storefronts, and keeps writes behind Clerk-authenticated server routes using the service role key. Local generate/save/share testing should use the local Supabase stack.
+Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables RLS, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key. Clerk users can create repeat storefronts; signed-out visitors are limited to one guest storefront by an HttpOnly cookie and database uniqueness constraint. Local generate/save/share testing should use the local Supabase stack.
 
 ## Development
 
@@ -57,11 +57,12 @@ Open `http://localhost:3000`. Local Supabase Studio runs at `http://127.0.0.1:54
 After the dev server is running:
 
 1. Sign in with a Clerk development user.
-2. Generate a storefront from a product idea.
-3. Confirm the success state shows a share URL.
-4. Open the share URL and reload it.
-5. Sign out or use a private browser window and confirm the public share page still renders.
-6. Open `/dashboard` while signed in and confirm the saved storefront appears.
+2. Open the signed-out homepage in a private browser window.
+3. Confirm `See example` opens the seeded public storefront.
+4. Generate one guest storefront from the homepage input and confirm the success state links to the new share URL.
+5. Reload the homepage, submit again as the same guest, and confirm the existing share URL is returned without another generation.
+6. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation still creates saved storefronts.
+7. Open a generated share URL in a signed-out browser and confirm the public share page renders.
 
 ## Verification
 
@@ -83,3 +84,5 @@ The Codex SDK route runs in the Node.js runtime because the SDK spawns the local
 - Deployment checklist: [`docs/deployment-checklist.md`](docs/deployment-checklist.md)
 
 Production deploys should come from `main`. Set `NEXT_PUBLIC_APP_URL` to the production URL in Vercel so generated share links use the stable live host.
+
+Run new Supabase migrations against the production database as a separate deployment step; Vercel deploys app code only and does not apply database migrations.
