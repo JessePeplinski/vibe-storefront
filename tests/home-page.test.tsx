@@ -12,8 +12,7 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
-  openSignIn: vi.fn(),
-  openSignUp: vi.fn()
+  openSignIn: vi.fn()
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -22,8 +21,7 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 vi.mock("@clerk/nextjs", () => ({
   useClerk: () => ({
-    openSignIn: mocks.openSignIn,
-    openSignUp: mocks.openSignUp
+    openSignIn: mocks.openSignIn
   })
 }));
 

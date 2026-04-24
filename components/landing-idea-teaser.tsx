@@ -29,7 +29,7 @@ type CreateStorefrontErrorResponse = {
 };
 
 export function LandingIdeaTeaser() {
-  const { openSignIn, openSignUp } = useClerk();
+  const { openSignIn } = useClerk();
   const [idea, setIdea] = useState("");
   const [generatingStarterIdea, setGeneratingStarterIdea] = useState<
     string | null
@@ -229,20 +229,13 @@ export function LandingIdeaTeaser() {
             {resultLinkText}
             <ExternalLink className="h-4 w-4" aria-hidden />
           </Link>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="mt-3">
             <button
-              className="border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
+              className="w-full border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
               onClick={() => openSignIn()}
               type="button"
             >
               Sign in for more
-            </button>
-            <button
-              className="border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
-              onClick={() => openSignUp()}
-              type="button"
-            >
-              Create account
             </button>
           </div>
         </div>
