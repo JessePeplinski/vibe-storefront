@@ -15,9 +15,10 @@ import {
   UserPlus,
   WandSparkles
 } from "lucide-react";
+import { GenerationProgress } from "@/components/generation-progress";
 import { StorefrontCard } from "@/components/storefront-card";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
-import { useGenerationCountdown } from "@/components/use-generation-countdown";
+import { useGenerationProgress } from "@/components/use-generation-countdown";
 import { DEFAULT_CODEX_MODEL } from "@/lib/codex-config";
 import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
@@ -61,7 +62,13 @@ export function StorefrontStudio({
   const [copiedPreviewHref, setCopiedPreviewHref] = useState<string | null>(
     null
   );
-  const { countdownText, resetCountdown } = useGenerationCountdown(isGenerating);
+  const {
+    currentPhaseIndex,
+    elapsedText,
+    estimateText,
+    phases,
+    resetProgress
+  } = useGenerationProgress(isGenerating);
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -100,7 +107,7 @@ export function StorefrontStudio({
 
     setError(null);
     setGeneratingStarterIdea(starterIdea ?? null);
-    resetCountdown();
+    resetProgress();
     setIsGenerating(true);
 
     try {
@@ -335,12 +342,12 @@ export function StorefrontStudio({
             <span>
               {isGenerating ? "Generating with Codex" : "Generate with Codex"}
             </span>
-            {isGenerating && countdownText && (
+            {isGenerating && elapsedText && (
               <span
                 aria-live="polite"
                 className="min-w-10 whitespace-nowrap text-center font-black tabular-nums text-slate-950/80"
               >
-                {countdownText}
+                {elapsedText}
               </span>
             )}
             {isGenerating ? (
@@ -349,6 +356,15 @@ export function StorefrontStudio({
               <Send className="h-4 w-4" aria-hidden />
             )}
           </button>
+          {isGenerating && elapsedText && (
+            <GenerationProgress
+              currentPhaseIndex={currentPhaseIndex}
+              elapsedText={elapsedText}
+              estimateText={estimateText}
+              phases={phases}
+              variant="dark"
+            />
+          )}
         </form>
 
         <section

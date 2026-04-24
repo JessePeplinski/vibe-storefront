@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { clerkClient, type User } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { CalendarDays, ExternalLink, Sparkles, UserRound } from "lucide-react";
+import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import { listPublishedStorefronts } from "@/lib/storefronts";
 
 export const dynamic = "force-dynamic";
@@ -102,11 +103,9 @@ export default async function AllStorefrontsPage() {
                   className="border border-black/10 bg-white p-4 shadow-sm"
                   key={storefront.id}
                 >
-                  <div
-                    className="mb-4 h-24 border border-black/10"
-                    style={{
-                      background: `linear-gradient(135deg, ${storefront.content.theme.palette.primary}, ${storefront.content.theme.palette.accent})`
-                    }}
+                  <StorefrontPreviewImage
+                    className="mb-4 h-24"
+                    content={storefront.content}
                   />
                   <div className="min-w-0">
                     <h2 className="text-xl font-black text-slate-950">

@@ -20,6 +20,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 CODEX_API_KEY=
 CODEX_MODEL=gpt-5.3-codex
+OPENAI_API_KEY=
+OPENAI_IMAGE_MODEL=gpt-image-2
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -54,7 +56,9 @@ OpenAI:
 - Open the OpenAI Platform project API keys page.
 - Create a secret API key with access to the Codex model used by this app.
 - Store it as `CODEX_API_KEY`.
+- Use the same key for image generation, or create a separate key and store it as `OPENAI_API_KEY`.
 - Leave `CODEX_MODEL=gpt-5.3-codex` unless the app is intentionally retargeted.
+- Leave `OPENAI_IMAGE_MODEL=gpt-image-2` unless product image generation is intentionally retargeted.
 
 ## 3. Local Verification
 
@@ -77,6 +81,7 @@ Then verify:
 - Generate a storefront from a product idea.
 - Confirm the success state shows a share URL.
 - Open the share URL and reload it.
+- Confirm the generated product image appears on the share page and in preview/gallery cards.
 - Sign out or open a private browser window and confirm the public share page still renders.
 - Open `/dashboard` while signed in and confirm the saved storefront appears.
 
@@ -102,7 +107,7 @@ npx -y supabase db push
 npx -y supabase migration list --linked
 ```
 
-For this feature, production must include `20260424020403_add_guest_storefronts.sql` for guest generation and `20260424101511_remove_homepage_example_storefront.sql` for the public storefront gallery cleanup. If using the Supabase SQL Editor instead of the CLI, run those migration SQL files once against the production project and confirm the migration history/schema afterward.
+For this feature, production must include `20260424020403_add_guest_storefronts.sql` for guest generation, `20260424101511_remove_homepage_example_storefront.sql` for the public storefront gallery cleanup, and `20260424130000_add_storefront_product_image_bucket.sql` for generated product image storage. If using the Supabase SQL Editor instead of the CLI, run those migration SQL files once against the production project and confirm the migration history/schema afterward.
 
 Create a new Vercel project connected to `JessePeplinski/vibe-storefront`.
 
@@ -118,8 +123,16 @@ Add the same environment variables in Vercel Production, with these differences:
 
 - Use live Clerk keys.
 - Set `NEXT_PUBLIC_APP_URL` to the final Vercel production URL.
+- Set `OPENAI_API_KEY` if product image generation should use a key separate from `CODEX_API_KEY`.
 
 Redeploy production after `NEXT_PUBLIC_APP_URL` is set.
+
+After the storage migration and deployment, backfill existing production storefronts:
+
+```bash
+npm run backfill:product-images -- --env .env.prod
+npm run backfill:product-images -- --env .env.prod --write --confirm-production
+```
 
 ## 5. Production Verification
 
@@ -130,4 +143,5 @@ Verify on the deployed URL:
 - Signed-in generation succeeds.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.
+- Product images appear on newly generated and backfilled storefronts.
 - Vercel logs show no runtime errors for `/api/storefronts` or `/s/[slug]`.
