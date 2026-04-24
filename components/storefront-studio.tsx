@@ -44,7 +44,10 @@ export function StorefrontStudio({
   mode = "signed-in"
 }: StorefrontStudioProps) {
   const { openSignIn, openSignUp } = useClerk();
-  const [idea, setIdea] = useState<string>(STARTER_IDEAS[0]);
+  const [idea, setIdea] = useState("");
+  const [generatingStarterIdea, setGeneratingStarterIdea] = useState<
+    string | null
+  >(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
@@ -81,19 +84,19 @@ export function StorefrontStudio({
     setSelectedStorefront(created.storefront);
   }
 
-  async function generateFromIdea(nextIdea: string) {
+  async function generateFromIdea(nextIdea: string, starterIdea?: string) {
     const trimmedIdea = nextIdea.trim();
 
     if (
-      !trimmedIdea ||
+      trimmedIdea.length < 6 ||
       isGenerating ||
       (mode === "guest" && guestGenerationUsed)
     ) {
       return;
     }
 
-    setIdea(trimmedIdea);
     setError(null);
+    setGeneratingStarterIdea(starterIdea ?? null);
     setIsGenerating(true);
 
     try {
@@ -139,6 +142,7 @@ export function StorefrontStudio({
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
+      setGeneratingStarterIdea(null);
       setIsGenerating(false);
     }
   }
@@ -214,24 +218,6 @@ export function StorefrontStudio({
               <p className="text-sm font-bold text-white">
                 What should Studio build next?
               </p>
-              <div className="mt-3 grid gap-2">
-                {STARTER_IDEAS.map((starterIdea) => (
-                  <button
-                    aria-label={`Generate storefront for ${starterIdea}`}
-                    className="inline-flex min-h-12 items-center gap-2 border border-white/10 bg-[#2b2925] px-3 py-2 text-left text-sm font-bold leading-5 text-stone-100 transition hover:border-teal-200 hover:bg-[#35322d] disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={generationDisabled}
-                    key={starterIdea}
-                    onClick={() => void generateFromIdea(starterIdea)}
-                    type="button"
-                  >
-                    <WandSparkles
-                      className="h-4 w-4 shrink-0 text-orange-300"
-                      aria-hidden
-                    />
-                    <span>{starterIdea}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -294,11 +280,41 @@ export function StorefrontStudio({
               minLength={6}
               name="idea"
               onChange={(event) => setIdea(event.target.value)}
-              placeholder="small-batch hot sauce from Brooklyn"
+              placeholder="Enter your product idea"
               required
               value={idea}
             />
           </label>
+          <div
+            aria-label="Example product ideas"
+            className="flex flex-wrap gap-2"
+            role="group"
+          >
+            {STARTER_IDEAS.map((starterIdea) => (
+              <button
+                aria-label={`Generate storefront for ${starterIdea}`}
+                aria-busy={generatingStarterIdea === starterIdea}
+                className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-[#2b2925] px-3 py-1.5 text-left text-xs font-bold leading-5 text-stone-100 transition hover:border-teal-200 hover:bg-[#35322d] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={generationDisabled}
+                key={starterIdea}
+                onClick={() => void generateFromIdea(starterIdea, starterIdea)}
+                type="button"
+              >
+                {generatingStarterIdea === starterIdea ? (
+                  <Loader2
+                    className="h-3.5 w-3.5 shrink-0 animate-spin text-orange-300"
+                    aria-hidden
+                  />
+                ) : (
+                  <WandSparkles
+                    className="h-3.5 w-3.5 shrink-0 text-orange-300"
+                    aria-hidden
+                  />
+                )}
+                <span>{starterIdea}</span>
+              </button>
+            ))}
+          </div>
 
           <button
             className="inline-flex w-full items-center justify-center gap-2 bg-teal-300 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:bg-stone-500 disabled:text-stone-200"

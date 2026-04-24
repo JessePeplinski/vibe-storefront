@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
@@ -83,9 +83,29 @@ describe("home page", () => {
       EXAMPLE_STOREFRONT_PATH
     );
     expect(screen.queryByText("Storefront canvas")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Product idea")).toHaveValue("");
+    expect(screen.getByLabelText("Product idea")).toHaveAttribute(
+      "placeholder",
+      "Enter your product idea"
+    );
+    expect(
+      screen.getByRole("button", { name: /generate with studio/i })
+    ).not.toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: /generate with studio/i }));
+    const exampleIdeas = screen.getByRole("group", {
+      name: "Example product ideas"
+    });
+    expect(within(exampleIdeas).getAllByRole("button")).toHaveLength(
+      STARTER_IDEAS.length
+    );
 
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Generate storefront for ${STARTER_IDEAS[0]}`
+      })
+    );
+
+    expect(screen.getByLabelText("Product idea")).toHaveValue("");
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/storefronts",
@@ -126,7 +146,11 @@ describe("home page", () => {
     const Page = (await import("@/app/(app)/page")).default;
 
     render(await Page());
-    fireEvent.click(screen.getByRole("button", { name: /generate with studio/i }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Generate storefront for ${STARTER_IDEAS[0]}`
+      })
+    );
 
     expect(
       await screen.findByText(
