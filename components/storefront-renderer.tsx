@@ -7,6 +7,7 @@ type StorefrontRendererProps = {
   compact?: boolean;
   idea?: string;
   publicUrl?: string;
+  variant?: "framed" | "landing";
 };
 
 type StorefrontStyle = CSSProperties & {
@@ -22,8 +23,10 @@ export function StorefrontRenderer({
   compact = false,
   content,
   idea,
-  publicUrl
+  publicUrl,
+  variant = "framed"
 }: StorefrontRendererProps) {
+  const isLanding = variant === "landing";
   const style: StorefrontStyle = {
     "--sf-bg": content.theme.palette.background,
     "--sf-surface": content.theme.palette.surface,
@@ -35,12 +38,20 @@ export function StorefrontRenderer({
 
   return (
     <article
-      className="overflow-hidden border border-black/10 bg-[var(--sf-bg)] text-[var(--sf-text)] shadow-glow"
+      className={`bg-[var(--sf-bg)] text-[var(--sf-text)] ${
+        isLanding
+          ? "flex min-h-screen flex-col overflow-hidden"
+          : "overflow-hidden border border-black/10 shadow-glow"
+      }`}
       style={style}
     >
       <section
         className={`grid gap-7 p-6 sm:p-8 lg:grid-cols-[1.02fr_0.98fr] ${
-          compact ? "lg:min-h-[430px] lg:p-9" : "min-h-[520px] lg:p-12"
+          compact
+            ? "lg:min-h-[430px] lg:p-9"
+            : isLanding
+              ? "flex-1 lg:items-center lg:p-16 xl:p-20"
+              : "min-h-[520px] lg:p-12"
         }`}
       >
         <div className="flex flex-col justify-between gap-8">
@@ -171,11 +182,23 @@ export function StorefrontRenderer({
         </section>
       )}
 
-      {(idea || publicUrl) && (
-        <footer className="flex flex-col gap-2 border-t border-black/10 bg-black px-6 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/70 sm:flex-row sm:items-center sm:justify-between">
-          {idea && <span>Generated from: {idea}</span>}
-          {publicUrl && <span>{publicUrl}</span>}
+      {isLanding ? (
+        <footer className="flex flex-col gap-2 border-t border-black/10 bg-black px-6 py-4 text-xs font-semibold text-white/70 sm:flex-row sm:items-center sm:justify-between">
+          <a
+            className="uppercase tracking-[0.16em] transition hover:text-white"
+            href="https://vibe-storefront.com"
+          >
+            Built with vibe-storefront.com
+          </a>
+          {idea && <span>Source prompt: {idea}</span>}
         </footer>
+      ) : (
+        (idea || publicUrl) && (
+          <footer className="flex flex-col gap-2 border-t border-black/10 bg-black px-6 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/70 sm:flex-row sm:items-center sm:justify-between">
+            {idea && <span>Generated from: {idea}</span>}
+            {publicUrl && <span>{publicUrl}</span>}
+          </footer>
+        )
       )}
     </article>
   );
