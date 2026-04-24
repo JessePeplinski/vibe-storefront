@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { Codex } from "@openai/codex-sdk";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { DEFAULT_CODEX_MODEL } from "@/lib/codex-config";
 import { requireEnv } from "@/lib/env";
 import {
   type StorefrontContent,
@@ -86,7 +87,7 @@ export async function generateStorefront(
       PATH: process.env.PATH ?? ""
     },
     config: {
-      model: process.env.CODEX_MODEL ?? "gpt-5.3-codex",
+      model: process.env.CODEX_MODEL ?? DEFAULT_CODEX_MODEL,
       approval_policy: "never",
       sandbox_mode: "read-only",
       model_reasoning_effort: "low"
