@@ -118,8 +118,9 @@ describe("StorefrontStudio", () => {
       "Enter your product idea"
     );
     expect(
-      screen.getByRole("button", { name: "Generate storefront" })
+      screen.getByRole("button", { name: "Generate with Codex" })
     ).not.toBeDisabled();
+    expect(screen.getByText("Model: gpt-5.3-codex")).toBeInTheDocument();
     expect(
       within(
         screen.getByRole("group", { name: "Example product ideas" })
@@ -292,6 +293,12 @@ describe("StorefrontStudio", () => {
 
     expect(screen.getByLabelText("Product idea")).toHaveValue("");
     expect(starterButton).toHaveAttribute("aria-busy", "true");
+    const generatingButton = await screen.findByRole("button", {
+      name: /generating with codex/i
+    });
+    expect(generatingButton).toBeDisabled();
+    expect(within(generatingButton).getByText("0:15")).toBeInTheDocument();
+    expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/storefronts",
@@ -391,7 +398,7 @@ describe("StorefrontStudio", () => {
       screen.getByRole("button", { name: "Create account" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Generate storefront" })
+      screen.getByRole("button", { name: "Generate with Codex" })
     ).toBeDisabled();
 
     const guestStorefront = screen.getByRole("region", {
@@ -452,7 +459,7 @@ describe("StorefrontStudio", () => {
       screen.getByRole("heading", { level: 2, name: "Brooklyn Ember Co." })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Generate storefront" })
+      screen.getByRole("button", { name: "Generate with Codex" })
     ).toBeDisabled();
   });
 });

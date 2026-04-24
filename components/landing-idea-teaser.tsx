@@ -10,6 +10,7 @@ import {
   Sparkles,
   WandSparkles
 } from "lucide-react";
+import { useGenerationCountdown } from "@/components/use-generation-countdown";
 import { EXAMPLE_STOREFRONT_PATH } from "@/lib/example-storefront";
 import { STARTER_IDEAS } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
@@ -37,6 +38,7 @@ export function LandingIdeaTeaser() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [existingGuestStorefront, setExistingGuestStorefront] = useState(false);
+  const { countdownText, resetCountdown } = useGenerationCountdown(isGenerating);
 
   async function generateFromIdea(nextIdea = idea, starterIdea?: string) {
     const trimmedIdea = nextIdea.trim();
@@ -47,6 +49,7 @@ export function LandingIdeaTeaser() {
 
     setError(null);
     setGeneratingStarterIdea(starterIdea ?? null);
+    resetCountdown();
     setIsGenerating(true);
 
     try {
@@ -175,12 +178,22 @@ export function LandingIdeaTeaser() {
           disabled={generationDisabled}
           type="submit"
         >
+          <span>
+            {isGenerating ? "Generating with Codex" : "Generate with Codex"}
+          </span>
+          {isGenerating && countdownText && (
+            <span
+              aria-live="polite"
+              className="min-w-10 whitespace-nowrap text-center font-black tabular-nums text-white/90"
+            >
+              {countdownText}
+            </span>
+          )}
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           ) : (
             <ArrowRight className="h-4 w-4" aria-hidden />
           )}
-          {isGenerating ? "Generating with Codex" : "Generate with Studio"}
         </button>
       </form>
 

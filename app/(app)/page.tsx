@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { LandingIdeaTeaser } from "@/components/landing-idea-teaser";
+import { DEFAULT_CODEX_MODEL } from "@/lib/codex-config";
 
 export default async function HomePage() {
   const { userId } = await auth();
@@ -26,6 +27,9 @@ export default async function HomePage() {
               Vibe Storefront uses a server-side Codex SDK call to generate
               brand copy, product positioning, palette, calls to action, and
               fictional reviews, then saves each page as a public share URL.
+            </p>
+            <p className="mt-4 text-sm font-bold text-slate-700">
+              Model: {DEFAULT_CODEX_MODEL}
             </p>
           </div>
           <LandingIdeaTeaser />
