@@ -29,20 +29,24 @@ type CreateStorefrontErrorResponse = {
 
 export function LandingIdeaTeaser() {
   const { openSignIn, openSignUp } = useClerk();
-  const [idea, setIdea] = useState<string>(STARTER_IDEAS[0]);
+  const [idea, setIdea] = useState("");
+  const [generatingStarterIdea, setGeneratingStarterIdea] = useState<
+    string | null
+  >(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [existingGuestStorefront, setExistingGuestStorefront] = useState(false);
 
-  async function generateFromIdea() {
-    const trimmedIdea = idea.trim();
+  async function generateFromIdea(nextIdea = idea, starterIdea?: string) {
+    const trimmedIdea = nextIdea.trim();
 
     if (isGenerating || result || trimmedIdea.length < 6) {
       return;
     }
 
     setError(null);
+    setGeneratingStarterIdea(starterIdea ?? null);
     setIsGenerating(true);
 
     try {
@@ -82,6 +86,7 @@ export function LandingIdeaTeaser() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
+      setGeneratingStarterIdea(null);
       setIsGenerating(false);
     }
   }
@@ -118,24 +123,6 @@ export function LandingIdeaTeaser() {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-2">
-        {STARTER_IDEAS.map((starterIdea) => (
-          <button
-            className="inline-flex min-h-12 items-center gap-2 border border-slate-200 px-3 py-2 text-left text-sm font-bold leading-5 text-slate-800 transition hover:border-slate-950 hover:bg-slate-50"
-            disabled={generationDisabled}
-            key={starterIdea}
-            onClick={() => setIdea(starterIdea)}
-            type="button"
-          >
-            <WandSparkles
-              className="h-4 w-4 shrink-0 text-slate-500"
-              aria-hidden
-            />
-            <span>{starterIdea}</span>
-          </button>
-        ))}
-      </div>
-
       <form className="space-y-3" onSubmit={handleSubmit}>
         <label className="block">
           <span className="text-sm font-bold text-slate-700">
@@ -148,11 +135,41 @@ export function LandingIdeaTeaser() {
             minLength={6}
             name="idea"
             onChange={(event) => setIdea(event.target.value)}
-            placeholder="small-batch hot sauce from Brooklyn"
+            placeholder="Enter your product idea"
             required
             value={idea}
           />
         </label>
+        <div
+          aria-label="Example product ideas"
+          className="flex flex-wrap gap-2"
+          role="group"
+        >
+          {STARTER_IDEAS.map((starterIdea) => (
+            <button
+              aria-label={`Generate storefront for ${starterIdea}`}
+              aria-busy={generatingStarterIdea === starterIdea}
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-left text-xs font-bold leading-5 text-slate-700 transition hover:border-slate-950 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={generationDisabled}
+              key={starterIdea}
+              onClick={() => void generateFromIdea(starterIdea, starterIdea)}
+              type="button"
+            >
+              {generatingStarterIdea === starterIdea ? (
+                <Loader2
+                  className="h-3.5 w-3.5 shrink-0 animate-spin text-slate-500"
+                  aria-hidden
+                />
+              ) : (
+                <WandSparkles
+                  className="h-3.5 w-3.5 shrink-0 text-slate-500"
+                  aria-hidden
+                />
+              )}
+              <span>{starterIdea}</span>
+            </button>
+          ))}
+        </div>
         <button
           className="inline-flex w-full items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
           disabled={generationDisabled}
