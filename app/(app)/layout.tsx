@@ -20,6 +20,12 @@ export default function AppLayout({
             <span className="whitespace-nowrap">Vibe Storefront</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              className="px-3 py-2 text-sm font-bold text-slate-700 transition hover:text-slate-950"
+              href="/storefronts"
+            >
+              Storefronts
+            </Link>
             <Show when="signed-in">
               <Link
                 className="px-3 py-2 text-sm font-bold text-slate-700 transition hover:text-slate-950"
