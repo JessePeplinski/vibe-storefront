@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bot,
+  Check,
+  Copy,
   ExternalLink,
   Loader2,
   Send,
@@ -34,6 +36,11 @@ export function StorefrontStudio({
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
+  const [selectedStorefront, setSelectedStorefront] =
+    useState<StorefrontRecord | null>(() => initialStorefronts[0] ?? null);
+  const [copiedPreviewHref, setCopiedPreviewHref] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -83,6 +90,7 @@ export function StorefrontStudio({
           (storefront) => storefront.id !== created.storefront.id
         )
       ]);
+      setSelectedStorefront(created.storefront);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
@@ -95,8 +103,26 @@ export function StorefrontStudio({
     void generateFromIdea(idea);
   }
 
-  const previewContent = result?.storefront.content ?? sampleStorefrontContent;
-  const previewIdea = result?.storefront.idea;
+  const previewContent =
+    selectedStorefront?.content ?? sampleStorefrontContent;
+  const previewIdea = selectedStorefront?.idea;
+  const previewHref = selectedStorefront
+    ? `/s/${selectedStorefront.slug}`
+    : undefined;
+  const selectedStorefrontName =
+    selectedStorefront?.content.name ?? "selected storefront";
+  const hasCopiedPreviewHref = copiedPreviewHref === previewHref;
+
+  async function handleCopyPreviewLink() {
+    if (!previewHref) {
+      return;
+    }
+
+    await window.navigator.clipboard.writeText(
+      `${window.location.origin}${previewHref}`
+    );
+    setCopiedPreviewHref(previewHref);
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[410px_minmax(0,1fr)]">
@@ -165,6 +191,8 @@ export function StorefrontStudio({
                   <Link
                     className="mt-2 inline-flex items-center gap-1 font-bold underline"
                     href={`/s/${result.storefront.slug}`}
+                    rel="noreferrer"
+                    target="_blank"
                   >
                     Open share URL
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -220,7 +248,12 @@ export function StorefrontStudio({
           {recentStorefronts.length > 0 ? (
             <div className="mt-3 grid gap-3">
               {recentStorefronts.slice(0, 4).map((storefront) => (
-                <StorefrontCard key={storefront.id} storefront={storefront} />
+                <StorefrontCard
+                  isSelected={selectedStorefront?.id === storefront.id}
+                  key={storefront.id}
+                  onPreview={setSelectedStorefront}
+                  storefront={storefront}
+                />
               ))}
             </div>
           ) : (
@@ -232,29 +265,46 @@ export function StorefrontStudio({
       </section>
 
       <section className="min-w-0">
-        <div className="mb-3 flex items-center justify-between gap-3 text-stone-200">
-          <div>
+        <div className="mb-3 flex flex-col gap-3 text-stone-200 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-200">
-              {result ? "Live preview" : "Sample preview"}
+              {selectedStorefront ? "Selected preview" : "Example storefront"}
             </p>
             <h2 className="mt-1 text-xl font-black text-white">
-              Storefront canvas
+              {selectedStorefront?.content.name ?? "Storefront canvas"}
             </h2>
           </div>
-          {result && (
-            <Link
-              className="inline-flex items-center gap-2 bg-white px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-stone-100"
-              href={`/s/${result.storefront.slug}`}
-            >
-              Open
-              <ExternalLink className="h-4 w-4" aria-hidden />
-            </Link>
+          {previewHref && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                aria-label={`Copy selected live link for ${selectedStorefrontName}`}
+                className="inline-flex min-h-10 items-center gap-2 border border-white/10 bg-[#211f1c] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#2b2925]"
+                onClick={() => void handleCopyPreviewLink()}
+                type="button"
+              >
+                {hasCopiedPreviewHref ? (
+                  <Check className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Copy className="h-4 w-4" aria-hidden />
+                )}
+                {hasCopiedPreviewHref ? "Copied" : "Copy link"}
+              </button>
+              <Link
+                className="inline-flex min-h-10 items-center gap-2 bg-white px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-stone-100"
+                href={previewHref}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Open live
+                <ExternalLink className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
           )}
         </div>
         <StorefrontRenderer
           content={previewContent}
           idea={previewIdea}
-          publicUrl={result?.shareUrl}
+          variant="landing"
         />
       </section>
     </div>
