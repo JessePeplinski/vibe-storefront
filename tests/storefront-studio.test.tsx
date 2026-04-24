@@ -1,4 +1,11 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StorefrontStudio } from "@/components/storefront-studio";
 import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
@@ -100,6 +107,25 @@ describe("StorefrontStudio", () => {
     expect(screen.getByText("Example storefront")).toBeInTheDocument();
     expect(screen.queryByText(/Generated from:/i)).not.toBeInTheDocument();
     expect(window.localStorage.getItem(DRAFT_IDEA_STORAGE_KEY)).toBeNull();
+  });
+
+  it("starts with an empty product idea prompt", () => {
+    render(<StorefrontStudio />);
+
+    expect(screen.getByLabelText("Product idea")).toHaveValue("");
+    expect(screen.getByLabelText("Product idea")).toHaveAttribute(
+      "placeholder",
+      "Enter your product idea"
+    );
+    expect(
+      screen.getByRole("button", { name: "Generate storefront" })
+    ).not.toBeDisabled();
+    expect(
+      within(
+        screen.getByRole("group", { name: "Example product ideas" })
+      ).getAllByRole("button")
+    ).toHaveLength(STARTER_IDEAS.length);
+
   });
 
   it("previews the newest initial recent storefront and lets another item take over the canvas", async () => {
@@ -238,25 +264,34 @@ describe("StorefrontStudio", () => {
       slug: "tiny-lamp-labs-abc123",
       idea: selectedIdea
     });
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        storefront: createdStorefront,
-        shareUrl: "https://vibe.example/s/tiny-lamp-labs-abc123"
-      })
+    let resolveFetch!: (response: {
+      ok: boolean;
+      json: () => Promise<{
+        storefront: StorefrontRecord;
+        shareUrl: string;
+      }>;
+    }) => void;
+    const fetchPromise = new Promise<{
+      ok: boolean;
+      json: () => Promise<{
+        storefront: StorefrontRecord;
+        shareUrl: string;
+      }>;
+    }>((resolve) => {
+      resolveFetch = resolve;
     });
+    const fetchMock = vi.fn().mockReturnValue(fetchPromise);
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Generate storefront for ${selectedIdea}`
-      })
-    );
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Product idea")).toHaveValue(selectedIdea);
+    const starterButton = screen.getByRole("button", {
+      name: `Generate storefront for ${selectedIdea}`
     });
+
+    fireEvent.click(starterButton);
+
+    expect(screen.getByLabelText("Product idea")).toHaveValue("");
+    expect(starterButton).toHaveAttribute("aria-busy", "true");
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/storefronts",
@@ -266,7 +301,19 @@ describe("StorefrontStudio", () => {
       })
     );
 
+    await act(async () => {
+      resolveFetch({
+        ok: true,
+        json: async () => ({
+          storefront: createdStorefront,
+          shareUrl: "https://vibe.example/s/tiny-lamp-labs-abc123"
+        })
+      });
+      await fetchPromise;
+    });
+
     expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
+    expect(starterButton).toHaveAttribute("aria-busy", "false");
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/tiny-lamp-labs-abc123");
@@ -384,7 +431,11 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio mode="guest" />);
-    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Generate storefront for ${STARTER_IDEAS[0]}`
+      })
+    );
 
     expect(
       await screen.findByText(
