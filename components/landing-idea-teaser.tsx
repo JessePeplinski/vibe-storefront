@@ -17,7 +17,7 @@ import type { StorefrontRecord } from "@/lib/storefront-schema";
 type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
-  status?: "created" | "existing_guest_storefront";
+  status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
 };
 
 type CreateStorefrontErrorResponse = {
