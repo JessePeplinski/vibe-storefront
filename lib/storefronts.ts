@@ -94,6 +94,26 @@ export async function listStorefrontsForOwner(
   return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
 }
 
+export async function deleteStorefrontForOwner(params: {
+  ownerClerkUserId: string;
+  storefrontId: string;
+}): Promise<StorefrontRecord | null> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("storefronts")
+    .delete()
+    .eq("id", params.storefrontId)
+    .eq("owner_clerk_user_id", params.ownerClerkUserId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to delete storefront: ${error.message}`);
+  }
+
+  return data ? parseStorefront(data as StorefrontRow) : null;
+}
+
 export async function listPublishedStorefronts(
   limit?: number
 ): Promise<StorefrontRecord[]> {

@@ -28,6 +28,11 @@ type CreateStorefrontErrorResponse = {
   status?: "existing_guest_storefront";
 };
 
+type DeleteStorefrontResponse = {
+  deletedStorefrontId?: string;
+  error?: string;
+};
+
 type StorefrontStudioProps = {
   initialStorefronts?: StorefrontRecord[];
   mode?: "signed-in" | "guest";
@@ -43,6 +48,10 @@ export function StorefrontStudio({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingStorefrontId, setDeletingStorefrontId] = useState<
+    string | null
+  >(null);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
   const {
@@ -67,6 +76,7 @@ export function StorefrontStudio({
   }, []);
 
   function showCreatedStorefront(created: CreateStorefrontResponse) {
+    setDeleteError(null);
     setResult(created);
     setRecentStorefronts((currentStorefronts) => [
       created.storefront,
@@ -135,6 +145,52 @@ export function StorefrontStudio({
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  async function deleteStorefront(storefront: StorefrontRecord) {
+    if (deletingStorefrontId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${storefront.content.name}? This will remove it from your profile and public storefronts.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleteError(null);
+    setDeletingStorefrontId(storefront.id);
+
+    try {
+      const response = await fetch(`/api/storefronts/${storefront.id}`, {
+        method: "DELETE"
+      });
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as DeleteStorefrontResponse;
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to delete storefront.");
+      }
+
+      setRecentStorefronts((currentStorefronts) =>
+        currentStorefronts.filter(
+          (currentStorefront) => currentStorefront.id !== storefront.id
+        )
+      );
+      setResult((currentResult) =>
+        currentResult?.storefront.id === storefront.id ? null : currentResult
+      );
+      window.alert(`${storefront.content.name} was deleted.`);
+    } catch (caught) {
+      setDeleteError(
+        caught instanceof Error ? caught.message : "Unable to delete storefront."
+      );
+    } finally {
+      setDeletingStorefrontId(null);
     }
   }
 
@@ -295,11 +351,22 @@ export function StorefrontStudio({
               {recentStorefronts.length} saved
             </p>
           </div>
+          {deleteError && (
+            <p
+              className="mb-3 border border-red-200 bg-red-50 p-3 text-sm font-bold leading-5 text-red-700"
+              role="alert"
+            >
+              {deleteError}
+            </p>
+          )}
           {recentStorefronts.length > 0 ? (
             <div className="grid gap-2">
               {recentStorefronts.slice(0, 4).map((storefront) => (
                 <StorefrontCard
+                  deleteDisabled={Boolean(deletingStorefrontId)}
+                  isDeleting={deletingStorefrontId === storefront.id}
                   key={storefront.id}
+                  onDelete={isGuestMode ? undefined : deleteStorefront}
                   storefront={storefront}
                 />
               ))}

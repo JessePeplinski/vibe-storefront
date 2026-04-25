@@ -2,16 +2,32 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Check, Copy, ExternalLink } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Copy,
+  ExternalLink,
+  Loader2,
+  Trash2
+} from "lucide-react";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
 type StorefrontCardProps = {
   storefront: StorefrontRecord;
+  deleteDisabled?: boolean;
+  isDeleting?: boolean;
+  onDelete?: (storefront: StorefrontRecord) => void;
 };
 
-export function StorefrontCard({ storefront }: StorefrontCardProps) {
+export function StorefrontCard({
+  deleteDisabled = false,
+  isDeleting = false,
+  onDelete,
+  storefront
+}: StorefrontCardProps) {
   const [hasCopied, setHasCopied] = useState(false);
+  const canDelete = Boolean(onDelete);
   const liveHref = `/s/${storefront.slug}`;
   const createdDate = new Intl.DateTimeFormat("en", {
     day: "numeric",
@@ -48,7 +64,13 @@ export function StorefrontCard({ storefront }: StorefrontCardProps) {
           Created {createdDate}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:w-[150px]">
+      <div
+        className={
+          canDelete
+            ? "grid grid-cols-3 gap-2 sm:w-[230px]"
+            : "grid grid-cols-2 gap-2 sm:w-[150px]"
+        }
+      >
         <button
           aria-label={`Copy live link for ${storefront.content.name}`}
           className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-black/10 bg-white px-2 text-xs font-black text-slate-950 transition hover:bg-stone-100"
@@ -72,6 +94,22 @@ export function StorefrontCard({ storefront }: StorefrontCardProps) {
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           Live
         </Link>
+        {canDelete && (
+          <button
+            aria-label={`Delete storefront ${storefront.content.name}`}
+            className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-red-200 bg-white px-2 text-xs font-black text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+            disabled={deleteDisabled}
+            onClick={() => onDelete?.(storefront)}
+            type="button"
+          >
+            {isDeleting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {isDeleting ? "Deleting" : "Delete"}
+          </button>
+        )}
       </div>
     </article>
   );
