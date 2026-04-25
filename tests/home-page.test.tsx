@@ -192,6 +192,7 @@ describe("home page", () => {
     expect(screen.getByText("Ember Table")).toBeInTheDocument();
     expect(screen.getByText("Desk Bloom")).toBeInTheDocument();
     expect(screen.getByText("Trail Crave")).toBeInTheDocument();
+    expect(screen.queryByText("Generated example")).not.toBeInTheDocument();
     expect(screen.queryByText("Storefront canvas")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Generate your storefront")).toHaveValue("");
     expect(screen.getByLabelText("Generate your storefront")).toHaveAttribute(
