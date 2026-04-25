@@ -4,10 +4,12 @@ import { FormEvent, useEffect, useState } from "react";
 import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import {
+  CheckCircle2,
   ExternalLink,
   Loader2,
   LogIn,
-  Send
+  Send,
+  X
 } from "lucide-react";
 import { GenerationProgress } from "@/components/generation-progress";
 import { StorefrontCard } from "@/components/storefront-card";
@@ -49,9 +51,12 @@ export function StorefrontStudio({
   const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
   const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteToast, setDeleteToast] = useState<string | null>(null);
   const [deletingStorefrontId, setDeletingStorefrontId] = useState<
     string | null
   >(null);
+  const [storefrontPendingDelete, setStorefrontPendingDelete] =
+    useState<StorefrontRecord | null>(null);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
   const {
@@ -77,6 +82,7 @@ export function StorefrontStudio({
 
   function showCreatedStorefront(created: CreateStorefrontResponse) {
     setDeleteError(null);
+    setDeleteToast(null);
     setResult(created);
     setRecentStorefronts((currentStorefronts) => [
       created.storefront,
@@ -84,6 +90,16 @@ export function StorefrontStudio({
         (storefront) => storefront.id !== created.storefront.id
       )
     ]);
+  }
+
+  function requestDeleteStorefront(storefront: StorefrontRecord) {
+    if (deletingStorefrontId) {
+      return;
+    }
+
+    setDeleteError(null);
+    setDeleteToast(null);
+    setStorefrontPendingDelete(storefront);
   }
 
   async function generateFromIdea(nextIdea: string) {
@@ -148,20 +164,19 @@ export function StorefrontStudio({
     }
   }
 
-  async function deleteStorefront(storefront: StorefrontRecord) {
+  async function deleteStorefront() {
+    const storefront = storefrontPendingDelete;
+
+    if (!storefront) {
+      return;
+    }
+
     if (deletingStorefrontId) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete ${storefront.content.name}? This will remove it from your profile and public storefronts.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setDeleteError(null);
+    setDeleteToast(null);
     setDeletingStorefrontId(storefront.id);
 
     try {
@@ -184,7 +199,8 @@ export function StorefrontStudio({
       setResult((currentResult) =>
         currentResult?.storefront.id === storefront.id ? null : currentResult
       );
-      window.alert(`${storefront.content.name} was deleted.`);
+      setStorefrontPendingDelete(null);
+      setDeleteToast(`${storefront.content.name} was deleted.`);
     } catch (caught) {
       setDeleteError(
         caught instanceof Error ? caught.message : "Unable to delete storefront."
@@ -212,9 +228,95 @@ export function StorefrontStudio({
   const recentStorefrontsTitle = isGuestMode
     ? "Guest storefront"
     : "Your storefronts";
+  const isDeletingPendingStorefront =
+    deletingStorefrontId === storefrontPendingDelete?.id;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8">
+      {deleteToast && (
+        <div
+          className="fixed bottom-4 left-1/2 z-40 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-start gap-3 border border-emerald-200 bg-white p-4 text-sm font-bold text-emerald-950 shadow-lg"
+          role="status"
+        >
+          <CheckCircle2
+            className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700"
+            aria-hidden
+          />
+          <p className="min-w-0 flex-1 leading-5">{deleteToast}</p>
+          <button
+            aria-label="Dismiss delete confirmation"
+            className="-mr-1 -mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center text-emerald-900 transition hover:bg-emerald-50"
+            onClick={() => setDeleteToast(null)}
+            type="button"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      )}
+
+      {storefrontPendingDelete && (
+        <div
+          aria-labelledby="delete-storefront-title"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6"
+          role="dialog"
+        >
+          <div className="w-full max-w-md border border-black/10 bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-red-700">
+                  Delete
+                </p>
+                <h2
+                  className="mt-2 text-2xl font-black leading-tight text-slate-950"
+                  id="delete-storefront-title"
+                >
+                  Delete storefront?
+                </h2>
+              </div>
+              <button
+                aria-label="Cancel delete"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center border border-black/10 text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+                disabled={isDeletingPendingStorefront}
+                onClick={() => setStorefrontPendingDelete(null)}
+                type="button"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Are you sure you want to delete{" "}
+              <span className="font-black text-slate-950">
+                {storefrontPendingDelete.content.name}
+              </span>
+              ? This permanently removes it from your profile and public
+              storefronts.
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                className="inline-flex min-h-10 items-center justify-center border border-black/10 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+                disabled={isDeletingPendingStorefront}
+                onClick={() => setStorefrontPendingDelete(null)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex min-h-10 items-center justify-center gap-2 bg-red-700 px-4 py-2 text-sm font-black text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-300"
+                disabled={isDeletingPendingStorefront}
+                onClick={() => void deleteStorefront()}
+                type="button"
+              >
+                {isDeletingPendingStorefront && (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                )}
+                Delete storefront
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section
         aria-labelledby="generate-title"
         className="mx-auto w-full max-w-3xl pt-2"
@@ -361,12 +463,12 @@ export function StorefrontStudio({
           )}
           {recentStorefronts.length > 0 ? (
             <div className="grid gap-2">
-              {recentStorefronts.slice(0, 4).map((storefront) => (
+              {recentStorefronts.map((storefront) => (
                 <StorefrontCard
                   deleteDisabled={Boolean(deletingStorefrontId)}
                   isDeleting={deletingStorefrontId === storefront.id}
                   key={storefront.id}
-                  onDelete={isGuestMode ? undefined : deleteStorefront}
+                  onDelete={isGuestMode ? undefined : requestDeleteStorefront}
                   storefront={storefront}
                 />
               ))}

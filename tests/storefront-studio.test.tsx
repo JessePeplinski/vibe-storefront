@@ -200,6 +200,32 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("href", "/s/lamp-loom-def456");
   });
 
+  it("renders every saved storefront in the library", () => {
+    const savedStorefronts = Array.from({ length: 5 }, (_, index) =>
+      storefront({
+        id: `storefront-${index}`,
+        slug: `saved-storefront-${index}`,
+        idea: `saved product idea ${index}`,
+        content: storefrontContent(
+          `Saved Storefront ${index + 1}`,
+          `Saved storefront ${index + 1} tagline.`
+        )
+      })
+    );
+
+    render(<StorefrontStudio initialStorefronts={savedStorefronts} />);
+
+    const recentStorefronts = screen.getByRole("region", {
+      name: "Your storefronts"
+    });
+
+    expect(screen.getByText("5 saved")).toBeInTheDocument();
+    for (const savedStorefront of savedStorefronts) {
+      expect(within(recentStorefronts).getByText(savedStorefront.content.name))
+        .toBeInTheDocument();
+    }
+  });
+
   it("deletes a signed-in storefront after confirmation", async () => {
     const newestStorefront = storefront({
       id: "00000000-0000-4000-8000-000000000001",
@@ -219,8 +245,6 @@ describe("StorefrontStudio", () => {
         "Small lighting kits that make rentals feel intentional."
       )
     });
-    const confirmMock = vi.fn().mockReturnValue(true);
-    const alertMock = vi.fn();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -228,8 +252,6 @@ describe("StorefrontStudio", () => {
       })
     });
 
-    vi.stubGlobal("confirm", confirmMock);
-    vi.stubGlobal("alert", alertMock);
     vi.stubGlobal("fetch", fetchMock);
 
     render(
@@ -248,8 +270,20 @@ describe("StorefrontStudio", () => {
       })
     );
 
-    expect(confirmMock).toHaveBeenCalledWith(
-      "Delete Desk Bloom? This will remove it from your profile and public storefronts."
+    const dialog = screen.getByRole("dialog", {
+      name: "Delete storefront?"
+    });
+
+    expect(dialog).toHaveTextContent(
+      "Are you sure you want to delete Desk Bloom?"
+    );
+    expect(dialog).toHaveTextContent(
+      "This permanently removes it from your profile and public storefronts."
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Delete storefront" })
     );
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -263,7 +297,11 @@ describe("StorefrontStudio", () => {
     });
     expect(within(recentStorefronts).getByText("Lamp Loom")).toBeInTheDocument();
     expect(screen.getByText("1 saved")).toBeInTheDocument();
-    expect(alertMock).toHaveBeenCalledWith("Desk Bloom was deleted.");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Desk Bloom was deleted."
+    );
+    expect(screen.queryByRole("dialog", { name: "Delete storefront?" }))
+      .not.toBeInTheDocument();
   });
 
   it("does not show delete actions for guest storefronts", () => {
