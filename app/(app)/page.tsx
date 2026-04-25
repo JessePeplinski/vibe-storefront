@@ -91,10 +91,7 @@ function ExampleStorefronts({
             content={storefront.content}
           />
           <div className="flex flex-1 flex-col p-2 pt-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
-              Generated example
-            </p>
-            <h3 className="mt-2 text-2xl font-black leading-tight text-slate-950">
+            <h3 className="text-2xl font-black leading-tight text-slate-950">
               {storefront.content.name}
             </h3>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
