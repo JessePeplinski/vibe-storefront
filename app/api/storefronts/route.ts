@@ -13,6 +13,7 @@ import {
 } from "@/lib/storefronts";
 import type {
   StorefrontContent,
+  StorefrontProductImage,
   StorefrontRecord
 } from "@/lib/storefront-schema";
 
@@ -21,6 +22,9 @@ export const maxDuration = 180;
 
 const GUEST_COOKIE_NAME = "vibe_storefront_guest_id";
 const GUEST_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+const PRODUCT_IMAGE_GENERATION_ATTEMPTS = 3;
+const PRODUCT_IMAGE_GENERATION_WARNING =
+  "Storefront created, but the product image could not be generated.";
 
 const createStorefrontRequestSchema = z.object({
   idea: z.string().trim().min(6).max(220)
@@ -32,12 +36,40 @@ function shareUrlForSlug(slug: string): string {
   return `${appBaseUrl()}/s/${slug}`;
 }
 
-async function generateStorefrontWithProductImage(
+async function generateProductImageWithRetries(params: {
+  content: StorefrontContent;
+  idea: string;
+  slug: string;
+}): Promise<StorefrontProductImage | null> {
+  for (
+    let attempt = 1;
+    attempt <= PRODUCT_IMAGE_GENERATION_ATTEMPTS;
+    attempt += 1
+  ) {
+    try {
+      return await generateProductImage(params);
+    } catch {
+      // The caller falls back to saving the storefront without an image.
+    }
+  }
+
+  return null;
+}
+
+async function generateStorefrontWithOptionalProductImage(
   idea: string
-): Promise<{ content: StorefrontContent; slug: string }> {
+): Promise<{ content: StorefrontContent; slug: string; warning?: string }> {
   const content = await generateStorefront(idea);
   const slug = buildStorefrontSlug(content.name);
-  const image = await generateProductImage({ content, idea, slug });
+  const image = await generateProductImageWithRetries({ content, idea, slug });
+
+  if (!image) {
+    return {
+      content,
+      slug,
+      warning: PRODUCT_IMAGE_GENERATION_WARNING
+    };
+  }
 
   return {
     content: {
@@ -142,9 +174,8 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const { content, slug } = await generateStorefrontWithProductImage(
-        parsed.data.idea
-      );
+      const { content, slug, warning } =
+        await generateStorefrontWithOptionalProductImage(parsed.data.idea);
       const storefront = await createGeneratedStorefront({
         ownerClerkUserId: userId,
         idea: parsed.data.idea,
@@ -156,7 +187,8 @@ export async function POST(request: NextRequest) {
         {
           storefront,
           shareUrl: shareUrlForSlug(storefront.slug),
-          status: "created"
+          status: "created",
+          warning
         },
         { status: 201 }
       );
@@ -179,9 +211,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { content, slug } = await generateStorefrontWithProductImage(
-      parsed.data.idea
-    );
+    const { content, slug, warning } =
+      await generateStorefrontWithOptionalProductImage(parsed.data.idea);
     const storefront = await createGeneratedStorefront({
       anonymousSessionId: guestSessionId,
       idea: parsed.data.idea,
@@ -193,7 +224,8 @@ export async function POST(request: NextRequest) {
       {
         storefront,
         shareUrl: shareUrlForSlug(storefront.slug),
-        status: "created"
+        status: "created",
+        warning
       },
       { status: 201 },
       guestSessionId

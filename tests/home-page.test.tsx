@@ -39,6 +39,9 @@ const productImage = {
   url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/ember-table-abc123/product.webp"
 };
 
+const productImageWarning =
+  "Storefront created, but the product image could not be generated.";
+
 function exampleStorefront(
   overrides: Partial<StorefrontRecord> = {}
 ): StorefrontRecord {
@@ -140,6 +143,7 @@ describe("home page", () => {
         storefront: typeof createdStorefront;
         shareUrl: string;
         status: "created";
+        warning?: string;
       }>;
     }) => void;
     const fetchPromise = new Promise<{
@@ -148,6 +152,7 @@ describe("home page", () => {
         storefront: typeof createdStorefront;
         shareUrl: string;
         status: "created";
+        warning?: string;
       }>;
     }>((resolve) => {
       resolveFetch = resolve;
@@ -240,7 +245,8 @@ describe("home page", () => {
         json: async () => ({
           storefront: createdStorefront,
           shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
-          status: "created"
+          status: "created",
+          warning: productImageWarning
         })
       });
       await fetchPromise;
@@ -249,6 +255,7 @@ describe("home page", () => {
     expect(
       await screen.findByRole("link", { name: /view your storefront/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(screen.getByText(productImageWarning)).toBeInTheDocument();
   });
 
   it("makes the existing guest storefront state explicit", async () => {

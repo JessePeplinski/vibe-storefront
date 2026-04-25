@@ -17,6 +17,8 @@ const clerkMocks = vi.hoisted(() => ({
 }));
 
 const clipboardWriteTextMock = vi.fn();
+const productImageWarning =
+  "Storefront created, but the product image could not be generated.";
 
 vi.mock("@clerk/nextjs", () => ({
   useClerk: () => clerkMocks
@@ -338,6 +340,7 @@ describe("StorefrontStudio", () => {
       json: () => Promise<{
         storefront: StorefrontRecord;
         shareUrl: string;
+        warning?: string;
       }>;
     }) => void;
     const fetchPromise = new Promise<{
@@ -345,6 +348,7 @@ describe("StorefrontStudio", () => {
       json: () => Promise<{
         storefront: StorefrontRecord;
         shareUrl: string;
+        warning?: string;
       }>;
     }>((resolve) => {
       resolveFetch = resolve;
@@ -387,13 +391,15 @@ describe("StorefrontStudio", () => {
         ok: true,
         json: async () => ({
           storefront: createdStorefront,
-          shareUrl: "https://vibe.example/s/tiny-lamp-labs-abc123"
+          shareUrl: "https://vibe.example/s/tiny-lamp-labs-abc123",
+          warning: productImageWarning
         })
       });
       await fetchPromise;
     });
 
     expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
+    expect(screen.getByText(productImageWarning)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/tiny-lamp-labs-abc123");
