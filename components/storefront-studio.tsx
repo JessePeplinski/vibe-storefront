@@ -21,6 +21,7 @@ type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
   status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
+  warning?: string;
 };
 
 type CreateStorefrontErrorResponse = {
@@ -404,6 +405,14 @@ export function StorefrontStudio({
             {result && (
               <div className="mt-3 border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950 first:mt-0">
                 <p className="font-black">{resultStatusText}</p>
+                {result.warning && (
+                  <p
+                    className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
+                    role="status"
+                  >
+                    {result.warning}
+                  </p>
+                )}
                 <Link
                   className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 bg-emerald-700 px-3 py-2 text-sm font-black text-white transition hover:bg-emerald-800"
                   href={`/s/${result.storefront.slug}`}

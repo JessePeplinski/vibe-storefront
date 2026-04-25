@@ -16,6 +16,7 @@ type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
   status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
+  warning?: string;
 };
 
 type CreateStorefrontErrorResponse = {
@@ -179,6 +180,14 @@ export function LandingIdeaTeaser() {
           <p className="text-sm font-black text-emerald-950">
             {resultHeading}
           </p>
+          {result?.warning && (
+            <p
+              className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
+              role="status"
+            >
+              {result.warning}
+            </p>
+          )}
           <Link
             className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-emerald-700 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-800"
             href={createdStorefrontPath}
