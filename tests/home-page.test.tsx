@@ -219,16 +219,22 @@ describe("home page", () => {
       typedIdea
     );
     const generatingButton = await screen.findByRole("button", {
-      name: /building storefront/i
+      name: /generating storefront/i
     });
     expect(generatingButton).toBeDisabled();
-    expect(generatingButton).toHaveTextContent("0:00");
+    expect(generatingButton).not.toHaveTextContent("0:00");
+
+    const generationProgress = screen.getByRole("status", {
+      name: "Generation progress"
+    });
     expect(
-      screen.getByRole("status", { name: "Generation progress" })
-    ).toHaveTextContent("Estimated step 1 of 4");
-    expect(
-      screen.getByRole("status", { name: "Generation progress" })
-    ).toHaveTextContent("Usually takes 1-3 minutes");
+      screen.getAllByRole("status", { name: "Generation progress" })
+    ).toHaveLength(1);
+    expect(generationProgress).toHaveTextContent("Step 1 of 4");
+    expect(generationProgress).toHaveTextContent("Total 0:00");
+    expect(generationProgress).toHaveTextContent("Write storefront copy");
+    expect(generationProgress).toHaveTextContent("Elapsed 0:00");
+    expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(

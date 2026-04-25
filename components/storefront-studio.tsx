@@ -8,11 +8,10 @@ import {
   ExternalLink,
   Loader2,
   LogIn,
-  Send,
   X
 } from "lucide-react";
-import { GenerationProgress } from "@/components/generation-progress";
 import { StorefrontCard } from "@/components/storefront-card";
+import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
 import { useGenerationProgress } from "@/components/use-generation-countdown";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
@@ -60,13 +59,8 @@ export function StorefrontStudio({
     useState<StorefrontRecord | null>(null);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
-  const {
-    currentPhaseIndex,
-    elapsedText,
-    estimateText,
-    phases,
-    resetProgress
-  } = useGenerationProgress(isGenerating);
+  const generationProgress = useGenerationProgress(isGenerating);
+  const { resetProgress } = generationProgress;
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -231,6 +225,53 @@ export function StorefrontStudio({
     : "Your storefronts";
   const isDeletingPendingStorefront =
     deletingStorefrontId === storefrontPendingDelete?.id;
+  const generationFeedback =
+    (result || error) && !isGenerating ? (
+      <div className="space-y-3">
+        {error && (
+          <p
+            className="border border-red-200 bg-red-50 p-3 text-sm font-bold leading-5 text-red-700"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
+        {result && (
+          <div className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
+            <p className="font-black">{resultStatusText}</p>
+            {result.warning && (
+              <p
+                className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
+                role="status"
+              >
+                {result.warning}
+              </p>
+            )}
+            <Link
+              className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 bg-emerald-700 px-3 py-2 text-sm font-black text-white transition hover:bg-emerald-800"
+              href={`/s/${result.storefront.slug}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Open share URL
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+            {isGuestMode && guestGenerationUsed && (
+              <div className="mt-3">
+                <button
+                  className="inline-flex min-h-10 items-center justify-center gap-2 border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
+                  onClick={() => openSignIn()}
+                  type="button"
+                >
+                  <LogIn className="h-4 w-4" aria-hidden />
+                  Sign in for more
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    ) : null;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8">
@@ -335,109 +376,21 @@ export function StorefrontStudio({
           </h1>
         </div>
 
-        <form
-          className="mt-6 border border-white/20 bg-white p-3 text-slate-950 shadow-sm sm:p-5"
+        <StorefrontGenerationForm
+          className="mt-6"
+          feedback={generationFeedback}
+          generationDisabled={generationDisabled}
+          idea={idea}
+          isGenerating={isGenerating}
+          onIdeaChange={setIdea}
           onSubmit={handleSubmit}
-        >
-          <label className="block">
-            <span className="text-xl font-black text-slate-950">
-              Generate your storefront
-            </span>
-            <textarea
-              className="mt-2 min-h-24 w-full resize-none border-slate-300 bg-slate-50 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-emerald-700 focus:ring-emerald-700 sm:min-h-28"
-              id="studio-product-idea"
-              maxLength={220}
-              minLength={6}
-              name="idea"
-              onChange={(event) => setIdea(event.target.value)}
-              placeholder="Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers."
-              required
-              value={idea}
-            />
-          </label>
-          <div className="mt-3 flex justify-end">
-            <button
-              className="inline-flex min-h-11 items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              disabled={generationDisabled}
-              type="submit"
-            >
-              <span>
-                {isGenerating ? "Generating storefront" : "Generate storefront"}
-              </span>
-              {isGenerating && elapsedText && (
-                <span
-                  aria-live="polite"
-                  className="min-w-10 whitespace-nowrap text-center font-black tabular-nums text-white/80"
-                >
-                  {elapsedText}
-                </span>
-              )}
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Send className="h-4 w-4" aria-hidden />
-              )}
-            </button>
-          </div>
-        </form>
-
-        {isGenerating && elapsedText && (
-          <div className="mx-auto mt-4 max-w-xl border border-black/10 bg-white p-4">
-            <GenerationProgress
-              currentPhaseIndex={currentPhaseIndex}
-              elapsedText={elapsedText}
-              estimateText={estimateText}
-              phases={phases}
-            />
-          </div>
-        )}
-
-        {(result || error) && !isGenerating && (
-          <div className="mx-auto mt-4 max-w-xl">
-            {error && (
-              <p
-                className="border border-red-200 bg-red-50 p-3 text-sm font-bold leading-5 text-red-700"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-            {result && (
-              <div className="mt-3 border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950 first:mt-0">
-                <p className="font-black">{resultStatusText}</p>
-                {result.warning && (
-                  <p
-                    className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
-                    role="status"
-                  >
-                    {result.warning}
-                  </p>
-                )}
-                <Link
-                  className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 bg-emerald-700 px-3 py-2 text-sm font-black text-white transition hover:bg-emerald-800"
-                  href={`/s/${result.storefront.slug}`}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Open share URL
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-                {isGuestMode && guestGenerationUsed && (
-                  <div className="mt-3">
-                    <button
-                      className="inline-flex min-h-10 items-center justify-center gap-2 border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
-                      onClick={() => openSignIn()}
-                      type="button"
-                    >
-                      <LogIn className="h-4 w-4" aria-hidden />
-                      Sign in for more
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          progress={generationProgress}
+          secondaryAction={{
+            href: "/storefronts",
+            label: "See all storefronts"
+          }}
+          textareaId="studio-product-idea"
+        />
       </section>
 
       <div className="mx-auto w-full max-w-5xl">

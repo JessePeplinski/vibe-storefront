@@ -1,73 +1,99 @@
-import type { GenerationPhase } from "@/components/use-generation-countdown";
+import { Check } from "lucide-react";
+import type { GenerationProgressStep } from "@/components/use-generation-countdown";
 
 type GenerationProgressProps = {
   currentPhaseIndex: number;
   elapsedText: string;
   estimateText: string;
-  phases: GenerationPhase[];
-  variant?: "dark" | "light";
+  progressPercent: number;
+  steps: GenerationProgressStep[];
 };
 
 export function GenerationProgress({
   currentPhaseIndex,
   elapsedText,
   estimateText,
-  phases,
-  variant = "light"
+  progressPercent,
+  steps
 }: GenerationProgressProps) {
-  const isDark = variant === "dark";
-  const labelClass = isDark ? "text-teal-100" : "text-slate-800";
-  const mutedClass = isDark ? "text-stone-300" : "text-slate-500";
-  const borderClass = isDark ? "border-white/15" : "border-slate-200";
-  const activeClass = isDark
-    ? "border-teal-200 bg-teal-200 text-slate-950"
-    : "border-slate-950 bg-slate-950 text-white";
-  const inactiveClass = isDark
-    ? "border-white/15 text-stone-300"
-    : "border-slate-200 text-slate-500";
+  const boundedProgress = Math.max(0, Math.min(100, progressPercent));
+  const activeStep = steps[currentPhaseIndex];
 
   return (
     <div
       aria-label="Generation progress"
-      className={`mt-3 border-t ${borderClass} pt-3`}
+      className="border-t border-slate-200 pt-4"
       role="status"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className={`text-xs font-black uppercase tracking-[0.14em] ${labelClass}`}>
-          Estimated step {currentPhaseIndex + 1} of {phases.length}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+            Step {currentPhaseIndex + 1} of {steps.length}
+          </p>
+          <p className="mt-1 text-sm font-black leading-5 text-slate-950">
+            {activeStep?.label ?? "Generating storefront"}
+          </p>
+        </div>
         <p
           aria-live="polite"
-          className={`text-xs font-black tabular-nums ${mutedClass}`}
+          className="shrink-0 text-sm font-black tabular-nums text-slate-700"
         >
-          Elapsed {elapsedText}
+          Total {elapsedText}
         </p>
       </div>
-      <ol className="mt-3 grid gap-2">
-        {phases.map((phase, index) => {
-          const isActive = index === currentPhaseIndex;
-          const isComplete = index < currentPhaseIndex;
+
+      <div className="mt-4 h-1.5 overflow-hidden bg-slate-100" aria-hidden>
+        <div
+          className="h-full bg-emerald-700 transition-[width] duration-300 ease-out"
+          style={{ width: `${boundedProgress}%` }}
+        />
+      </div>
+
+      <ol className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4 sm:gap-x-4">
+        {steps.map((step, index) => {
+          const isActive = step.status === "active";
+          const isComplete = step.status === "complete";
+          const markerClass = isComplete
+            ? "border-emerald-700 bg-emerald-700 text-white"
+            : isActive
+              ? "border-slate-950 bg-slate-950 text-white"
+              : "border-slate-300 bg-white text-slate-400";
+          const labelClass =
+            isActive || isComplete ? "text-slate-950" : "text-slate-500";
+          const timeClass =
+            isActive || isComplete ? "text-slate-700" : "text-slate-400";
 
           return (
             <li
-              className={`flex min-h-8 items-center gap-2 text-xs font-bold ${
-                isActive ? labelClass : mutedClass
-              }`}
-              key={phase.label}
+              className="flex min-h-[4rem] min-w-0 items-start gap-2"
+              key={step.label}
             >
               <span
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black ${
-                  isActive || isComplete ? activeClass : inactiveClass
-                }`}
+                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black ${markerClass}`}
               >
-                {index + 1}
+                {isComplete ? (
+                  <Check className="h-3.5 w-3.5" aria-hidden />
+                ) : (
+                  index + 1
+                )}
               </span>
-              <span>{phase.label}</span>
+              <span className="min-w-0">
+                <span
+                  className={`block text-xs font-black leading-4 ${labelClass}`}
+                >
+                  {step.label}
+                </span>
+                <span
+                  className={`mt-1 block text-xs font-bold tabular-nums ${timeClass}`}
+                >
+                  {step.elapsedText ? `Elapsed ${step.elapsedText}` : "Waiting"}
+                </span>
+              </span>
             </li>
           );
         })}
       </ol>
-      <p className={`mt-2 text-xs font-semibold ${mutedClass}`}>
+      <p className="mt-2 text-xs font-semibold text-slate-500">
         {estimateText}
       </p>
     </div>
