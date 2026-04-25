@@ -200,6 +200,94 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("href", "/s/lamp-loom-def456");
   });
 
+  it("deletes a signed-in storefront after confirmation", async () => {
+    const newestStorefront = storefront({
+      id: "00000000-0000-4000-8000-000000000001",
+      slug: "desk-bloom-abc123",
+      idea: "modular desk planters for office workers",
+      content: storefrontContent(
+        "Desk Bloom",
+        "Modular desk planters for brighter workdays."
+      )
+    });
+    const olderStorefront = storefront({
+      id: "00000000-0000-4000-8000-000000000002",
+      slug: "lamp-loom-def456",
+      idea: "tiny lamp kits for renters",
+      content: storefrontContent(
+        "Lamp Loom",
+        "Small lighting kits that make rentals feel intentional."
+      )
+    });
+    const confirmMock = vi.fn().mockReturnValue(true);
+    const alertMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        deletedStorefrontId: newestStorefront.id
+      })
+    });
+
+    vi.stubGlobal("confirm", confirmMock);
+    vi.stubGlobal("alert", alertMock);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <StorefrontStudio
+        initialStorefronts={[newestStorefront, olderStorefront]}
+      />
+    );
+
+    const recentStorefronts = screen.getByRole("region", {
+      name: "Your storefronts"
+    });
+
+    fireEvent.click(
+      within(recentStorefronts).getByRole("button", {
+        name: "Delete storefront Desk Bloom"
+      })
+    );
+
+    expect(confirmMock).toHaveBeenCalledWith(
+      "Delete Desk Bloom? This will remove it from your profile and public storefronts."
+    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/storefronts/00000000-0000-4000-8000-000000000001",
+        { method: "DELETE" }
+      );
+    });
+    await waitFor(() => {
+      expect(within(recentStorefronts).queryByText("Desk Bloom"))
+        .not.toBeInTheDocument();
+    });
+    expect(within(recentStorefronts).getByText("Lamp Loom")).toBeInTheDocument();
+    expect(screen.getByText("1 saved")).toBeInTheDocument();
+    expect(alertMock).toHaveBeenCalledWith("Desk Bloom was deleted.");
+  });
+
+  it("does not show delete actions for guest storefronts", () => {
+    const guestStorefront = storefront({
+      id: "guest-storefront-id",
+      owner_clerk_user_id: null,
+      anonymous_session_id: "00000000-0000-4000-8000-000000000001"
+    });
+
+    render(
+      <StorefrontStudio
+        initialStorefronts={[guestStorefront]}
+        mode="guest"
+      />
+    );
+
+    const guestStorefronts = screen.getByRole("region", {
+      name: "Guest storefront"
+    });
+
+    expect(within(guestStorefronts).queryByRole("button", { name: /Delete/ }))
+      .not.toBeInTheDocument();
+  });
+
   it("submits an idea and adds the saved storefront to recent results", async () => {
     const selectedIdea = STARTER_IDEAS[1];
     const createdStorefront = storefront({
