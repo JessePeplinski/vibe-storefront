@@ -1,7 +1,7 @@
-import type { CSSProperties } from "react";
 import { ArrowRight, Quote, Sparkles } from "lucide-react";
 import { MockCheckoutButton } from "@/components/mock-checkout-button";
 import type { StorefrontContent } from "@/lib/storefront-schema";
+import { deriveStorefrontThemeStyle } from "@/lib/storefront-theme";
 
 type StorefrontRendererProps = {
   content: StorefrontContent;
@@ -9,15 +9,6 @@ type StorefrontRendererProps = {
   idea?: string;
   publicUrl?: string;
   variant?: "framed" | "landing";
-};
-
-type StorefrontStyle = CSSProperties & {
-  "--sf-bg": string;
-  "--sf-surface": string;
-  "--sf-primary": string;
-  "--sf-secondary": string;
-  "--sf-accent": string;
-  "--sf-text": string;
 };
 
 function cssImageUrl(url: string): string {
@@ -33,14 +24,7 @@ export function StorefrontRenderer({
 }: StorefrontRendererProps) {
   const isLanding = variant === "landing";
   const productImage = content.product.image;
-  const style: StorefrontStyle = {
-    "--sf-bg": content.theme.palette.background,
-    "--sf-surface": content.theme.palette.surface,
-    "--sf-primary": content.theme.palette.primary,
-    "--sf-secondary": content.theme.palette.secondary,
-    "--sf-accent": content.theme.palette.accent,
-    "--sf-text": content.theme.palette.text
-  };
+  const style = deriveStorefrontThemeStyle(content.theme.palette);
 
   return (
     <article
@@ -62,7 +46,7 @@ export function StorefrontRenderer({
       >
         <div className="flex flex-col justify-between gap-8">
           <div className={compact ? "space-y-5" : "space-y-7"}>
-            <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--sf-primary)] sm:text-sm">
+            <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--sf-eyebrow)] sm:text-sm">
               <Sparkles className="h-4 w-4" aria-hidden />
               <span>{content.hero.eyebrow}</span>
             </div>
@@ -74,11 +58,11 @@ export function StorefrontRenderer({
               >
                 {content.name}
               </h1>
-              <p className="max-w-2xl text-lg font-bold text-[var(--sf-secondary)] sm:text-xl">
+              <p className="max-w-2xl text-lg font-bold text-[var(--sf-support)] sm:text-xl">
                 {content.tagline}
               </p>
               <p
-                className={`max-w-2xl text-base leading-7 text-black/70 ${
+                className={`max-w-2xl text-base leading-7 text-[var(--sf-muted)] ${
                   compact ? "" : "sm:text-lg"
                 }`}
               >
@@ -94,14 +78,14 @@ export function StorefrontRenderer({
                 />
               ) : (
                 <button
-                  className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"
+                  className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-[var(--sf-on-primary)] transition hover:brightness-95"
                   type="button"
                 >
                   {content.cta.label}
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </button>
               )}
-              <span className="max-w-sm text-sm font-medium text-black/60">
+              <span className="max-w-sm text-sm font-medium text-[var(--sf-muted)]">
                 {content.cta.sublabel}
               </span>
             </div>
@@ -110,22 +94,26 @@ export function StorefrontRenderer({
             <div className="grid gap-3 sm:grid-cols-3">
               {Object.entries(content.theme.palette).map(([name, color]) => (
                 <div
-                  className="border border-black/10 bg-white/60 p-3 text-xs font-semibold uppercase tracking-[0.14em]"
+                  className="border border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--sf-surface-text)]"
                   key={name}
                 >
                   <div
-                    className="mb-3 h-10 border border-black/10"
+                    className="mb-3 h-10 border border-[var(--sf-surface-border)]"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="block text-black/60">{name}</span>
-                  <span className="mt-1 block text-black">{color}</span>
+                  <span className="block text-[var(--sf-surface-muted)]">
+                    {name}
+                  </span>
+                  <span className="mt-1 block text-[var(--sf-surface-text)]">
+                    {color}
+                  </span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-col justify-between gap-5 bg-[var(--sf-surface)] p-5 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] sm:p-6">
+        <aside className="flex min-w-0 flex-col justify-between gap-5 border border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)] sm:p-6">
           <div className="space-y-4">
             <div
               className={`relative overflow-hidden bg-[var(--sf-secondary)] text-white ${
@@ -171,14 +159,14 @@ export function StorefrontRenderer({
                 </div>
               </div>
             </div>
-            <p className="text-base leading-7 text-black/70">
+            <p className="text-base leading-7 text-[var(--sf-surface-muted)]">
               {content.product.description}
             </p>
           </div>
           <ul className="grid gap-3">
             {content.product.highlights.map((highlight) => (
               <li
-                className="border border-black/10 bg-white/70 p-3 text-sm font-semibold text-black/75"
+                className="border border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-sm font-semibold text-[var(--sf-surface-text)]"
                 key={highlight}
               >
                 {highlight}
@@ -189,21 +177,26 @@ export function StorefrontRenderer({
       </section>
 
       {!compact && (
-        <section className="grid gap-4 border-t border-black/10 bg-white/50 p-6 sm:grid-cols-3 sm:p-8">
+        <section className="grid gap-4 border-t border-[var(--sf-border)] bg-[var(--sf-section-bg)] p-6 sm:grid-cols-3 sm:p-8">
           {content.testimonials.map((testimonial) => (
             <figure
-              className="flex min-h-48 flex-col justify-between bg-[var(--sf-surface)] p-5 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+              className="flex min-h-48 flex-col justify-between border border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)]"
               key={testimonial.name}
             >
-              <Quote className="h-5 w-5 text-[var(--sf-primary)]" aria-hidden />
-              <blockquote className="mt-4 text-sm leading-6 text-black/70">
+              <Quote
+                className="h-5 w-5 text-[var(--sf-surface-highlight)]"
+                aria-hidden
+              />
+              <blockquote className="mt-4 text-sm leading-6 text-[var(--sf-surface-muted)]">
                 {`"${testimonial.quote}"`}
               </blockquote>
               <figcaption className="mt-6 text-sm">
-                <span className="block font-bold text-black">
+                <span className="block font-bold text-[var(--sf-surface-text)]">
                   {testimonial.name}
                 </span>
-                <span className="text-black/55">{testimonial.role}</span>
+                <span className="text-[var(--sf-surface-muted)]">
+                  {testimonial.role}
+                </span>
               </figcaption>
             </figure>
           ))}
