@@ -144,7 +144,7 @@ describe("app layout", () => {
     expect(menu).toHaveClass("hidden");
   });
 
-  it("keeps only public gallery navigation when signed out", async () => {
+  it("keeps the signed-out header focused on sign in", async () => {
     mocks.signedIn = false;
     const Layout = (await import("@/app/(app)/layout")).default;
 
@@ -159,9 +159,10 @@ describe("app layout", () => {
       .not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: "Your storefronts" }))
       .not.toBeInTheDocument();
-    expect(
-      within(nav).getByRole("link", { name: "All storefronts" })
-    ).toHaveAttribute("href", "/storefronts");
+    expect(within(nav).queryByRole("link", { name: "All storefronts" }))
+      .not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: "GitHub" }))
+      .not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: "Sign in" }))
       .toBeInTheDocument();
   });
