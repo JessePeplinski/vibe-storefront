@@ -8,7 +8,7 @@
     "build": "next build",
     "backfill:product-images": "node scripts/backfill-product-images.mjs",
     "start": "next start",
-    "smoke:browser": "playwright test tests/browser-smoke.spec.ts --browser=chromium --reporter=line",
+    "smoke:browser": "node scripts/run-browser-smoke.mjs",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
