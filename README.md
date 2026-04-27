@@ -14,6 +14,8 @@ Demo: https://vibe-storefront.com
 
 ## Quick Start
 
+Use Node.js 24.x. If you use `nvm`, run `nvm use` from the repo root.
+
 Copy the local environment template and fill in development keys:
 
 ```bash
