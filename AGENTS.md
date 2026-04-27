@@ -4,7 +4,23 @@ Instructions for AI coding agents working in this repository.
 
 ## Project Overview
 
-Vibe Storefront is a Next.js App Router prototype for turning product ideas into shareable storefront concepts. A signed-in user enters a product idea, the server calls the Codex SDK for structured storefront content, saves it to Supabase, and exposes a public share URL.
+Vibe Storefront is a Next.js App Router prototype for turning product ideas into shareable storefront concepts. A visitor enters a plain-English product idea, the server calls the Codex SDK for structured storefront content, saves it to Supabase, generates product imagery, and exposes a public share URL.
+
+## Source Docs
+
+- `README.md` is the public-facing project overview. Keep it concise and avoid moving internal operations back into it.
+- `docs/local-development.md` is the local setup and smoke-test guide. Check it before changing local environment, Clerk, Supabase, or verification instructions.
+- `docs/project-context.md` is the maintainer context for runtime behavior, persistence boundaries, guest storefront behavior, product image storage, and image backfill.
+- `docs/deployment-checklist.md` is the production deployment source of truth. Check it before changing Vercel, production environment variables, production Supabase migrations, Google sign-in, or deployment verification.
+
+## Codex Runbook
+
+- Start every task with `git status --short --branch` and confirm the active branch before editing.
+- Keep README changes public-facing. Move local setup, runtime notes, deployment details, and maintainer-only context into the matching `docs/` file.
+- For docs-only changes, run `git diff --check` before finishing.
+- For code, config, schema, or behavior changes, run `npm run verify` before finishing or publishing.
+- For local generate/save/share testing, use the local Supabase stack only; do not write test data to production Supabase.
+- If the user says "all set", treat it as approval to publish through the documented branch flow after verification.
 
 ## Development Workflow
 
@@ -24,6 +40,7 @@ npm run verify
 - Do not commit secrets.
 - `.env.local` is for local development and must stay gitignored.
 - `.env.prod` is an ignored local reference file for production/demo keys.
+- Keep environment setup details in `docs/local-development.md`; keep production-only setup in `docs/deployment-checklist.md`.
 - Use Clerk development keys locally.
 - Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman; start it before running the Supabase CLI.
 - Use the local Supabase stack for local testing:
@@ -42,6 +59,7 @@ npx -y supabase start
 - The app validates Codex output with the Zod schema in `lib/storefront-schema.ts`.
 - Supabase service-role writes should stay server-side only.
 - Public storefront reads should continue to use the public/anon Supabase client and RLS.
+- Product image generation/storage and backfill behavior are documented in `docs/project-context.md`.
 
 ## Repo Map
 
