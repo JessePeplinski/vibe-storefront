@@ -4,6 +4,12 @@ Use this guide for local setup, local-only provider keys, and manual smoke testi
 
 ## Environment
 
+Use Node.js 24.x for local development. If you use `nvm`, run:
+
+```bash
+nvm use
+```
+
 Copy `.env.example` to `.env.local`:
 
 ```bash
