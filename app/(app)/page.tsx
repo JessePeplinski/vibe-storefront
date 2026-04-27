@@ -243,16 +243,16 @@ export default async function HomePage() {
       </section>
 
       <section className="bg-[#08251d] px-4 py-14 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200">
-              Build the first signal
-            </p>
-            <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
-              Start with the product idea you are already debating.
-            </h2>
-          </div>
-          <div className="flex flex-col gap-3 sm:items-end">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200">
+                Build the first signal
+              </p>
+              <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
+                Start with the product idea you are already debating.
+              </h2>
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#8ee8b6] px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-[#b8f3cf]"
@@ -268,8 +268,10 @@ export default async function HomePage() {
                 See examples
               </Link>
             </div>
+          </div>
+          <div className="mt-8 border-t border-white/10 pt-5">
             <a
-              className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"
+              className="inline-flex items-center gap-2 text-sm font-bold text-white/65 transition hover:text-white"
               href={githubRepoUrl}
               rel="noreferrer"
               target="_blank"
