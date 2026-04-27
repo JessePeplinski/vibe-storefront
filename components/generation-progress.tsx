@@ -6,6 +6,7 @@ type GenerationProgressProps = {
   elapsedText: string;
   estimateText: string;
   progressPercent: number;
+  showOverallEstimate?: boolean;
   steps: GenerationProgressStep[];
 };
 
@@ -14,6 +15,7 @@ export function GenerationProgress({
   elapsedText,
   estimateText,
   progressPercent,
+  showOverallEstimate = true,
   steps
 }: GenerationProgressProps) {
   const boundedProgress = Math.max(0, Math.min(100, progressPercent));
@@ -103,9 +105,11 @@ export function GenerationProgress({
           );
         })}
       </ol>
-      <p className="mt-2 text-xs font-semibold text-slate-500">
-        {estimateText}
-      </p>
+      {showOverallEstimate && (
+        <p className="mt-2 text-xs font-semibold text-slate-500">
+          {estimateText}
+        </p>
+      )}
     </div>
   );
 }

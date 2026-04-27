@@ -403,7 +403,9 @@ describe("StorefrontStudio", () => {
     expect(generationProgress).toHaveTextContent("Draft storefront copy");
     expect(generationProgress).toHaveTextContent("Elapsed 0:00");
     expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
-    expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
+    expect(generationProgress).not.toHaveTextContent(
+      "Usually takes 1-3 minutes"
+    );
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
