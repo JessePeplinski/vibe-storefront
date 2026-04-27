@@ -148,7 +148,7 @@ export default async function AllStorefrontsPage() {
                       </p>
                     </div>
                     <p className="mt-4 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">
-                      From: {storefront.idea}
+                      Source prompt: {storefront.idea}
                     </p>
                   </div>
                   <Link
