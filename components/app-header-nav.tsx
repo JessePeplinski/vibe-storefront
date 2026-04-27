@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Show, useClerk, useUser, UserButton } from "@clerk/nextjs";
-import { ChevronRight, LogOut, Menu, UserRound, X } from "lucide-react";
+import { ChevronRight, Code2, LogOut, Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { AuthButtons } from "@/components/auth-buttons";
 
 const menuId = "signed-in-navigation-menu";
+const githubRepoUrl = "https://github.com/JessePeplinski/vibe-storefront";
 
 export function AppHeaderNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +72,16 @@ export function AppHeaderNav() {
           >
             All storefronts
           </Link>
+          <a
+            className="inline-flex items-center gap-2 whitespace-nowrap px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-white/70 hover:text-slate-950 sm:px-3 sm:py-2 sm:hover:bg-transparent"
+            href={githubRepoUrl}
+            onClick={() => setIsOpen(false)}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <Code2 className="h-4 w-4" aria-hidden />
+            GitHub
+          </a>
           <div className="mt-2 grid gap-2 sm:hidden">
             <button
               aria-label="Manage account"
@@ -131,6 +142,15 @@ export function AppHeaderNav() {
         >
           All storefronts
         </Link>
+        <a
+          className="inline-flex items-center gap-2 whitespace-nowrap px-2 py-2 text-sm font-bold text-slate-700 transition hover:text-slate-950 sm:px-3"
+          href={githubRepoUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <Code2 className="h-4 w-4" aria-hidden />
+          GitHub
+        </a>
         <AuthButtons />
       </Show>
     </div>
