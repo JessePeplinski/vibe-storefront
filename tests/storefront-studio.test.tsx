@@ -99,7 +99,7 @@ describe("StorefrontStudio", () => {
     render(<StorefrontStudio />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
+      expect(screen.getByLabelText("Storefront idea")).toHaveValue(
         "solar-powered picnic coolers for city parks"
       );
     });
@@ -111,8 +111,8 @@ describe("StorefrontStudio", () => {
   it("starts with an empty product idea prompt", () => {
     render(<StorefrontStudio />);
 
-    expect(screen.getByLabelText("Generate your storefront")).toHaveValue("");
-    expect(screen.getByLabelText("Generate your storefront")).toHaveAttribute(
+    expect(screen.getByLabelText("Storefront idea")).toHaveValue("");
+    expect(screen.getByLabelText("Storefront idea")).toHaveAttribute(
       "placeholder",
       "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers."
     );
@@ -357,12 +357,12 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+    fireEvent.change(screen.getByLabelText("Storefront idea"), {
       target: { value: selectedIdea }
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
 
-    expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
+    expect(screen.getByLabelText("Storefront idea")).toHaveValue(
       selectedIdea
     );
     const generatingButton = await screen.findByRole("button", {
@@ -446,7 +446,7 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+    fireEvent.change(screen.getByLabelText("Storefront idea"), {
       target: { value: "nsfw poster subscription boxes" }
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
@@ -476,7 +476,7 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio />);
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+    fireEvent.change(screen.getByLabelText("Storefront idea"), {
       target: { value: selectedIdea }
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
@@ -511,7 +511,7 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio mode="guest" />);
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+    fireEvent.change(screen.getByLabelText("Storefront idea"), {
       target: { value: selectedIdea }
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
@@ -566,7 +566,7 @@ describe("StorefrontStudio", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<StorefrontStudio mode="guest" />);
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+    fireEvent.change(screen.getByLabelText("Storefront idea"), {
       target: { value: STARTER_IDEAS[0] }
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
