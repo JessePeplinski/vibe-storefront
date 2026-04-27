@@ -10,6 +10,7 @@ Vibe Storefront is a Next.js App Router prototype for turning product ideas into
 
 - Work from a feature branch. Do not commit directly to `main`.
 - Keep changes focused on the requested task and avoid unrelated refactors.
+- Treat "all set" as approval to publish the completed work: commit the feature branch, merge it into `dev`, merge `dev` into `main`, then push the updated branches.
 - Before merging, run:
 
 ```bash
@@ -17,7 +18,11 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm start -- -p 3100
+npm run smoke:browser
 ```
+
+Run the checks sequentially so `next build` and `tsc` do not compete over `.next` artifacts. For the browser smoke test, run `npm start -- -p 3100` in one terminal, run the smoke command against that server, then stop the server after it passes. The smoke test defaults to `http://127.0.0.1:3100`; override with `PLAYWRIGHT_BASE_URL` only when using a different port.
 
 ## Environment Rules
 

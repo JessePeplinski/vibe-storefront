@@ -69,10 +69,6 @@ export default async function AllStorefrontsPage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-5 inline-flex items-center gap-2 border border-black/10 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-600">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Public gallery
-            </div>
             <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
               All storefronts
             </h1>
