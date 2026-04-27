@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import {
@@ -12,23 +12,12 @@ import {
 } from "lucide-react";
 import { StorefrontCard } from "@/components/storefront-card";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
-import { useGenerationProgress } from "@/components/use-generation-countdown";
+import {
+  useStorefrontGeneration,
+  type StorefrontGenerationResult
+} from "@/components/use-storefront-generation";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
-
-type CreateStorefrontResponse = {
-  storefront: StorefrontRecord;
-  shareUrl: string;
-  status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
-  warning?: string;
-};
-
-type CreateStorefrontErrorResponse = {
-  error: string;
-  storefront?: StorefrontRecord;
-  shareUrl?: string;
-  status?: "existing_guest_storefront";
-};
 
 type DeleteStorefrontResponse = {
   deletedStorefrontId?: string;
@@ -45,11 +34,6 @@ export function StorefrontStudio({
   mode = "signed-in"
 }: StorefrontStudioProps) {
   const { openSignIn } = useClerk();
-  const [idea, setIdea] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
-  const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteToast, setDeleteToast] = useState<string | null>(null);
   const [deletingStorefrontId, setDeletingStorefrontId] = useState<
@@ -59,8 +43,21 @@ export function StorefrontStudio({
     useState<StorefrontRecord | null>(null);
   const [recentStorefronts, setRecentStorefronts] =
     useState(initialStorefronts);
-  const generationProgress = useGenerationProgress(isGenerating);
-  const { resetProgress } = generationProgress;
+  const {
+    clearResult,
+    error,
+    generationDisabled,
+    guestGenerationUsed,
+    handleSubmit,
+    idea,
+    isGenerating,
+    progress: generationProgress,
+    result,
+    setIdea
+  } = useStorefrontGeneration({
+    mode,
+    onStorefrontReady: showCreatedStorefront
+  });
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -73,12 +70,11 @@ export function StorefrontStudio({
 
       return () => window.clearTimeout(timeoutId);
     }
-  }, []);
+  }, [setIdea]);
 
-  function showCreatedStorefront(created: CreateStorefrontResponse) {
+  function showCreatedStorefront(created: StorefrontGenerationResult) {
     setDeleteError(null);
     setDeleteToast(null);
-    setResult(created);
     setRecentStorefronts((currentStorefronts) => [
       created.storefront,
       ...currentStorefronts.filter(
@@ -95,68 +91,6 @@ export function StorefrontStudio({
     setDeleteError(null);
     setDeleteToast(null);
     setStorefrontPendingDelete(storefront);
-  }
-
-  async function generateFromIdea(nextIdea: string) {
-    const trimmedIdea = nextIdea.trim();
-
-    if (
-      trimmedIdea.length < 6 ||
-      isGenerating ||
-      (mode === "guest" && guestGenerationUsed)
-    ) {
-      return;
-    }
-
-    setError(null);
-    resetProgress();
-    setIsGenerating(true);
-
-    try {
-      const response = await fetch("/api/storefronts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ idea: trimmedIdea })
-      });
-      const payload = (await response.json()) as
-        | CreateStorefrontResponse
-        | CreateStorefrontErrorResponse;
-
-      if (!response.ok) {
-        if (
-          response.status === 409 &&
-          "error" in payload &&
-          "storefront" in payload &&
-          payload.storefront &&
-          "shareUrl" in payload &&
-          payload.shareUrl
-        ) {
-          setGuestGenerationUsed(true);
-          showCreatedStorefront({
-            storefront: payload.storefront,
-            shareUrl: payload.shareUrl,
-            status: payload.status
-          });
-          setError(payload.error);
-          return;
-        }
-
-        throw new Error("error" in payload ? payload.error : "Generation failed");
-      }
-
-      const created = payload as CreateStorefrontResponse;
-      showCreatedStorefront(created);
-
-      if (mode === "guest") {
-        setGuestGenerationUsed(true);
-      }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Generation failed");
-    } finally {
-      setIsGenerating(false);
-    }
   }
 
   async function deleteStorefront() {
@@ -191,9 +125,9 @@ export function StorefrontStudio({
           (currentStorefront) => currentStorefront.id !== storefront.id
         )
       );
-      setResult((currentResult) =>
-        currentResult?.storefront.id === storefront.id ? null : currentResult
-      );
+      if (result?.storefront.id === storefront.id) {
+        clearResult();
+      }
       setStorefrontPendingDelete(null);
       setDeleteToast(`${storefront.content.name} was deleted.`);
     } catch (caught) {
@@ -205,14 +139,7 @@ export function StorefrontStudio({
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void generateFromIdea(idea);
-  }
-
   const isGuestMode = mode === "guest";
-  const generationDisabled =
-    isGenerating || (isGuestMode && guestGenerationUsed);
   const resultStatusText = isGuestMode
     ? result?.status === "existing_guest_storefront"
       ? `${result.storefront.content.name} is already ready.`
@@ -239,6 +166,9 @@ export function StorefrontStudio({
         {result && (
           <div className="border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
             <p className="font-black">{resultStatusText}</p>
+            <p className="mt-1 font-bold text-emerald-800">
+              Finished in {result.finishedInText}
+            </p>
             {result.warning && (
               <p
                 className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"

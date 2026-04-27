@@ -49,6 +49,9 @@ export function StorefrontGenerationForm({
     ? "grid gap-3 sm:grid-cols-2"
     : "flex justify-end";
   const buttonWidth = secondaryAction ? "w-full" : "";
+  const disabledButtonTone = isGenerating
+    ? "disabled:bg-slate-950 disabled:text-white"
+    : "disabled:border disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-600";
 
   return (
     <form
@@ -60,7 +63,7 @@ export function StorefrontGenerationForm({
           Generate your storefront
         </span>
         <textarea
-          className="mt-2 min-h-24 w-full resize-none border-slate-300 bg-slate-50 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-emerald-700 focus:ring-emerald-700 sm:min-h-28"
+          className="mt-2 min-h-32 w-full resize-none border-slate-300 bg-slate-50 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-emerald-700 focus:ring-emerald-700 sm:min-h-28"
           id={textareaId}
           maxLength={220}
           minLength={6}
@@ -84,7 +87,7 @@ export function StorefrontGenerationForm({
 
       <div className={actionLayout}>
         <button
-          className={`inline-flex min-h-11 items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 ${buttonWidth}`}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed ${disabledButtonTone} ${buttonWidth}`}
           disabled={generationDisabled}
           type="submit"
         >

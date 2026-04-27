@@ -49,10 +49,11 @@ export function GenerationProgress({
         />
       </div>
 
-      <ol className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4 sm:gap-x-4">
+      <ol className="mt-4 grid grid-cols-1 gap-0 sm:grid-cols-4 sm:gap-x-4">
         {steps.map((step, index) => {
           const isActive = step.status === "active";
           const isComplete = step.status === "complete";
+          const connectorClass = isComplete ? "bg-emerald-700" : "bg-slate-200";
           const markerClass = isComplete
             ? "border-emerald-700 bg-emerald-700 text-white"
             : isActive
@@ -65,11 +66,18 @@ export function GenerationProgress({
 
           return (
             <li
-              className="flex min-h-[4rem] min-w-0 items-start gap-2"
+              className="relative flex min-h-[4.5rem] min-w-0 items-start gap-2 pb-3 last:min-h-0 last:pb-0 sm:min-h-[4rem] sm:pb-0"
               key={step.label}
             >
+              {index < steps.length - 1 && (
+                <span
+                  className={`absolute bottom-1 left-3.5 top-8 w-px sm:hidden ${connectorClass}`}
+                  data-generation-connector="true"
+                  aria-hidden
+                />
+              )}
               <span
-                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black ${markerClass}`}
+                className={`relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black ${markerClass}`}
               >
                 {isComplete ? (
                   <Check className="h-3.5 w-3.5" aria-hidden />
@@ -86,7 +94,9 @@ export function GenerationProgress({
                 <span
                   className={`mt-1 block text-xs font-bold tabular-nums ${timeClass}`}
                 >
-                  {step.elapsedText ? `Elapsed ${step.elapsedText}` : "Waiting"}
+                  {step.elapsedText
+                    ? `Elapsed ${step.elapsedText}`
+                    : step.estimateLabel}
                 </span>
               </span>
             </li>

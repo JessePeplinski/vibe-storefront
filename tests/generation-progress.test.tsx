@@ -29,7 +29,7 @@ describe("GenerationProgress", () => {
   it("shows total elapsed time and per-step elapsed estimates", () => {
     vi.useFakeTimers();
 
-    render(<ProgressHarness />);
+    const { container } = render(<ProgressHarness />);
 
     let generationProgress = screen.getByRole("status", {
       name: "Generation progress"
@@ -37,10 +37,13 @@ describe("GenerationProgress", () => {
 
     expect(generationProgress).toHaveTextContent("Step 1 of 4");
     expect(generationProgress).toHaveTextContent("Total 0:00");
-    expect(generationProgress).toHaveTextContent("Write storefront copy");
+    expect(generationProgress).toHaveTextContent("Draft storefront copy");
     expect(generationProgress).toHaveTextContent("Elapsed 0:00");
-    expect(generationProgress).toHaveTextContent("Create product image");
-    expect(generationProgress).toHaveTextContent("Waiting");
+    expect(generationProgress).toHaveTextContent("Generate product image");
+    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
+    expect(
+      container.querySelectorAll("[data-generation-connector='true']")
+    ).toHaveLength(3);
 
     act(() => {
       vi.advanceTimersByTime(31_000);
@@ -52,9 +55,9 @@ describe("GenerationProgress", () => {
 
     expect(generationProgress).toHaveTextContent("Step 2 of 4");
     expect(generationProgress).toHaveTextContent("Total 0:31");
-    expect(generationProgress).toHaveTextContent("Write storefront copy");
+    expect(generationProgress).toHaveTextContent("Draft storefront copy");
     expect(generationProgress).toHaveTextContent("Elapsed 0:30");
-    expect(generationProgress).toHaveTextContent("Create product image");
+    expect(generationProgress).toHaveTextContent("Generate product image");
     expect(generationProgress).toHaveTextContent("Elapsed 0:01");
   });
 });

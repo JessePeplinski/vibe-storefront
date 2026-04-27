@@ -380,8 +380,9 @@ describe("StorefrontStudio", () => {
     ).toHaveLength(1);
     expect(generationProgress).toHaveTextContent("Step 1 of 4");
     expect(generationProgress).toHaveTextContent("Total 0:00");
-    expect(generationProgress).toHaveTextContent("Write storefront copy");
+    expect(generationProgress).toHaveTextContent("Draft storefront copy");
     expect(generationProgress).toHaveTextContent("Elapsed 0:00");
+    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
     expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -406,6 +407,7 @@ describe("StorefrontStudio", () => {
     });
 
     expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
+    expect(screen.getByText(/Finished in \d+:\d{2}/)).toBeInTheDocument();
     expect(screen.getByText(productImageWarning)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open share url/i })
