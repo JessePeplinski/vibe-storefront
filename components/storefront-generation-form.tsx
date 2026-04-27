@@ -31,6 +31,7 @@ type StorefrontGenerationFormProps = {
   progress: GenerationProgressState;
   secondaryAction?: SecondaryAction;
   showLabel?: boolean;
+  showOverallEstimate?: boolean;
   textareaId: string;
 };
 
@@ -45,6 +46,7 @@ export function StorefrontGenerationForm({
   progress,
   secondaryAction,
   showLabel = true,
+  showOverallEstimate = true,
   textareaId
 }: StorefrontGenerationFormProps) {
   const actionLayout = secondaryAction
@@ -86,6 +88,7 @@ export function StorefrontGenerationForm({
           elapsedText={progress.elapsedText}
           estimateText={progress.estimateText}
           progressPercent={progress.progressPercent}
+          showOverallEstimate={showOverallEstimate}
           steps={progress.steps}
         />
       )}

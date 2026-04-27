@@ -328,6 +328,7 @@ export function StorefrontStudio({
             label: "See all storefronts"
           }}
           showLabel={false}
+          showOverallEstimate={false}
           textareaId="studio-product-idea"
         />
       </section>
