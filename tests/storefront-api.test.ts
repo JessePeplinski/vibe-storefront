@@ -50,6 +50,30 @@ const productImage = {
   url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/brooklyn-ember-co-image123/product.webp"
 };
 
+const codexUsage = {
+  cached_input_tokens: 100,
+  input_tokens: 1_000,
+  output_tokens: 500
+};
+
+const imageUsage = {
+  input_tokens: 200,
+  input_tokens_details: {
+    text_tokens: 200
+  },
+  output_tokens: 1_000,
+  output_tokens_details: {
+    image_tokens: 1_000
+  },
+  total_tokens: 1_200
+};
+
+const generatedProductImage = {
+  image: productImage,
+  model: "gpt-image-2",
+  usage: imageUsage
+};
+
 const productImageWarning =
   "Storefront created, but the product image could not be generated.";
 const contentCannotBeGenerated = "Content cannot be generated.";
@@ -62,6 +86,14 @@ const sampleStorefrontContentWithImage = {
   }
 };
 
+function generatedStorefront(content = sampleStorefrontContent) {
+  return {
+    content,
+    model: "gpt-5.3-codex",
+    usage: codexUsage
+  };
+}
+
 describe("storefront API", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -70,7 +102,8 @@ describe("storefront API", () => {
     mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
     mocks.deleteProductImage.mockResolvedValue(undefined);
     mocks.deleteStorefrontForOwner.mockResolvedValue(null);
-    mocks.generateProductImage.mockResolvedValue(productImage);
+    mocks.generateProductImage.mockResolvedValue(generatedProductImage);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(null);
   });
 
@@ -87,7 +120,7 @@ describe("storefront API", () => {
 
   it("generates and persists a storefront for the Clerk user", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.createStorefront.mockResolvedValue({
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
@@ -126,10 +159,25 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContentWithImage,
+      generationCost: expect.objectContaining({
+        currency: "USD",
+        totalUsd: expect.any(Number)
+      }),
       slug: "brooklyn-ember-co-image123"
     });
     expect(payload.shareUrl).toBe(
       "https://vibe.example/s/brooklyn-ember-co-image123"
+    );
+    expect(payload).not.toHaveProperty("usageBudget");
+    expect(payload.usageCost).toMatchObject({
+      currency: "USD",
+      imageUsd: expect.any(Number),
+      isEstimate: true,
+      textUsd: expect.any(Number),
+      totalUsd: expect.any(Number)
+    });
+    expect(payload.storefront.generation_cost).toMatchObject(
+      payload.usageCost
     );
   });
 
@@ -174,10 +222,12 @@ describe("storefront API", () => {
 
   it("rejects blocked generated content before image generation or save", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.generateStorefront.mockResolvedValue({
-      ...sampleStorefrontContent,
-      tagline: "N S F W poster drops for collectors."
-    });
+    mocks.generateStorefront.mockResolvedValue(
+      generatedStorefront({
+        ...sampleStorefrontContent,
+        tagline: "N S F W poster drops for collectors."
+      })
+    );
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
@@ -199,7 +249,7 @@ describe("storefront API", () => {
 
   it("retries product image generation and saves the storefront when a retry succeeds", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.generateProductImage
       .mockRejectedValueOnce(
         new Error("Unable to generate product image: upstream timeout")
@@ -207,7 +257,7 @@ describe("storefront API", () => {
       .mockRejectedValueOnce(
         new Error("Unable to generate product image: upstream timeout")
       )
-      .mockResolvedValueOnce(productImage);
+      .mockResolvedValueOnce(generatedProductImage);
     mocks.createStorefront.mockResolvedValue({
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
@@ -234,6 +284,10 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContentWithImage,
+      generationCost: expect.objectContaining({
+        currency: "USD",
+        totalUsd: expect.any(Number)
+      }),
       slug: "brooklyn-ember-co-image123"
     });
     expect(payload).not.toHaveProperty("warning");
@@ -284,7 +338,7 @@ describe("storefront API", () => {
     vi.spyOn(crypto, "randomUUID").mockReturnValue(guestSessionId);
     mocks.auth.mockResolvedValue({ userId: null });
     mocks.getStorefrontByAnonymousSession.mockResolvedValue(null);
-    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.createStorefront.mockResolvedValue({
       id: "guest-storefront-id",
       owner_clerk_user_id: null,
@@ -321,6 +375,10 @@ describe("storefront API", () => {
       anonymousSessionId: guestSessionId,
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContentWithImage,
+      generationCost: expect.objectContaining({
+        currency: "USD",
+        totalUsd: expect.any(Number)
+      }),
       slug: "brooklyn-ember-co-image123"
     });
     expect(payload.shareUrl).toBe(
@@ -377,7 +435,7 @@ describe("storefront API", () => {
 
   it("saves the storefront without an image when product image retries are exhausted", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.generateProductImage.mockRejectedValue(
       new Error("Unable to generate product image: quota exceeded")
     );
@@ -407,6 +465,10 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContent,
+      generationCost: expect.objectContaining({
+        currency: "USD",
+        totalUsd: expect.any(Number)
+      }),
       slug: "brooklyn-ember-co-image123"
     });
     expect(mocks.deleteProductImage).not.toHaveBeenCalled();
@@ -424,7 +486,7 @@ describe("storefront API", () => {
 
   it("deletes an uploaded product image if the database insert fails", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.createStorefront.mockRejectedValue(
       new Error("Unable to save storefront: duplicate slug")
     );

@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import { clerkClient, type User } from "@clerk/nextjs/server";
 import Link from "next/link";
-import { CalendarDays, ExternalLink, Sparkles, UserRound } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  ReceiptText,
+  Sparkles,
+  UserRound
+} from "lucide-react";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import { listPublishedStorefronts } from "@/lib/storefronts";
+import { formatUsageUsd } from "@/lib/usage-format";
 
 export const dynamic = "force-dynamic";
 
@@ -111,19 +118,33 @@ export default async function AllStorefrontsPage() {
                       {storefront.content.tagline}
                     </p>
                     <div className="mt-4 grid gap-2 text-sm font-bold text-slate-600">
-                      <p className="inline-flex items-center gap-2">
+                      <p className="flex items-center gap-2">
                         <UserRound
                           className="h-4 w-4 shrink-0 text-slate-400"
                           aria-hidden
                         />
                         <span>By {creatorLabel}</span>
                       </p>
-                      <p className="inline-flex items-center gap-2">
+                      <p className="flex items-center gap-2">
                         <CalendarDays
                           className="h-4 w-4 shrink-0 text-slate-400"
                           aria-hidden
                         />
                         <span>Created {formatCreatedDate(storefront.created_at)}</span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <ReceiptText
+                          className="h-4 w-4 shrink-0 text-slate-400"
+                          aria-hidden
+                        />
+                        {storefront.generation_cost ? (
+                          <span>
+                            Estimated cost{" "}
+                            {formatUsageUsd(storefront.generation_cost.totalUsd)}
+                          </span>
+                        ) : (
+                          <span>Estimated cost not recorded</span>
+                        )}
                       </p>
                     </div>
                     <p className="mt-4 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">

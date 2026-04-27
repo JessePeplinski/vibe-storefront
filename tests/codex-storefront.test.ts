@@ -32,7 +32,12 @@ describe("generateStorefront", () => {
       run: mocks.run
     });
     mocks.run.mockResolvedValue({
-      finalResponse: JSON.stringify(sampleStorefrontContent)
+      finalResponse: JSON.stringify(sampleStorefrontContent),
+      usage: {
+        cached_input_tokens: 20,
+        input_tokens: 100,
+        output_tokens: 50
+      }
     });
   });
 
@@ -45,7 +50,15 @@ describe("generateStorefront", () => {
       "small-batch hot sauce from Brooklyn"
     );
 
-    expect(storefront).toEqual(sampleStorefrontContent);
+    expect(storefront).toEqual({
+      content: sampleStorefrontContent,
+      model: "gpt-5.3-codex",
+      usage: {
+        cached_input_tokens: 20,
+        input_tokens: 100,
+        output_tokens: 50
+      }
+    });
     expect(mocks.Codex).toHaveBeenCalledWith(
       expect.objectContaining({
         codexPathOverride: "/tmp/test-codex"

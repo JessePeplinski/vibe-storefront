@@ -41,6 +41,14 @@ const productImage = {
 
 const productImageWarning =
   "Storefront created, but the product image could not be generated.";
+const usageCost = {
+  currency: "USD" as const,
+  imageUsd: 0.05,
+  isEstimate: true as const,
+  textUsd: 0.006,
+  totalUsd: 0.056,
+  unavailableLineItems: []
+};
 
 function exampleStorefront(
   overrides: Partial<StorefrontRecord> = {}
@@ -143,6 +151,7 @@ describe("home page", () => {
         storefront: typeof createdStorefront;
         shareUrl: string;
         status: "created";
+        usageCost?: typeof usageCost;
         warning?: string;
       }>;
     }) => void;
@@ -152,6 +161,7 @@ describe("home page", () => {
         storefront: typeof createdStorefront;
         shareUrl: string;
         status: "created";
+        usageCost?: typeof usageCost;
         warning?: string;
       }>;
     }>((resolve) => {
@@ -237,14 +247,15 @@ describe("home page", () => {
     expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
     expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/storefronts",
-      expect.objectContaining({
-        body: JSON.stringify({ idea: typedIdea }),
-        method: "POST"
-      })
-    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/storefronts",
+        expect.objectContaining({
+          body: JSON.stringify({ idea: typedIdea }),
+          method: "POST"
+        })
+      );
+    });
 
     await act(async () => {
       resolveFetch({
@@ -253,6 +264,7 @@ describe("home page", () => {
           storefront: createdStorefront,
           shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
           status: "created",
+          usageCost,
           warning: productImageWarning
         })
       });
@@ -263,6 +275,8 @@ describe("home page", () => {
       await screen.findByRole("link", { name: /view your storefront/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
     expect(screen.getByText(/Finished in \d+:\d{2}/)).toBeInTheDocument();
+    expect(screen.getByText("This request cost about $0.06."))
+      .toBeInTheDocument();
     expect(screen.getByText(productImageWarning)).toBeInTheDocument();
   });
 
@@ -308,5 +322,6 @@ describe("home page", () => {
     expect(
       screen.getByRole("link", { name: /open existing storefront/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(screen.getByText("No new API spend.")).toBeInTheDocument();
   });
 });

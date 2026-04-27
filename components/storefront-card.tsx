@@ -8,10 +8,12 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  ReceiptText,
   Trash2
 } from "lucide-react";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
+import { formatUsageUsd } from "@/lib/usage-format";
 
 type StorefrontCardProps = {
   storefront: StorefrontRecord;
@@ -59,9 +61,15 @@ export function StorefrontCard({
         <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-500">
           From: {storefront.idea}
         </p>
-        <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
+        <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-500">
           <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
           Created {createdDate}
+        </p>
+        <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-slate-500">
+          <ReceiptText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {storefront.generation_cost
+            ? `Estimated cost ${formatUsageUsd(storefront.generation_cost.totalUsd)}`
+            : "Estimated cost not recorded"}
         </p>
       </div>
       <div
