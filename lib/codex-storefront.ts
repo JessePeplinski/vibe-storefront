@@ -10,6 +10,7 @@ import {
   type StorefrontContent,
   storefrontContentSchema
 } from "@/lib/storefront-schema";
+import type { CodexTokenUsage } from "@/lib/usage-costs";
 
 const storefrontJsonSchema = zodToJsonSchema(codexStorefrontContentSchema, {
   $refStrategy: "none",
@@ -67,9 +68,15 @@ function parseCodexResponse(finalResponse: string): StorefrontContent {
   return storefrontContentSchema.parse(parsed);
 }
 
+export type GeneratedStorefrontContent = {
+  content: StorefrontContent;
+  model: string;
+  usage: CodexTokenUsage | null;
+};
+
 export async function generateStorefront(
   idea: string
-): Promise<StorefrontContent> {
+): Promise<GeneratedStorefrontContent> {
   const trimmedIdea = idea.trim();
 
   if (trimmedIdea.length < 6) {
@@ -79,6 +86,7 @@ export async function generateStorefront(
   const codexHome = join("/tmp", "vibe-storefront-codex");
   await mkdir(codexHome, { recursive: true });
 
+  const model = process.env.CODEX_MODEL ?? DEFAULT_CODEX_MODEL;
   const codex = new Codex({
     codexPathOverride: resolveCodexBinaryPath(),
     env: {
@@ -88,7 +96,7 @@ export async function generateStorefront(
       PATH: process.env.PATH ?? ""
     },
     config: {
-      model: process.env.CODEX_MODEL ?? DEFAULT_CODEX_MODEL,
+      model,
       approval_policy: "never",
       sandbox_mode: "read-only",
       model_reasoning_effort: "low"
@@ -103,7 +111,11 @@ export async function generateStorefront(
     outputSchema: storefrontJsonSchema
   });
 
-  return parseCodexResponse(turn.finalResponse);
+  return {
+    content: parseCodexResponse(turn.finalResponse),
+    model,
+    usage: turn.usage
+  };
 }
 
 export const __testables = {

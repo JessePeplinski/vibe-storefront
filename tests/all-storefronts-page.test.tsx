@@ -25,6 +25,15 @@ const productImage = {
   url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/ember-table-abc123/product.webp"
 };
 
+const generationCost = {
+  currency: "USD" as const,
+  imageUsd: 0.031,
+  isEstimate: true as const,
+  textUsd: 0.008593,
+  totalUsd: 0.039593,
+  unavailableLineItems: []
+};
+
 function storefront(
   overrides: Partial<StorefrontRecord> = {}
 ): StorefrontRecord {
@@ -81,7 +90,8 @@ describe("all storefronts page", () => {
         owner_clerk_user_id: "user_full",
         slug: "ember-table-abc123",
         idea: "tableside coffee heaters",
-        content: storefrontContent("Ember Table", productImage)
+        content: storefrontContent("Ember Table", productImage),
+        generation_cost: generationCost
       }),
       storefront({
         id: "partial-name-id",
@@ -127,6 +137,8 @@ describe("all storefronts page", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("Created Apr 23, 2026")).toHaveLength(3);
     expect(screen.getByText("Created Apr 22, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Estimated cost $0.04")).toBeInTheDocument();
+    expect(screen.getAllByText("Estimated cost not recorded")).toHaveLength(3);
     expect(
       screen.getByRole("link", { name: "Generate storefront" })
     ).toHaveAttribute("href", "/");

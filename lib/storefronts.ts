@@ -1,16 +1,19 @@
 import { buildStorefrontSlug } from "@/lib/slug";
 import {
   type StorefrontContent,
+  type StorefrontGenerationCost,
   type StorefrontRecord,
-  storefrontContentSchema
+  storefrontContentSchema,
+  storefrontGenerationCostSchema
 } from "@/lib/storefront-schema";
 import {
   createSupabasePublicClient,
   createSupabaseServiceClient
 } from "@/lib/supabase/server";
 
-type StorefrontRow = Omit<StorefrontRecord, "content"> & {
+type StorefrontRow = Omit<StorefrontRecord, "content" | "generation_cost"> & {
   content: unknown;
+  generation_cost?: unknown | null;
 };
 
 type StorefrontOwner =
@@ -26,7 +29,10 @@ type StorefrontOwner =
 function parseStorefront(row: StorefrontRow): StorefrontRecord {
   return {
     ...row,
-    content: storefrontContentSchema.parse(row.content)
+    content: storefrontContentSchema.parse(row.content),
+    generation_cost: row.generation_cost
+      ? storefrontGenerationCostSchema.parse(row.generation_cost)
+      : null
   };
 }
 
@@ -48,27 +54,57 @@ function storefrontOwnerFields(params: StorefrontOwner) {
   };
 }
 
+function isMissingGenerationCostColumnError(message: string): boolean {
+  return (
+    message.includes("generation_cost") &&
+    (message.includes("schema cache") || message.includes("column"))
+  );
+}
+
 export async function createStorefront(
   params: StorefrontOwner & {
     idea: string;
     content: StorefrontContent;
+    generationCost?: StorefrontGenerationCost | null;
     slug?: string;
   }
 ): Promise<StorefrontRecord> {
   const supabase = createSupabaseServiceClient();
   const slug = params.slug ?? buildStorefrontSlug(params.content.name);
+  const insertPayload = {
+    ...storefrontOwnerFields(params),
+    idea: params.idea,
+    slug,
+    content: params.content,
+    published: true
+  };
+  const insertPayloadWithCost = params.generationCost
+    ? {
+        ...insertPayload,
+        generation_cost: params.generationCost
+      }
+    : insertPayload;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("storefronts")
-    .insert({
-      ...storefrontOwnerFields(params),
-      idea: params.idea,
-      slug,
-      content: params.content,
-      published: true
-    })
+    .insert(insertPayloadWithCost)
     .select("*")
     .single();
+
+  if (
+    error &&
+    params.generationCost &&
+    isMissingGenerationCostColumnError(error.message)
+  ) {
+    const retry = await supabase
+      .from("storefronts")
+      .insert(insertPayload)
+      .select("*")
+      .single();
+
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     throw new Error(`Unable to save storefront: ${error.message}`);
