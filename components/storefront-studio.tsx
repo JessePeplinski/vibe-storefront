@@ -299,7 +299,7 @@ export function StorefrontStudio({
             className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl"
             id="generate-title"
           >
-            What storefront should we generate
+            Generate a storefront
           </h1>
         </div>
 
