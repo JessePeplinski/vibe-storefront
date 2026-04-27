@@ -435,6 +435,30 @@ describe("StorefrontStudio", () => {
       .toBeInTheDocument();
   });
 
+  it("shows the blocked-content error without showing a result", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({
+        error: "Content cannot be generated."
+      })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<StorefrontStudio />);
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: "nsfw poster subscription boxes" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
+
+    expect(
+      await screen.findByText("Content cannot be generated.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Storefront saved.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /open share url/i }))
+      .not.toBeInTheDocument();
+  });
+
   it("frames repeated signed-in prompts as reusing the existing storefront", async () => {
     const selectedIdea = STARTER_IDEAS[0];
     const existingStorefront = storefront({
