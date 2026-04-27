@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { sampleStorefrontContent } from "@/lib/storefront-schema";
+import {
+  sampleStorefrontContent,
+  type StorefrontContent
+} from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => ({
   getPublicStorefrontBySlug: vi.fn()
@@ -23,6 +26,27 @@ const sampleStorefrontContentWithImage = {
   product: {
     ...sampleStorefrontContent.product,
     image: productImage
+  }
+};
+
+const darkUnreadableStorefrontContent: StorefrontContent = {
+  ...sampleStorefrontContent,
+  name: "Rewind Relics",
+  tagline: "Movie and game memories you can hold onto.",
+  hero: {
+    ...sampleStorefrontContent.hero,
+    body: "Shop curated memorabilia, display-ready collectibles, and gift-worthy throwbacks inspired by the films, arcades, and console legends Gen X grew up with."
+  },
+  theme: {
+    mood: "Cinematic retro with arcade energy",
+    palette: {
+      background: "#111827",
+      surface: "#F9FAFB",
+      primary: "#B91C1C",
+      secondary: "#1D4ED8",
+      accent: "#F59E0B",
+      text: "#111827"
+    }
   }
 };
 
@@ -88,6 +112,37 @@ describe("public storefront page", () => {
     expect(screen.getByText("Source prompt: small-batch hot sauce from Brooklyn")).toBeInTheDocument();
     expect(screen.queryByText("background")).not.toBeInTheDocument();
     expect(screen.queryByText("#f7efe5")).not.toBeInTheDocument();
+  });
+
+  it("normalizes unreadable dark palettes on public storefronts", async () => {
+    mocks.getPublicStorefrontBySlug.mockResolvedValueOnce({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "rewind-relics-ppapx8",
+      idea: "nostalgic memorabilia gifts",
+      content: darkUnreadableStorefrontContent,
+      published: true,
+      created_at: "2026-04-27T00:00:00.000Z",
+      updated_at: "2026-04-27T00:00:00.000Z"
+    });
+    const Page = (await import("@/app/s/[slug]/page")).default;
+
+    render(
+      await Page({
+        params: Promise.resolve({ slug: "rewind-relics-ppapx8" })
+      })
+    );
+
+    const article = screen.getByRole("article");
+
+    expect(article.style.getPropertyValue("--sf-bg")).toBe("#111827");
+    expect(article.style.getPropertyValue("--sf-text")).toBe("#f8fafc");
+    expect(article.style.getPropertyValue("--sf-muted")).not.toBe("#111827");
+    expect(article.style.getPropertyValue("--sf-support")).toBe("#F59E0B");
+    expect(
+      screen.getByText(darkUnreadableStorefrontContent.hero.body)
+    ).toHaveClass("text-[var(--sf-muted)]");
   });
 
   it("opens a mock checkout modal from the landing page CTA", async () => {

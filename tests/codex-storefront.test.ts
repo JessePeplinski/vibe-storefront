@@ -76,6 +76,14 @@ describe("generateStorefront", () => {
         })
       })
     );
+    const prompt = __testables.buildPrompt("small-batch hot sauce from Brooklyn");
+
+    expect(prompt).toContain(
+      "The palette background and text colors must never be identical or near-identical."
+    );
+    expect(prompt).toContain(
+      "For dark backgrounds, choose a light text color. For light backgrounds, choose a dark text color."
+    );
     const outputSchema = __testables.storefrontJsonSchema as {
       properties: {
         product: {

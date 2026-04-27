@@ -58,6 +58,9 @@ function buildPrompt(idea: string): string {
     "Return only JSON that matches the provided schema. Do not include markdown.",
     "The page should feel specific, demo-ready, and plausible. Testimonials must be fictional.",
     "Use accessible color contrast. Use hex colors only.",
+    "The palette background and text colors must never be identical or near-identical.",
+    "For dark backgrounds, choose a light text color. For light backgrounds, choose a dark text color.",
+    "Primary, secondary, and accent colors must be readable when used for labels or emphasis on the background and surface colors.",
     "",
     `Product idea: ${idea}`
   ].join("\n");

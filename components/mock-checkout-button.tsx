@@ -19,7 +19,7 @@ export function MockCheckoutButton({
   return (
     <>
       <button
-        className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-white transition hover:brightness-95"
+        className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-[var(--sf-on-primary)] transition hover:brightness-95"
         onClick={() => setIsOpen(true)}
         type="button"
       >
