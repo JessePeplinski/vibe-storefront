@@ -18,11 +18,10 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
-npm start -- -p 3100
 npm run smoke:browser
 ```
 
-Run the checks sequentially so `next build` and `tsc` do not compete over `.next` artifacts. For the browser smoke test, run `npm start -- -p 3100` in one terminal, run the smoke command against that server, then stop the server after it passes. The smoke test defaults to `http://127.0.0.1:3100`; override with `PLAYWRIGHT_BASE_URL` only when using a different port.
+Run the checks sequentially so `next build` and `tsc` do not compete over `.next` artifacts. The browser smoke command starts the built app on `http://127.0.0.1:3100`, runs the Playwright smoke test, and stops the server afterward. Override the smoke port with `SMOKE_PORT` or the tested URL with `PLAYWRIGHT_BASE_URL` only when needed.
 
 ## Environment Rules
 
@@ -30,6 +29,7 @@ Run the checks sequentially so `next build` and `tsc` do not compete over `.next
 - `.env.local` is for local development and must stay gitignored.
 - `.env.prod` is an ignored local reference file for production/demo keys.
 - Use Clerk development keys locally.
+- Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman; start it before running the Supabase CLI.
 - Use the local Supabase stack for local testing:
 
 ```bash
@@ -46,6 +46,21 @@ npx -y supabase start
 - The app validates Codex output with the Zod schema in `lib/storefront-schema.ts`.
 - Supabase service-role writes should stay server-side only.
 - Public storefront reads should continue to use the public/anon Supabase client and RLS.
+
+## Repo Map
+
+- Dashboard UI lives in `components/storefront-studio.tsx`.
+- Homepage UI lives in `app/(app)/page.tsx`; its generation form is wrapped by `components/landing-idea-teaser.tsx`.
+- All storefronts gallery lives in `app/(app)/storefronts/page.tsx`.
+- Public share pages render through `components/storefront-renderer.tsx`.
+- `components/storefront-generation-form.tsx` is shared by homepage and dashboard; visible label/copy/layout changes there can affect both surfaces.
+
+## Local Testing Notes
+
+- `npm run smoke:browser` expects `npm run build` to have already created `.next`.
+- If Playwright cannot find Chromium, run `npx playwright install chromium`.
+- Failed Playwright runs can create `test-results/`; remove it before committing.
+- Local generate/save/share testing must use the local Supabase stack, not production Supabase.
 
 ## Testing Notes
 
