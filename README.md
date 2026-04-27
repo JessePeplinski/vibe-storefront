@@ -16,7 +16,7 @@ Use the production URL for deployed smoke testing. Generation requires the Verce
 - Supabase Postgres with RLS
 - `@openai/codex-sdk` and `@openai/codex` for storefront copy generation
 - OpenAI Image API with `gpt-image-2` for generated product imagery
-- Vitest and Testing Library
+- Vitest, Testing Library, and Playwright
 
 ## Environment
 
@@ -110,11 +110,10 @@ After the dev server is running:
 ## Verification
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
+npm run verify
 ```
+
+`npm run verify` runs typecheck, lint, unit tests, production build, and the Playwright browser smoke test sequentially. The smoke test starts the built app, verifies the homepage and all-storefronts page in Chromium, and stops the temporary server afterward.
 
 The Codex SDK route runs in the Node.js runtime because the SDK spawns the local Codex CLI. In deployed Vercel environments, the route uses `/tmp` for Codex runtime state and resolves the packaged platform Codex binary when available. If generation fails with quota errors, check the OpenAI project tied to `CODEX_API_KEY` and `OPENAI_API_KEY` before changing persistence code.
 
