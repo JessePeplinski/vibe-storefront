@@ -9,6 +9,7 @@ import {
 const MILLIS_PER_SECOND = 1000;
 
 export type GenerationPhase = {
+  estimateLabel: string;
   label: string;
   startsAtSecond: number;
 };
@@ -22,19 +23,23 @@ export type GenerationProgressStep = GenerationPhase & {
 
 export const GENERATION_PHASES: GenerationPhase[] = [
   {
-    label: "Write storefront copy",
+    estimateLabel: "Estimated first 30 seconds",
+    label: "Draft storefront copy",
     startsAtSecond: 0
   },
   {
-    label: "Create product image",
+    estimateLabel: "Estimated 0:30-1:50",
+    label: "Generate product image",
     startsAtSecond: 30
   },
   {
-    label: "Upload image",
+    estimateLabel: "Estimated 1:50-2:05",
+    label: "Store image asset",
     startsAtSecond: 110
   },
   {
-    label: "Save share page",
+    estimateLabel: "Estimated final 10 seconds",
+    label: "Publish share page",
     startsAtSecond: 125
   }
 ];

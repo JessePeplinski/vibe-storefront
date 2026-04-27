@@ -1,98 +1,32 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
-import { useGenerationProgress } from "@/components/use-generation-countdown";
-import type { StorefrontRecord } from "@/lib/storefront-schema";
-
-type CreateStorefrontResponse = {
-  storefront: StorefrontRecord;
-  shareUrl: string;
-  status?: "created" | "existing_guest_storefront" | "existing_prompt_storefront";
-  warning?: string;
-};
-
-type CreateStorefrontErrorResponse = {
-  error: string;
-  storefront?: StorefrontRecord;
-  shareUrl?: string;
-  status?: "existing_guest_storefront";
-};
+import { useStorefrontGeneration } from "@/components/use-storefront-generation";
 
 export function LandingIdeaTeaser() {
   const { openSignIn } = useClerk();
-  const [idea, setIdea] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CreateStorefrontResponse | null>(null);
-  const [existingGuestStorefront, setExistingGuestStorefront] = useState(false);
-  const generationProgress = useGenerationProgress(isGenerating);
-  const { resetProgress } = generationProgress;
-
-  async function generateFromIdea(nextIdea = idea) {
-    const trimmedIdea = nextIdea.trim();
-
-    if (isGenerating || result || trimmedIdea.length < 6) {
-      return;
-    }
-
-    setError(null);
-    resetProgress();
-    setIsGenerating(true);
-
-    try {
-      const response = await fetch("/api/storefronts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ idea: trimmedIdea })
-      });
-      const payload = (await response.json()) as
-        | CreateStorefrontResponse
-        | CreateStorefrontErrorResponse;
-
-      if (!response.ok) {
-        if (
-          response.status === 409 &&
-          "error" in payload &&
-          payload.storefront &&
-          payload.shareUrl
-        ) {
-          setResult({
-            storefront: payload.storefront,
-            shareUrl: payload.shareUrl,
-            status: payload.status
-          });
-          setExistingGuestStorefront(true);
-          setError(payload.error);
-          return;
-        }
-
-        throw new Error("error" in payload ? payload.error : "Generation failed");
-      }
-
-      setResult(payload as CreateStorefrontResponse);
-      setExistingGuestStorefront(false);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Generation failed");
-    } finally {
-      setIsGenerating(false);
-    }
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void generateFromIdea();
-  }
+  const {
+    error,
+    generationDisabled,
+    handleSubmit,
+    idea,
+    isGenerating,
+    progress: generationProgress,
+    result,
+    setIdea
+  } = useStorefrontGeneration({
+    disableAfterResult: true,
+    mode: "guest"
+  });
 
   const createdStorefrontPath = result
     ? `/s/${result.storefront.slug}`
     : undefined;
-  const generationDisabled = isGenerating || Boolean(result);
+  const existingGuestStorefront =
+    result?.status === "existing_guest_storefront";
   const resultHeading = existingGuestStorefront
     ? `${result?.storefront.content.name} is already ready.`
     : "Storefront ready.";
@@ -113,6 +47,11 @@ export function LandingIdeaTeaser() {
             <p className="text-sm font-black text-emerald-950">
               {resultHeading}
             </p>
+            {result && (
+              <p className="mt-1 text-sm font-bold text-emerald-800">
+                Finished in {result.finishedInText}
+              </p>
+            )}
             {result?.warning && (
               <p
                 className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
