@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
+import {
+  CONTENT_CANNOT_BE_GENERATED_ERROR,
+  containsBlockedNsfwTerm,
+  storefrontContentContainsBlockedTerms
+} from "@/lib/content-safety";
 import { generateStorefront } from "@/lib/codex-storefront";
 import { appBaseUrl } from "@/lib/env";
 import { deleteProductImage, generateProductImage } from "@/lib/product-images";
@@ -32,6 +37,13 @@ const createStorefrontRequestSchema = z.object({
 
 const guestSessionSchema = z.string().uuid();
 
+function contentCannotBeGeneratedResponse() {
+  return NextResponse.json(
+    { error: CONTENT_CANNOT_BE_GENERATED_ERROR },
+    { status: 400 }
+  );
+}
+
 function shareUrlForSlug(slug: string): string {
   return `${appBaseUrl()}/s/${slug}`;
 }
@@ -60,6 +72,11 @@ async function generateStorefrontWithOptionalProductImage(
   idea: string
 ): Promise<{ content: StorefrontContent; slug: string; warning?: string }> {
   const content = await generateStorefront(idea);
+
+  if (storefrontContentContainsBlockedTerms(content)) {
+    throw new Error(CONTENT_CANNOT_BE_GENERATED_ERROR);
+  }
+
   const slug = buildStorefrontSlug(content.name);
   const image = await generateProductImageWithRetries({ content, idea, slug });
 
@@ -159,6 +176,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (containsBlockedNsfwTerm(parsed.data.idea)) {
+    return contentCannotBeGeneratedResponse();
+  }
+
   try {
     if (userId) {
       const existingStorefront = await getStorefrontByOwnerAndIdea({
@@ -233,7 +254,9 @@ export async function POST(request: NextRequest) {
   } catch (caught) {
     const message =
       caught instanceof Error ? caught.message : "Unable to generate storefront.";
+    const status =
+      message === CONTENT_CANNOT_BE_GENERATED_ERROR ? 400 : 500;
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -52,6 +52,7 @@ const productImage = {
 
 const productImageWarning =
   "Storefront created, but the product image could not be generated.";
+const contentCannotBeGenerated = "Content cannot be generated.";
 
 const sampleStorefrontContentWithImage = {
   ...sampleStorefrontContent,
@@ -130,6 +131,70 @@ describe("storefront API", () => {
     expect(payload.shareUrl).toBe(
       "https://vibe.example/s/brooklyn-ember-co-image123"
     );
+  });
+
+  it("rejects blocked Clerk user prompts before generation", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "nsfw poster subscription boxes" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.getStorefrontByOwnerAndIdea).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+  });
+
+  it("rejects blocked guest prompts without creating a guest session", async () => {
+    mocks.auth.mockResolvedValue({ userId: null });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "adult-toy travel organizer" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.getStorefrontByAnonymousSession).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("rejects blocked generated content before image generation or save", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue({
+      ...sampleStorefrontContent,
+      tagline: "N S F W poster drops for collectors."
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "limited-run poster subscription boxes" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.generateStorefront).toHaveBeenCalledWith(
+      "limited-run poster subscription boxes"
+    );
+    expect(mocks.buildStorefrontSlug).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
   });
 
   it("retries product image generation and saves the storefront when a retry succeeds", async () => {
