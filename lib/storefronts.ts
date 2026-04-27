@@ -94,13 +94,41 @@ export async function listStorefrontsForOwner(
   return ((data ?? []) as StorefrontRow[]).map(parseStorefront);
 }
 
-export async function listPublishedStorefronts(): Promise<StorefrontRecord[]> {
-  const supabase = createSupabasePublicClient();
+export async function deleteStorefrontForOwner(params: {
+  ownerClerkUserId: string;
+  storefrontId: string;
+}): Promise<StorefrontRecord | null> {
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
+    .from("storefronts")
+    .delete()
+    .eq("id", params.storefrontId)
+    .eq("owner_clerk_user_id", params.ownerClerkUserId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to delete storefront: ${error.message}`);
+  }
+
+  return data ? parseStorefront(data as StorefrontRow) : null;
+}
+
+export async function listPublishedStorefronts(
+  limit?: number
+): Promise<StorefrontRecord[]> {
+  const supabase = createSupabasePublicClient();
+  let query = supabase
     .from("storefronts")
     .select("*")
     .eq("published", true)
     .order("created_at", { ascending: false });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(`Unable to load storefronts: ${error.message}`);

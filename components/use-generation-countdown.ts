@@ -9,25 +9,37 @@ import {
 const MILLIS_PER_SECOND = 1000;
 
 export type GenerationPhase = {
+  estimateLabel: string;
   label: string;
   startsAtSecond: number;
 };
 
+export type GenerationStepStatus = "active" | "complete" | "pending";
+
+export type GenerationProgressStep = GenerationPhase & {
+  elapsedText: string | null;
+  status: GenerationStepStatus;
+};
+
 export const GENERATION_PHASES: GenerationPhase[] = [
   {
-    label: "Write storefront copy",
+    estimateLabel: "Estimated first 30 seconds",
+    label: "Draft storefront copy",
     startsAtSecond: 0
   },
   {
-    label: "Create product image",
+    estimateLabel: "Estimated 0:30-1:50",
+    label: "Generate product image",
     startsAtSecond: 30
   },
   {
-    label: "Upload image",
+    estimateLabel: "Estimated 1:50-2:05",
+    label: "Store image asset",
     startsAtSecond: 110
   },
   {
-    label: "Save share page",
+    estimateLabel: "Estimated final 10 seconds",
+    label: "Publish share page",
     startsAtSecond: 125
   }
 ];
@@ -39,12 +51,59 @@ function formatElapsedTime(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
+function buildGenerationSteps(
+  elapsedSeconds: number,
+  currentPhaseIndex: number,
+  isActive: boolean
+): GenerationProgressStep[] {
+  return GENERATION_PHASES.map((phase, index) => {
+    if (!isActive) {
+      return {
+        ...phase,
+        elapsedText: null,
+        status: "pending"
+      };
+    }
+
+    if (index < currentPhaseIndex) {
+      const nextPhaseStart =
+        GENERATION_PHASES[index + 1]?.startsAtSecond ??
+        STOREFRONT_GENERATION_ESTIMATE_SECONDS;
+
+      return {
+        ...phase,
+        elapsedText: formatElapsedTime(nextPhaseStart - phase.startsAtSecond),
+        status: "complete"
+      };
+    }
+
+    if (index === currentPhaseIndex) {
+      return {
+        ...phase,
+        elapsedText: formatElapsedTime(
+          Math.max(0, elapsedSeconds - phase.startsAtSecond)
+        ),
+        status: "active"
+      };
+    }
+
+    return {
+      ...phase,
+      elapsedText: null,
+      status: "pending"
+    };
+  });
+}
+
 type GenerationProgress = {
   currentPhaseIndex: number;
+  elapsedSeconds: number;
   elapsedText: string | null;
   estimateText: string;
   phases: GenerationPhase[];
+  progressPercent: number;
   resetProgress: () => void;
+  steps: GenerationProgressStep[];
 };
 
 export function useGenerationProgress(
@@ -68,10 +127,13 @@ export function useGenerationProgress(
   if (!isActive) {
     return {
       currentPhaseIndex: 0,
+      elapsedSeconds: 0,
       elapsedText: null,
       estimateText: STOREFRONT_GENERATION_ESTIMATE_LABEL,
       phases: GENERATION_PHASES,
-      resetProgress
+      progressPercent: 0,
+      resetProgress,
+      steps: buildGenerationSteps(0, 0, false)
     };
   }
 
@@ -87,9 +149,13 @@ export function useGenerationProgress(
 
   return {
     currentPhaseIndex,
+    elapsedSeconds,
     elapsedText: formatElapsedTime(elapsedSeconds),
     estimateText: STOREFRONT_GENERATION_ESTIMATE_LABEL,
     phases: GENERATION_PHASES,
-    resetProgress
+    progressPercent:
+      (cappedElapsedSeconds / STOREFRONT_GENERATION_ESTIMATE_SECONDS) * 100,
+    resetProgress,
+    steps: buildGenerationSteps(elapsedSeconds, currentPhaseIndex, true)
   };
 }

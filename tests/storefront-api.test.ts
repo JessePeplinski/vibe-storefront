@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => {
     auth: vi.fn(),
     buildStorefrontSlug: vi.fn(),
     createStorefront: vi.fn(),
+    deleteStorefrontForOwner: vi.fn(),
     deleteProductImage: vi.fn(),
     generateProductImage: vi.fn(),
     generateStorefront: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@/lib/slug", () => ({
 
 vi.mock("@/lib/storefronts", () => ({
   createStorefront: mocks.createStorefront,
+  deleteStorefrontForOwner: mocks.deleteStorefrontForOwner,
   getStorefrontByAnonymousSession: mocks.getStorefrontByAnonymousSession,
   getStorefrontByOwnerAndIdea: mocks.getStorefrontByOwnerAndIdea,
   listStorefrontsForOwner: mocks.listStorefrontsForOwner
@@ -47,6 +49,10 @@ const productImage = {
   storagePath: "storefronts/brooklyn-ember-co-image123/product.webp",
   url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/brooklyn-ember-co-image123/product.webp"
 };
+
+const productImageWarning =
+  "Storefront created, but the product image could not be generated.";
+const contentCannotBeGenerated = "Content cannot be generated.";
 
 const sampleStorefrontContentWithImage = {
   ...sampleStorefrontContent,
@@ -63,6 +69,7 @@ describe("storefront API", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
     mocks.deleteProductImage.mockResolvedValue(undefined);
+    mocks.deleteStorefrontForOwner.mockResolvedValue(null);
     mocks.generateProductImage.mockResolvedValue(productImage);
     mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(null);
   });
@@ -124,6 +131,112 @@ describe("storefront API", () => {
     expect(payload.shareUrl).toBe(
       "https://vibe.example/s/brooklyn-ember-co-image123"
     );
+  });
+
+  it("rejects blocked Clerk user prompts before generation", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "nsfw poster subscription boxes" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.getStorefrontByOwnerAndIdea).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+  });
+
+  it("rejects blocked guest prompts without creating a guest session", async () => {
+    mocks.auth.mockResolvedValue({ userId: null });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "adult-toy travel organizer" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.getStorefrontByAnonymousSession).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("rejects blocked generated content before image generation or save", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue({
+      ...sampleStorefrontContent,
+      tagline: "N S F W poster drops for collectors."
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "limited-run poster subscription boxes" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.generateStorefront).toHaveBeenCalledWith(
+      "limited-run poster subscription boxes"
+    );
+    expect(mocks.buildStorefrontSlug).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+  });
+
+  it("retries product image generation and saves the storefront when a retry succeeds", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
+    mocks.generateProductImage
+      .mockRejectedValueOnce(
+        new Error("Unable to generate product image: upstream timeout")
+      )
+      .mockRejectedValueOnce(
+        new Error("Unable to generate product image: upstream timeout")
+      )
+      .mockResolvedValueOnce(productImage);
+    mocks.createStorefront.mockResolvedValue({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(mocks.generateProductImage).toHaveBeenCalledTimes(3);
+    expect(mocks.createStorefront).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      slug: "brooklyn-ember-co-image123"
+    });
+    expect(payload).not.toHaveProperty("warning");
   });
 
   it("returns an existing storefront for a repeated Clerk user prompt", async () => {
@@ -262,12 +375,23 @@ describe("storefront API", () => {
     );
   });
 
-  it("fails creation when product image generation fails", async () => {
+  it("saves the storefront without an image when product image retries are exhausted", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
     mocks.generateStorefront.mockResolvedValue(sampleStorefrontContent);
     mocks.generateProductImage.mockRejectedValue(
       new Error("Unable to generate product image: quota exceeded")
     );
+    mocks.createStorefront.mockResolvedValue({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
@@ -277,11 +401,25 @@ describe("storefront API", () => {
     const response = await POST(request);
     const payload = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(payload).toEqual({
-      error: "Unable to generate product image: quota exceeded"
+    expect(response.status).toBe(201);
+    expect(mocks.generateProductImage).toHaveBeenCalledTimes(3);
+    expect(mocks.createStorefront).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      slug: "brooklyn-ember-co-image123"
     });
-    expect(mocks.createStorefront).not.toHaveBeenCalled();
+    expect(mocks.deleteProductImage).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      storefront: {
+        content: sampleStorefrontContent,
+        slug: "brooklyn-ember-co-image123"
+      },
+      shareUrl: "https://vibe.example/s/brooklyn-ember-co-image123",
+      status: "created",
+      warning: productImageWarning
+    });
+    expect(payload.storefront.content.product.image).toBeUndefined();
   });
 
   it("deletes an uploaded product image if the database insert fails", async () => {
@@ -304,5 +442,131 @@ describe("storefront API", () => {
       error: "Unable to save storefront: duplicate slug"
     });
     expect(mocks.deleteProductImage).toHaveBeenCalledWith(productImage.storagePath);
+  });
+
+  it("rejects unauthenticated delete requests", async () => {
+    mocks.auth.mockResolvedValue({ userId: null });
+    const { DELETE } = await import("@/app/api/storefronts/[id]/route");
+    const request = new NextRequest(
+      "https://vibe.example/api/storefronts/00000000-0000-4000-8000-000000000001",
+      { method: "DELETE" }
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(payload).toEqual({ error: "Unauthorized" });
+    expect(mocks.deleteStorefrontForOwner).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid storefront ids on delete", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    const { DELETE } = await import("@/app/api/storefronts/[id]/route");
+    const request = new NextRequest(
+      "https://vibe.example/api/storefronts/not-a-uuid",
+      { method: "DELETE" }
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: "not-a-uuid" })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Invalid storefront id." });
+    expect(mocks.deleteStorefrontForOwner).not.toHaveBeenCalled();
+  });
+
+  it("returns not found when deleting a missing or unowned storefront", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.deleteStorefrontForOwner.mockResolvedValue(null);
+    const { DELETE } = await import("@/app/api/storefronts/[id]/route");
+    const request = new NextRequest(
+      "https://vibe.example/api/storefronts/00000000-0000-4000-8000-000000000001",
+      { method: "DELETE" }
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(mocks.deleteStorefrontForOwner).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      storefrontId: "00000000-0000-4000-8000-000000000001"
+    });
+    expect(payload).toEqual({ error: "Storefront not found." });
+    expect(mocks.deleteProductImage).not.toHaveBeenCalled();
+  });
+
+  it("deletes an owned storefront and cleans up its product image", async () => {
+    const storefrontId = "00000000-0000-4000-8000-000000000001";
+
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.deleteStorefrontForOwner.mockResolvedValue({
+      id: storefrontId,
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { DELETE } = await import("@/app/api/storefronts/[id]/route");
+    const request = new NextRequest(
+      `https://vibe.example/api/storefronts/${storefrontId}`,
+      { method: "DELETE" }
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: storefrontId })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.deleteStorefrontForOwner).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      storefrontId
+    });
+    expect(mocks.deleteProductImage).toHaveBeenCalledWith(productImage.storagePath);
+    expect(payload).toEqual({ deletedStorefrontId: storefrontId });
+  });
+
+  it("keeps a deleted storefront deleted when product image cleanup fails", async () => {
+    const storefrontId = "00000000-0000-4000-8000-000000000001";
+
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.deleteProductImage.mockRejectedValue(new Error("storage unavailable"));
+    mocks.deleteStorefrontForOwner.mockResolvedValue({
+      id: storefrontId,
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { DELETE } = await import("@/app/api/storefronts/[id]/route");
+    const request = new NextRequest(
+      `https://vibe.example/api/storefronts/${storefrontId}`,
+      { method: "DELETE" }
+    );
+
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: storefrontId })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.deleteProductImage).toHaveBeenCalledWith(productImage.storagePath);
+    expect(payload).toEqual({ deletedStorefrontId: storefrontId });
   });
 });
