@@ -1,10 +1,88 @@
-# Vibe Storefront Deployment Checklist
+# Deployment Checklist
 
-Use this checklist to configure the real provider keys without pasting secrets into Codex.
+Use this checklist to configure production providers, apply migrations, and verify the deployed app without putting secrets in source control.
 
-## 1. Local Environment
+## Production Targets
 
-Create `.env.local` from `.env.example` and fill every value:
+- Vercel project: `vibe-storefront`
+- Production URL: https://vibe-storefront.com
+- Vercel fallback URL: https://vibe-storefront-two.vercel.app
+- Production branch: `main`
+- Node.js runtime in Vercel: 24.x
+
+Production deploys should come from `main`. Run `npm run verify` before publishing changes, then follow the repo workflow for promoting a feature branch through `dev` and `main`.
+
+## Provider Keys
+
+Clerk:
+
+- Use production Clerk keys in Vercel: `pk_live_...` and `sk_live_...`.
+- Keep the sign-in URL set to `/sign-in`; Clerk handles account creation from the same flow.
+- Store Clerk values only in Vercel environment variables or Clerk itself.
+
+Supabase:
+
+- Copy the production Project URL into `NEXT_PUBLIC_SUPABASE_URL`.
+- Copy the anon or publishable public API key into `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Copy the service role key into `SUPABASE_SERVICE_ROLE_KEY`.
+- Never expose the service role key in browser code.
+
+OpenAI:
+
+- Create a secret API key with access to the Codex model used by this app.
+- Store it as `CODEX_API_KEY`.
+- Use the same key for image generation, or create a separate key and store it as `OPENAI_API_KEY`.
+- Leave `CODEX_MODEL=gpt-5.3-codex` unless the app is intentionally retargeted.
+- Leave `OPENAI_IMAGE_MODEL=gpt-image-2` unless product image generation is intentionally retargeted.
+
+App:
+
+- Set `NEXT_PUBLIC_APP_URL` to `https://vibe-storefront.com` so generated share links use the stable live host.
+
+## Google Sign-In
+
+Production Google sign-in requires custom Google OAuth credentials from Google Cloud. Store those OAuth credentials in Clerk only; do not add them to Vercel environment variables, `.env.local`, `.env.prod`, or source control.
+
+Setup:
+
+1. In Clerk, open the production app's Google SSO connection and enable sign-in and account creation with custom credentials.
+2. In Google Cloud Console, create an OAuth client for a Web application.
+3. Add the production domains as authorized JavaScript origins:
+   - `https://vibe-storefront.com`
+   - `https://vibe-storefront-two.vercel.app`
+4. Add Clerk's exact Authorized Redirect URI as the Google authorized redirect URI. For the current production Clerk domain, this is `https://clerk.vibe-storefront.com/v1/oauth_callback`.
+5. Paste the Google OAuth client values into Clerk and save the SSO connection.
+6. On the Google OAuth consent screen, make sure the app is available to the intended audience. If the app remains in testing mode, add the Google accounts that should be allowed to sign in as test users.
+
+After setup, verify Google sign-in from `https://vibe-storefront.com/sign-in`. Reaching Google's account chooser confirms the Clerk-to-Google OAuth handoff is configured.
+
+## Supabase Migrations
+
+Run new Supabase migrations against the production database as a separate deployment step. Vercel deploys app code only and does not apply database migrations.
+
+Recommended CLI flow:
+
+```bash
+npx -y supabase login
+npx -y supabase link --project-ref <production-project-ref>
+npx -y supabase migration list --linked
+npx -y supabase db push
+npx -y supabase migration list --linked
+```
+
+If using the Supabase SQL Editor instead of the CLI, run pending migration SQL files from `supabase/migrations` once against the production project and confirm the migration history/schema afterward.
+
+## Vercel
+
+Vercel settings:
+
+- Framework preset: Next.js.
+- Production branch: `main`.
+- Root directory: repository root.
+- Build command: `npm run build`.
+- Install command: `npm install`.
+
+Add production environment variables in Vercel:
 
 ```bash
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
@@ -20,121 +98,24 @@ CODEX_API_KEY=
 CODEX_MODEL=gpt-5.3-codex
 OPENAI_API_KEY=
 OPENAI_IMAGE_MODEL=gpt-image-2
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+NEXT_PUBLIC_APP_URL=https://vibe-storefront.com
 ```
-
-Do not commit `.env.local`; it is gitignored.
-
-## 2. Generate Provider Keys
-
-Clerk:
-
-- Open the Clerk Dashboard for the app.
-- Use development keys locally: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...` and `CLERK_SECRET_KEY=sk_test_...`.
-- Use production keys in Vercel: `pk_live_...` and `sk_live_...`.
-- Keep the sign-in URL set to `/sign-in`; Clerk handles account creation from the same flow.
-- For production Google sign-in, configure a Google SSO connection in Clerk with custom OAuth credentials using Clerk's [Google social connection guide](https://clerk.com/docs/authentication/social-connections/google):
-  - In Clerk, open SSO connections, add or edit Google for all users, and enable sign-in/account creation plus custom credentials.
-  - In Google Cloud Console, create a Web application OAuth client.
-  - Add `https://vibe-storefront-two.vercel.app` and any custom production domain as authorized JavaScript origins.
-  - Paste Clerk's exact Authorized Redirect URI into Google's Authorized Redirect URIs.
-  - Save the Google Client ID and Client Secret in Clerk only; do not add them to Vercel env vars or commit them.
-  - Before public testing, confirm the Google OAuth app is published for the intended audience, not limited to test users.
-
-Supabase:
-
-- Open the Supabase project dashboard.
-- Copy the Project URL into `NEXT_PUBLIC_SUPABASE_URL`.
-- Copy the anon or publishable public API key into `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- Copy the service role key into `SUPABASE_SERVICE_ROLE_KEY`.
-- Never expose the service role key in browser code.
-
-OpenAI:
-
-- Open the OpenAI Platform project API keys page.
-- Create a secret API key with access to the Codex model used by this app.
-- Store it as `CODEX_API_KEY`.
-- Use the same key for image generation, or create a separate key and store it as `OPENAI_API_KEY`.
-- Leave `CODEX_MODEL=gpt-5.3-codex` unless the app is intentionally retargeted.
-- Leave `OPENAI_IMAGE_MODEL=gpt-image-2` unless product image generation is intentionally retargeted.
-
-## 3. Local Verification
-
-Start Docker Desktop or another Docker-compatible container runtime before starting the local Supabase stack.
-
-Run:
-
-```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run dev
-```
-
-Then verify:
-
-- Open `http://localhost:3000`.
-- Create or use a disposable Clerk test user.
-- Generate a storefront from a product idea.
-- Confirm the success state shows a share URL.
-- Open the share URL and reload it.
-- Confirm the generated product image appears on the share page and in preview/gallery cards.
-- Sign out or open a private browser window and confirm the public share page still renders.
-- Open `/dashboard` while signed in and confirm the saved storefront appears.
-
-## 4. Production Deployment
-
-Promote the verified branch to `main`, because production deploys should only come from `main`:
-
-```bash
-git checkout main
-git merge --no-ff feat/guest-storefront-demo
-git push -u origin main
-```
-
-Apply Supabase migrations to the production database before or immediately after the Vercel deploy. Production does not automatically receive local migrations just because the app is deployed.
-
-Recommended CLI flow:
-
-```bash
-npx -y supabase login
-npx -y supabase link --project-ref <production-project-ref>
-npx -y supabase migration list --linked
-npx -y supabase db push
-npx -y supabase migration list --linked
-```
-
-For this feature, production must include `20260424020403_add_guest_storefronts.sql` for guest generation, `20260424101511_remove_homepage_example_storefront.sql` for the public storefront gallery cleanup, and `20260424130000_add_storefront_product_image_bucket.sql` for generated product image storage. If using the Supabase SQL Editor instead of the CLI, run those migration SQL files once against the production project and confirm the migration history/schema afterward.
-
-Create a new Vercel project connected to `JessePeplinski/vibe-storefront`.
-
-Vercel settings:
-
-- Framework preset: Next.js.
-- Production branch: `main`.
-- Root directory: repository root.
-- Build command: `npm run build`.
-- Install command: `npm install`.
-
-Add the same environment variables in Vercel Production, with these differences:
-
-- Use live Clerk keys.
-- Set `NEXT_PUBLIC_APP_URL` to the final Vercel production URL.
-- Set `OPENAI_API_KEY` if product image generation should use a key separate from `CODEX_API_KEY`.
 
 Redeploy production after `NEXT_PUBLIC_APP_URL` is set.
 
-After the storage migration and deployment, backfill existing production storefronts:
+## Product Image Backfill
+
+After the storage migration and deployment, backfill existing production storefronts if needed:
 
 ```bash
 npm run backfill:product-images -- --env .env.prod
 npm run backfill:product-images -- --env .env.prod --write --confirm-production
 ```
 
-## 5. Production Verification
+## Production Verification
 
-Verify on the deployed URL:
+Verify on `https://vibe-storefront.com`:
 
 - Signed-out homepage renders.
 - Clerk sign-in works, including account creation and Google sign-in from `/sign-in`.

@@ -1,73 +1,26 @@
 # Vibe Storefront
 
-Vibe Storefront is a Next.js App Router prototype for turning product ideas into shareable storefront concepts. A visitor enters a plain-English product idea, the server calls the OpenAI Codex SDK for structured storefront content, saves it to Supabase, and returns a public share URL. Signed-out visitors can generate one guest storefront before signing in.
+Vibe Storefront is a Next.js prototype that turns a plain-English product idea into a shareable storefront concept. It generates structured storefront copy with the OpenAI Codex SDK, creates product imagery with the OpenAI Image API, saves the result to Supabase, and publishes a public share page.
 
-## Live Test URL
-
-- Production: https://vibe-storefront.com
-- Vercel fallback: https://vibe-storefront-two.vercel.app
-
-Use the production URL for deployed smoke testing. Generation requires the Vercel Production environment to have valid Clerk, Supabase, and `CODEX_API_KEY` values.
+Demo: https://vibe-storefront.com
 
 ## Stack
 
-- Next.js 16, TypeScript, Tailwind CSS
-- Clerk for auth
-- Supabase Postgres with RLS
-- `@openai/codex-sdk` and `@openai/codex` for storefront copy generation
-- OpenAI Image API with `gpt-image-2` for generated product imagery
+- Next.js 16 App Router, React, TypeScript, Tailwind CSS
+- Clerk for authentication
+- Supabase Postgres, Row Level Security, and Storage
+- `@openai/codex-sdk`, `@openai/codex`, and the OpenAI Image API
 - Vitest, Testing Library, and Playwright
 
-## Environment
+## Quick Start
 
-Copy `.env.example` to `.env.local` and fill in:
+Copy the local environment template and fill in development keys:
 
 ```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-CODEX_API_KEY=
-CODEX_MODEL=gpt-5.3-codex
-OPENAI_API_KEY=
-OPENAI_IMAGE_MODEL=gpt-image-2
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+cp .env.example .env.local
 ```
 
-Use Clerk development keys locally. `OPENAI_API_KEY` is optional when it points to the same OpenAI project as `CODEX_API_KEY`; the app falls back to `CODEX_API_KEY` for image generation. Production/demo keys belong only in Vercel environment variables or an ignored local reference file such as `.env.prod`.
-
-Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables RLS, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key. Clerk users can create repeat storefronts; signed-out visitors are limited to one guest storefront by an HttpOnly cookie and database uniqueness constraint. Local generate/save/share testing should use the local Supabase stack.
-
-Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`, and each storefront stores the durable public image URL in `content.product.image`.
-
-## Authentication
-
-The app uses Clerk's prebuilt sign-in component at `/sign-in`; account creation is handled from the same Clerk flow. Local development should use a Clerk development instance. Production should use a Clerk production instance with live Clerk environment variables set in Vercel.
-
-Google sign-in is configured in Clerk as a Google SSO connection. Development instances can use Clerk's shared OAuth credentials, but production Google sign-in requires custom Google OAuth credentials from Google Cloud. Store those OAuth credentials in Clerk only; do not add them to Vercel environment variables, `.env.local`, `.env.prod`, or source control.
-
-Production Google OAuth setup:
-
-1. In Clerk, open the production app's Google SSO connection and enable sign-in and account creation with custom credentials.
-2. In Google Cloud Console, create an OAuth client for a Web application.
-3. Add the production domains as authorized JavaScript origins:
-   - `https://vibe-storefront.com`
-   - `https://vibe-storefront-two.vercel.app`
-4. Add Clerk's exact Authorized Redirect URI as the Google authorized redirect URI. For the current production Clerk domain, this is `https://clerk.vibe-storefront.com/v1/oauth_callback`.
-5. Paste the Google OAuth client values into Clerk and save the SSO connection.
-6. On the Google OAuth consent screen, make sure the app is available to the intended audience. If the app remains in testing mode, add the Google accounts that should be allowed to sign in as test users.
-
-After setup, verify Google sign-in from `https://vibe-storefront.com/sign-in`. Reaching Google's account chooser confirms the Clerk-to-Google OAuth handoff is configured.
-
-## Development
-
-Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman. Start the container runtime before running the Supabase CLI.
+Install dependencies, start the local Supabase stack, and run the app:
 
 ```bash
 npm install
@@ -75,57 +28,22 @@ npx -y supabase start
 npm run dev
 ```
 
-Open `http://localhost:3000`. Local Supabase Studio runs at `http://127.0.0.1:54323`.
+Open `http://localhost:3000`.
 
-## Product Image Backfill
-
-Existing storefronts can be backfilled after the storage migration is applied:
-
-```bash
-npm run backfill:product-images -- --env .env.local
-npm run backfill:product-images -- --env .env.local --write
-```
-
-For production, use the ignored production env reference and pass the explicit confirmation flag:
-
-```bash
-npm run backfill:product-images -- --env .env.prod
-npm run backfill:product-images -- --env .env.prod --write --confirm-production
-```
-
-The command skips storefronts that already have `content.product.image`.
-
-## Local Smoke Test
-
-After the dev server is running:
-
-1. Sign in with a Clerk development user.
-2. Open the signed-out homepage in a private browser window.
-3. Confirm `See all storefronts` opens the public storefront gallery.
-4. Generate one guest storefront from the homepage input and confirm the success state links to the new share URL.
-5. Reload the homepage, submit again as the same guest, and confirm the existing share URL is returned without another generation.
-6. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation still creates saved storefronts.
-7. Open a generated share URL in a signed-out browser and confirm the public share page renders.
+Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman. Use Clerk development keys locally. See [`docs/local-development.md`](docs/local-development.md) for the full local setup and manual smoke-test flow.
 
 ## Verification
+
+Run the consolidated check before publishing changes:
 
 ```bash
 npm run verify
 ```
 
-`npm run verify` runs typecheck, lint, unit tests, production build, and the Playwright browser smoke test sequentially. The smoke test starts the built app, verifies the homepage and all-storefronts page in Chromium, and stops the temporary server afterward.
+`npm run verify` runs typecheck, lint, unit tests, production build, and the Playwright browser smoke test sequentially.
 
-The Codex SDK route runs in the Node.js runtime because the SDK spawns the local Codex CLI. In deployed Vercel environments, the route uses `/tmp` for Codex runtime state and resolves the packaged platform Codex binary when available. If generation fails with quota errors, check the OpenAI project tied to `CODEX_API_KEY` and `OPENAI_API_KEY` before changing persistence code.
+## Project Docs
 
-## Deployment
-
-- Vercel project: `vibe-storefront`
-- Production URL: https://vibe-storefront.com
-- Vercel fallback URL: https://vibe-storefront-two.vercel.app
-- Production branch: `main`
-- Node.js runtime in Vercel: 24.x
-- Deployment checklist: [`docs/deployment-checklist.md`](docs/deployment-checklist.md)
-
-Production deploys should come from `main`. Set `NEXT_PUBLIC_APP_URL` to the production URL in Vercel so generated share links use the stable live host.
-
-Run new Supabase migrations against the production database as a separate deployment step; Vercel deploys app code only and does not apply database migrations.
+- [`docs/local-development.md`](docs/local-development.md) - local environment setup, Supabase, Clerk, and smoke testing.
+- [`docs/project-context.md`](docs/project-context.md) - runtime architecture, persistence boundaries, guest storefront behavior, and image backfill notes.
+- [`docs/deployment-checklist.md`](docs/deployment-checklist.md) - production environment, migrations, Vercel, and deployment verification.
