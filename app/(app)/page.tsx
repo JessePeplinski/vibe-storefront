@@ -169,7 +169,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3 lg:pt-2">
-            {validationSteps.map((step, index) => {
+            {validationSteps.map((step) => {
               const Icon = step.icon;
 
               return (
@@ -180,10 +180,7 @@ export default async function HomePage() {
                   <div className="flex h-11 w-11 items-center justify-center bg-[#083f31] text-white">
                     <Icon className="h-5 w-5" aria-hidden />
                   </div>
-                  <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-                    0{index + 1}
-                  </p>
-                  <h3 className="mt-2 text-xl font-black text-slate-950">
+                  <h3 className="mt-5 text-xl font-black text-slate-950">
                     {step.title}
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600">

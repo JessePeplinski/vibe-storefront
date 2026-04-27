@@ -295,14 +295,11 @@ export function StorefrontStudio({
         id="generate"
       >
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
-            Generate
-          </p>
           <h1
-            className="mt-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl"
+            className="text-3xl font-black leading-tight text-slate-950 sm:text-4xl"
             id="generate-title"
           >
-            What storefront should we test?
+            What storefront should we generate
           </h1>
         </div>
 
@@ -319,6 +316,7 @@ export function StorefrontStudio({
             href: "/storefronts",
             label: "See all storefronts"
           }}
+          showLabel={false}
           textareaId="studio-product-idea"
         />
       </section>
@@ -331,11 +329,8 @@ export function StorefrontStudio({
         >
           <div className="mb-3 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
-                Library
-              </p>
               <h2
-                className="mt-1 text-2xl font-black leading-tight text-slate-950"
+                className="text-2xl font-black leading-tight text-slate-950"
                 id="your-storefronts-title"
               >
                 {recentStorefrontsTitle}

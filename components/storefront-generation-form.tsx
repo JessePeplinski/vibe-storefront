@@ -30,6 +30,7 @@ type StorefrontGenerationFormProps = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   progress: GenerationProgressState;
   secondaryAction?: SecondaryAction;
+  showLabel?: boolean;
   textareaId: string;
 };
 
@@ -43,6 +44,7 @@ export function StorefrontGenerationForm({
   onSubmit,
   progress,
   secondaryAction,
+  showLabel = true,
   textareaId
 }: StorefrontGenerationFormProps) {
   const actionLayout = secondaryAction
@@ -59,11 +61,14 @@ export function StorefrontGenerationForm({
       onSubmit={onSubmit}
     >
       <label className="block">
-        <span className="text-xl font-black text-slate-950">
-          Generate your storefront
-        </span>
+        {showLabel && (
+          <span className="text-xl font-black text-slate-950">
+            Generate your storefront
+          </span>
+        )}
         <textarea
-          className="mt-2 min-h-32 w-full resize-none border-slate-300 bg-slate-50 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-emerald-700 focus:ring-emerald-700 sm:min-h-28"
+          aria-label={showLabel ? undefined : "Storefront idea"}
+          className={`${showLabel ? "mt-2" : ""} min-h-32 w-full resize-none border-slate-300 bg-slate-50 text-base text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-emerald-700 focus:ring-emerald-700 sm:min-h-28`}
           id={textareaId}
           maxLength={220}
           minLength={6}
