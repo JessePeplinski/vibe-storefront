@@ -11,7 +11,8 @@
     "smoke:browser": "node scripts/run-browser-smoke.mjs",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "latest",
