@@ -16,6 +16,7 @@ Vibe Storefront is a Next.js App Router prototype for turning product ideas into
 ## Codex Runbook
 
 - Start every task with `git status --short --branch` and confirm the active branch before editing.
+- Use Node.js 24.x for repo commands; `.nvmrc` and `package.json` engines are the source of truth.
 - Keep README changes public-facing. Move local setup, runtime notes, deployment details, and maintainer-only context into the matching `docs/` file.
 - For docs-only changes, run `git diff --check` before finishing.
 - For code, config, schema, or behavior changes, run `npm run verify` before finishing or publishing.
