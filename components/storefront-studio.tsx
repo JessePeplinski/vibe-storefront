@@ -18,6 +18,7 @@ import {
 } from "@/components/use-storefront-generation";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
+import { formatUsageUsd } from "@/lib/usage-format";
 
 type DeleteStorefrontResponse = {
   deletedStorefrontId?: string;
@@ -169,6 +170,16 @@ export function StorefrontStudio({
             <p className="mt-1 font-bold text-emerald-800">
               Finished in {result.finishedInText}
             </p>
+            {result.usageCost ? (
+              <p className="mt-1 font-bold text-emerald-800">
+                This request cost about{" "}
+                {formatUsageUsd(result.usageCost.totalUsd)}.
+              </p>
+            ) : result.status?.startsWith("existing_") ? (
+              <p className="mt-1 font-bold text-emerald-800">
+                No new API spend.
+              </p>
+            ) : null}
             {result.warning && (
               <p
                 className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"

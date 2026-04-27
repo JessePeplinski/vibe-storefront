@@ -1,7 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useGenerationProgress } from "@/components/use-generation-countdown";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -12,11 +11,21 @@ export type StorefrontGenerationStatus =
   | "existing_guest_storefront"
   | "existing_prompt_storefront";
 
+export type ApiUsageCost = {
+  currency: "USD";
+  imageUsd: number | null;
+  isEstimate: true;
+  textUsd: number | null;
+  totalUsd: number;
+  unavailableLineItems: string[];
+};
+
 export type StorefrontGenerationResult = {
   finishedInText: string;
   shareUrl: string;
   status?: StorefrontGenerationStatus;
   storefront: StorefrontRecord;
+  usageCost?: ApiUsageCost | null;
   warning?: string;
 };
 
@@ -24,6 +33,7 @@ type CreateStorefrontResponse = {
   storefront: StorefrontRecord;
   shareUrl: string;
   status?: StorefrontGenerationStatus;
+  usageCost?: ApiUsageCost | null;
   warning?: string;
 };
 

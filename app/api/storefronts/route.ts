@@ -21,6 +21,12 @@ import type {
   StorefrontProductImage,
   StorefrontRecord
 } from "@/lib/storefront-schema";
+import {
+  estimateStorefrontGenerationCost,
+  toPublicUsageCost,
+  type OpenAIImageUsage,
+  type UsageCostBreakdown
+} from "@/lib/usage-costs";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -37,6 +43,12 @@ const createStorefrontRequestSchema = z.object({
 
 const guestSessionSchema = z.string().uuid();
 
+type ProductImageGenerationResult = {
+  image: StorefrontProductImage;
+  model: string;
+  usage: OpenAIImageUsage | null;
+};
+
 function contentCannotBeGeneratedResponse() {
   return NextResponse.json(
     { error: CONTENT_CANNOT_BE_GENERATED_ERROR },
@@ -52,7 +64,7 @@ async function generateProductImageWithRetries(params: {
   content: StorefrontContent;
   idea: string;
   slug: string;
-}): Promise<StorefrontProductImage | null> {
+}): Promise<ProductImageGenerationResult | null> {
   for (
     let attempt = 1;
     attempt <= PRODUCT_IMAGE_GENERATION_ATTEMPTS;
@@ -70,33 +82,50 @@ async function generateProductImageWithRetries(params: {
 
 async function generateStorefrontWithOptionalProductImage(
   idea: string
-): Promise<{ content: StorefrontContent; slug: string; warning?: string }> {
-  const content = await generateStorefront(idea);
+): Promise<{
+  content: StorefrontContent;
+  slug: string;
+  usageCost: UsageCostBreakdown;
+  warning?: string;
+}> {
+  const generatedStorefront = await generateStorefront(idea);
 
-  if (storefrontContentContainsBlockedTerms(content)) {
+  if (storefrontContentContainsBlockedTerms(generatedStorefront.content)) {
     throw new Error(CONTENT_CANNOT_BE_GENERATED_ERROR);
   }
 
-  const slug = buildStorefrontSlug(content.name);
-  const image = await generateProductImageWithRetries({ content, idea, slug });
+  const slug = buildStorefrontSlug(generatedStorefront.content.name);
+  const image = await generateProductImageWithRetries({
+    content: generatedStorefront.content,
+    idea,
+    slug
+  });
+  const usageCost = estimateStorefrontGenerationCost({
+    imageModel: image?.model,
+    imageUsage: image?.usage ?? null,
+    textModel: generatedStorefront.model,
+    textUsage: generatedStorefront.usage
+  });
 
   if (!image) {
     return {
-      content,
+      content: generatedStorefront.content,
       slug,
+      usageCost,
       warning: PRODUCT_IMAGE_GENERATION_WARNING
     };
   }
 
   return {
     content: {
-      ...content,
+      ...generatedStorefront.content,
       product: {
-        ...content.product,
-        image
+        ...generatedStorefront.content.product,
+        image: image.image
       }
     },
-    slug
+    slug,
+    usageCost
   };
 }
 
@@ -195,20 +224,29 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const { content, slug, warning } =
+      const { content, slug, usageCost, warning } =
         await generateStorefrontWithOptionalProductImage(parsed.data.idea);
+      const publicUsageCost = toPublicUsageCost(usageCost);
       const storefront = await createGeneratedStorefront({
         ownerClerkUserId: userId,
         idea: parsed.data.idea,
         content,
+        generationCost: publicUsageCost,
         slug
       });
+      const storefrontWithUsageCost = publicUsageCost
+        ? {
+            ...storefront,
+            generation_cost: publicUsageCost
+          }
+        : storefront;
 
       return NextResponse.json(
         {
-          storefront,
+          storefront: storefrontWithUsageCost,
           shareUrl: shareUrlForSlug(storefront.slug),
           status: "created",
+          usageCost: publicUsageCost,
           warning
         },
         { status: 201 }
@@ -232,20 +270,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { content, slug, warning } =
+    const { content, slug, usageCost, warning } =
       await generateStorefrontWithOptionalProductImage(parsed.data.idea);
+    const publicUsageCost = toPublicUsageCost(usageCost);
     const storefront = await createGeneratedStorefront({
       anonymousSessionId: guestSessionId,
       idea: parsed.data.idea,
       content,
+      generationCost: publicUsageCost,
       slug
     });
+    const storefrontWithUsageCost = publicUsageCost
+      ? {
+          ...storefront,
+          generation_cost: publicUsageCost
+        }
+      : storefront;
 
     return jsonWithGuestCookie(
       {
-        storefront,
+        storefront: storefrontWithUsageCost,
         shareUrl: shareUrlForSlug(storefront.slug),
         status: "created",
+        usageCost: publicUsageCost,
         warning
       },
       { status: 201 },

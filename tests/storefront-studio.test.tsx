@@ -19,6 +19,14 @@ const clerkMocks = vi.hoisted(() => ({
 const clipboardWriteTextMock = vi.fn();
 const productImageWarning =
   "Storefront created, but the product image could not be generated.";
+const usageCost = {
+  currency: "USD" as const,
+  imageUsd: 0.05,
+  isEstimate: true as const,
+  textUsd: 0.006,
+  totalUsd: 0.056,
+  unavailableLineItems: []
+};
 
 vi.mock("@clerk/nextjs", () => ({
   useClerk: () => clerkMocks
@@ -132,7 +140,8 @@ describe("StorefrontStudio", () => {
       content: storefrontContent(
         "Desk Bloom",
         "Modular desk planters for brighter workdays."
-      )
+      ),
+      generation_cost: usageCost
     });
     const olderStorefront = storefront({
       id: "lamp-loom-id",
@@ -164,6 +173,11 @@ describe("StorefrontStudio", () => {
     expect(
       within(recentStorefronts).getAllByText("Created Apr 23, 2026")
     ).toHaveLength(2);
+    expect(within(recentStorefronts).getByText("Estimated cost $0.06"))
+      .toBeInTheDocument();
+    expect(
+      within(recentStorefronts).getByText("Estimated cost not recorded")
+    ).toBeInTheDocument();
     expect(
       within(recentStorefronts).getByText(
         "From: modular desk planters for office workers"
@@ -282,7 +296,10 @@ describe("StorefrontStudio", () => {
     expect(dialog).toHaveTextContent(
       "This permanently removes it from your profile and public storefronts."
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/storefronts/00000000-0000-4000-8000-000000000001",
+      { method: "DELETE" }
+    );
 
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Delete storefront" })
@@ -333,13 +350,15 @@ describe("StorefrontStudio", () => {
     const createdStorefront = storefront({
       id: "lamp-kit-id",
       slug: "tiny-lamp-labs-abc123",
-      idea: selectedIdea
+      idea: selectedIdea,
+      generation_cost: usageCost
     });
     let resolveFetch!: (response: {
       ok: boolean;
       json: () => Promise<{
         storefront: StorefrontRecord;
         shareUrl: string;
+        usageCost?: typeof usageCost;
         warning?: string;
       }>;
     }) => void;
@@ -348,6 +367,7 @@ describe("StorefrontStudio", () => {
       json: () => Promise<{
         storefront: StorefrontRecord;
         shareUrl: string;
+        usageCost?: typeof usageCost;
         warning?: string;
       }>;
     }>((resolve) => {
@@ -385,14 +405,15 @@ describe("StorefrontStudio", () => {
     expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
     expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
     expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/storefronts",
-      expect.objectContaining({
-        body: JSON.stringify({ idea: selectedIdea }),
-        method: "POST"
-      })
-    );
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/storefronts",
+        expect.objectContaining({
+          body: JSON.stringify({ idea: selectedIdea }),
+          method: "POST"
+        })
+      );
+    });
 
     await act(async () => {
       resolveFetch({
@@ -400,6 +421,7 @@ describe("StorefrontStudio", () => {
         json: async () => ({
           storefront: createdStorefront,
           shareUrl: "https://vibe.example/s/tiny-lamp-labs-abc123",
+          usageCost,
           warning: productImageWarning
         })
       });
@@ -408,6 +430,9 @@ describe("StorefrontStudio", () => {
 
     expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
     expect(screen.getByText(/Finished in \d+:\d{2}/)).toBeInTheDocument();
+    expect(screen.getByText("This request cost about $0.06."))
+      .toBeInTheDocument();
+    expect(screen.getByText("Estimated cost $0.06")).toBeInTheDocument();
     expect(screen.getByText(productImageWarning)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open share url/i })
@@ -489,6 +514,7 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/carryclean-co-abc123");
+    expect(screen.getByText("No new API spend.")).toBeInTheDocument();
     expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
   });
 
@@ -505,7 +531,8 @@ describe("StorefrontStudio", () => {
       ok: true,
       json: vi.fn().mockResolvedValue({
         storefront: createdStorefront,
-        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123"
+        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
+        usageCost
       })
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -522,6 +549,8 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(screen.getByText("This request cost about $0.06."))
+      .toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Sign in for more" })
     ).toBeInTheDocument();
@@ -582,6 +611,7 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getByRole("link", { name: /open share url/i })
     ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
+    expect(screen.getByText("No new API spend.")).toBeInTheDocument();
     expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Generate storefront" })

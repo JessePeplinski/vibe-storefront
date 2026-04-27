@@ -5,6 +5,7 @@ import type {
   StorefrontContent,
   StorefrontProductImage
 } from "@/lib/storefront-schema";
+import type { OpenAIImageUsage } from "@/lib/usage-costs";
 
 export const PRODUCT_IMAGE_BUCKET = "storefront-product-images";
 export const DEFAULT_PRODUCT_IMAGE_MODEL = "gpt-image-2";
@@ -26,6 +27,13 @@ type OpenAIImageGenerationResponse = {
     message?: string;
     type?: string;
   };
+  usage?: OpenAIImageUsage;
+};
+
+export type GeneratedProductImage = {
+  image: StorefrontProductImage;
+  model: string;
+  usage: OpenAIImageUsage | null;
 };
 
 function productImageModel(): string {
@@ -85,7 +93,9 @@ async function parseOpenAIImageResponse(
   }
 }
 
-async function requestProductImage(prompt: string): Promise<Buffer> {
+async function requestProductImage(
+  prompt: string
+): Promise<{ imageBytes: Buffer; usage: OpenAIImageUsage | null }> {
   let response: Response;
 
   try {
@@ -124,7 +134,10 @@ async function requestProductImage(prompt: string): Promise<Buffer> {
     throw new Error("Unable to generate product image: missing image data.");
   }
 
-  return Buffer.from(imageBase64, "base64");
+  return {
+    imageBytes: Buffer.from(imageBase64, "base64"),
+    usage: payload.usage ?? null
+  };
 }
 
 async function uploadProductImage(
@@ -166,19 +179,24 @@ export async function generateProductImage({
   content,
   idea,
   slug
-}: GenerateProductImageParams): Promise<StorefrontProductImage> {
+}: GenerateProductImageParams): Promise<GeneratedProductImage> {
   const generatedAt = new Date();
   const storagePath = buildProductImageStoragePath(slug, generatedAt);
   const prompt = buildProductImagePrompt({ content, idea });
-  const imageBytes = await requestProductImage(prompt);
+  const { imageBytes, usage } = await requestProductImage(prompt);
   const url = await uploadProductImage(imageBytes, storagePath);
+  const model = productImageModel();
 
   return {
-    url,
-    storagePath,
-    alt: buildProductImageAlt(content),
-    model: productImageModel(),
-    generatedAt: generatedAt.toISOString()
+    image: {
+      url,
+      storagePath,
+      alt: buildProductImageAlt(content),
+      model,
+      generatedAt: generatedAt.toISOString()
+    },
+    model,
+    usage
   };
 }
 

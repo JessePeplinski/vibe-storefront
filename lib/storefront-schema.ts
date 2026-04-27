@@ -59,10 +59,22 @@ export const storefrontContentSchema = codexStorefrontContentSchema.extend({
   })
 });
 
+export const storefrontGenerationCostSchema = z.object({
+  currency: z.literal("USD"),
+  imageUsd: z.number().nonnegative().nullable(),
+  isEstimate: z.literal(true),
+  textUsd: z.number().nonnegative().nullable(),
+  totalUsd: z.number().nonnegative(),
+  unavailableLineItems: z.array(z.string())
+});
+
 export type CodexStorefrontContent = z.infer<
   typeof codexStorefrontContentSchema
 >;
 export type StorefrontContent = z.infer<typeof storefrontContentSchema>;
+export type StorefrontGenerationCost = z.infer<
+  typeof storefrontGenerationCostSchema
+>;
 export type StorefrontProductImage = z.infer<typeof storefrontProductImageSchema>;
 
 export type StorefrontRecord = {
@@ -72,6 +84,7 @@ export type StorefrontRecord = {
   slug: string;
   idea: string;
   content: StorefrontContent;
+  generation_cost?: StorefrontGenerationCost | null;
   published: boolean;
   created_at: string;
   updated_at: string;
