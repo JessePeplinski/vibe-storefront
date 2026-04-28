@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -57,22 +58,10 @@ function GitHubMark() {
   );
 }
 
-function cssImageUrl(url: string): string {
-  return `url("${url.replace(/"/g, '\\"')}")`;
-}
-
-function heroBackground(storefronts: StorefrontRecord[]): string {
-  const image = storefronts.find(
+function heroImage(storefronts: StorefrontRecord[]) {
+  return storefronts.find(
     (storefront) => storefront.content.product.image
   )?.content.product.image;
-
-  if (!image) {
-    return "linear-gradient(135deg, #061f18, #143d32 54%, #0b1724)";
-  }
-
-  return `linear-gradient(90deg, rgba(5, 24, 18, 0.94), rgba(5, 24, 18, 0.74) 54%, rgba(5, 24, 18, 0.52)), ${cssImageUrl(
-    image.url
-  )}`;
 }
 
 function ExampleStorefronts({
@@ -104,6 +93,7 @@ function ExampleStorefronts({
           <StorefrontPreviewImage
             className="h-44"
             content={storefront.content}
+            sizes="(min-width: 768px) 33vw, 100vw"
           />
           <div className="flex flex-1 flex-col p-2 pt-4">
             <h3 className="text-2xl font-black leading-tight text-slate-950">
@@ -137,15 +127,39 @@ export default async function HomePage() {
   }
 
   const exampleStorefronts = await listPublishedStorefronts(3);
+  const heroProductImage = heroImage(exampleStorefronts);
 
   return (
     <main className="overflow-hidden bg-[#f8f7f2]">
       <section className="relative isolate overflow-hidden bg-[#08251d] text-white">
         <div className="absolute inset-0" aria-hidden="true">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: heroBackground(exampleStorefronts) }}
-          />
+          {heroProductImage ? (
+            <>
+              <Image
+                alt=""
+                className="object-cover"
+                fill
+                preload
+                sizes="100vw"
+                src={heroProductImage.url}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, rgba(5, 24, 18, 0.94), rgba(5, 24, 18, 0.74) 54%, rgba(5, 24, 18, 0.52))"
+                }}
+              />
+            </>
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(135deg, #061f18, #143d32 54%, #0b1724)"
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-[#071b15]/42" />
         </div>
 
