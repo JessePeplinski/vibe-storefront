@@ -1,6 +1,26 @@
 import { z } from "zod";
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const codexPresentationVersionSchema = z.enum(["2.0"]);
+
+export const storefrontThemeAppearanceSchema = z.object({
+  radius: z.enum(["sharp", "balanced", "soft"]),
+  surface: z.enum(["solid", "tinted", "outlined"]),
+  treatment: z.enum([
+    "minimal",
+    "editorial",
+    "bold",
+    "technical",
+    "premium",
+    "playful"
+  ])
+});
+
+export const defaultStorefrontThemeAppearance = {
+  radius: "balanced",
+  surface: "solid",
+  treatment: "minimal"
+} satisfies z.infer<typeof storefrontThemeAppearanceSchema>;
 
 export const storefrontProductImageSchema = z.object({
   url: z.string().url(),
@@ -17,8 +37,18 @@ const storefrontProductSchema = z.object({
   highlights: z.array(z.string().min(3).max(90)).min(3).max(5)
 });
 
+const storefrontPaletteSchema = z.object({
+  background: hexColor,
+  surface: hexColor,
+  primary: hexColor,
+  secondary: hexColor,
+  accent: hexColor,
+  text: hexColor
+});
+
 export const codexStorefrontContentSchema = z.object({
-  name: z.string().min(2).max(60),
+  presentationVersion: codexPresentationVersionSchema,
+  name: z.string().min(2).max(70),
   tagline: z.string().min(8).max(120),
   hero: z.object({
     eyebrow: z.string().min(2).max(50),
@@ -28,14 +58,8 @@ export const codexStorefrontContentSchema = z.object({
   product: storefrontProductSchema,
   theme: z.object({
     mood: z.string().min(3).max(60),
-    palette: z.object({
-      background: hexColor,
-      surface: hexColor,
-      primary: hexColor,
-      secondary: hexColor,
-      accent: hexColor,
-      text: hexColor
-    })
+    appearance: storefrontThemeAppearanceSchema,
+    palette: storefrontPaletteSchema
   }),
   cta: z.object({
     label: z.string().min(3).max(36),
@@ -54,8 +78,16 @@ export const codexStorefrontContentSchema = z.object({
 });
 
 export const storefrontContentSchema = codexStorefrontContentSchema.extend({
+  presentationVersion: z.enum(["1.0", "2.0"]).default("1.0"),
   product: storefrontProductSchema.extend({
     image: storefrontProductImageSchema.optional()
+  }),
+  theme: z.object({
+    mood: z.string().min(3).max(60),
+    appearance: storefrontThemeAppearanceSchema.default(
+      defaultStorefrontThemeAppearance
+    ),
+    palette: storefrontPaletteSchema
   })
 });
 
@@ -76,6 +108,9 @@ export type StorefrontGenerationCost = z.infer<
   typeof storefrontGenerationCostSchema
 >;
 export type StorefrontProductImage = z.infer<typeof storefrontProductImageSchema>;
+export type StorefrontThemeAppearance = z.infer<
+  typeof storefrontThemeAppearanceSchema
+>;
 
 export type StorefrontRecord = {
   id: string;
@@ -91,6 +126,7 @@ export type StorefrontRecord = {
 };
 
 export const sampleStorefrontContent: StorefrontContent = {
+  presentationVersion: "2.0",
   name: "Brooklyn Ember Co.",
   tagline: "Small-batch heat with a neighborhood soul.",
   hero: {
@@ -111,6 +147,11 @@ export const sampleStorefrontContent: StorefrontContent = {
   },
   theme: {
     mood: "Urban pantry with sharp contrast and warm accents",
+    appearance: {
+      radius: "balanced",
+      surface: "tinted",
+      treatment: "editorial"
+    },
     palette: {
       background: "#f7efe5",
       surface: "#fffaf3",

@@ -20,7 +20,8 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${storefront.content.name} | Vibe Storefront`;
+  const displayName = storefront.content.product.name;
+  const title = `${displayName} | Vibe Storefront`;
   const description = storefront.content.tagline;
   const publicUrl = `${appBaseUrl()}/s/${storefront.slug}`;
   const image = storefront.content.product.image;
@@ -29,7 +30,7 @@ export async function generateMetadata({
     title,
     description,
     openGraph: {
-      title: storefront.content.name,
+      title: displayName,
       description,
       images: image
         ? [
@@ -45,7 +46,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: image ? "summary_large_image" : "summary",
-      title: storefront.content.name,
+      title: displayName,
       description,
       images: image ? [image.url] : undefined
     }

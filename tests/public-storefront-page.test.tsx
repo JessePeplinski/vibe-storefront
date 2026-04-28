@@ -39,6 +39,11 @@ const darkUnreadableStorefrontContent: StorefrontContent = {
   },
   theme: {
     mood: "Cinematic retro with arcade energy",
+    appearance: {
+      radius: "sharp",
+      surface: "outlined",
+      treatment: "bold"
+    },
     palette: {
       background: "#111827",
       surface: "#F9FAFB",
@@ -102,7 +107,10 @@ describe("public storefront page", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Brooklyn Ember Co." })
+      screen.getByRole("heading", {
+        level: 1,
+        name: sampleStorefrontContent.product.name
+      })
     ).toBeInTheDocument();
     expect(screen.getByText(sampleStorefrontContent.hero.body)).toBeInTheDocument();
     expect(screen.getByText("Reserve a bottle")).toBeInTheDocument();
@@ -110,8 +118,28 @@ describe("public storefront page", () => {
       screen.getByRole("link", { name: "Built with vibe-storefront.com" })
     ).toHaveAttribute("href", "https://vibe-storefront.com");
     expect(screen.getByText("Source prompt: small-batch hot sauce from Brooklyn")).toBeInTheDocument();
+    expect(screen.queryByText(/vibe storefront v2/i)).not.toBeInTheDocument();
     expect(screen.queryByText("background")).not.toBeInTheDocument();
     expect(screen.queryByText("#f7efe5")).not.toBeInTheDocument();
+  });
+
+  it("renders product navigation with a Buy now checkout trigger", async () => {
+    const Page = (await import("@/app/s/[slug]/page")).default;
+
+    render(
+      await Page({
+        params: Promise.resolve({ slug: "brooklyn-ember-co-abc123" })
+      })
+    );
+
+    const nav = screen.getByRole("navigation");
+
+    expect(
+      within(nav).getByText(sampleStorefrontContent.product.name)
+    ).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("button", { name: /buy now/i })
+    ).toBeInTheDocument();
   });
 
   it("normalizes unreadable dark palettes on public storefronts", async () => {
@@ -166,6 +194,27 @@ describe("public storefront page", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("opens the same mock checkout modal from the Buy now nav CTA", async () => {
+    const Page = (await import("@/app/s/[slug]/page")).default;
+
+    render(
+      await Page({
+        params: Promise.resolve({ slug: "brooklyn-ember-co-abc123" })
+      })
+    );
+
+    fireEvent.click(
+      within(screen.getByRole("navigation")).getByRole("button", {
+        name: /buy now/i
+      })
+    );
+
+    const checkout = screen.getByRole("dialog", { name: "Checkout preview" });
+    expect(checkout).toBeInTheDocument();
+    expect(within(checkout).getByText("The Borough Blend")).toBeInTheDocument();
+    expect(within(checkout).getByText("$14")).toBeInTheDocument();
+  });
+
   it("uses storefront content for public share metadata", async () => {
     const { generateMetadata } = await import("@/app/s/[slug]/page");
 
@@ -174,10 +223,10 @@ describe("public storefront page", () => {
         params: Promise.resolve({ slug: "brooklyn-ember-co-abc123" })
       })
     ).resolves.toMatchObject({
-      title: "Brooklyn Ember Co. | Vibe Storefront",
+      title: "The Borough Blend | Vibe Storefront",
       description: sampleStorefrontContent.tagline,
       openGraph: {
-        title: "Brooklyn Ember Co.",
+        title: "The Borough Blend",
         description: sampleStorefrontContent.tagline,
         siteName: "Vibe Storefront",
         type: "website",
@@ -185,7 +234,7 @@ describe("public storefront page", () => {
       },
       twitter: {
         card: "summary",
-        title: "Brooklyn Ember Co.",
+        title: "The Borough Blend",
         description: sampleStorefrontContent.tagline
       }
     });
