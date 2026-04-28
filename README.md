@@ -1,5 +1,9 @@
 # Vibe Storefront
 
+[![vercel deploy](https://img.shields.io/website?url=https%3A%2F%2Fvibe-storefront.com&label=vercel%20deploy&up_message=online&down_message=offline&logo=vercel)](https://vibe-storefront.com)
+[![verify](https://github.com/JessePeplinski/vibe-storefront/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/JessePeplinski/vibe-storefront/actions/workflows/verify.yml)
+[![coverage](https://img.shields.io/codecov/c/github/JessePeplinski/vibe-storefront?label=coverage&logo=codecov)](https://codecov.io/gh/JessePeplinski/vibe-storefront)
+
 Vibe Storefront is a Next.js prototype that turns a plain-English product idea into a shareable storefront concept. It generates structured storefront copy with the OpenAI Codex SDK, creates product imagery with the OpenAI Image API, saves the result to Supabase, and publishes a public share page.
 
 Demo: https://vibe-storefront.com
