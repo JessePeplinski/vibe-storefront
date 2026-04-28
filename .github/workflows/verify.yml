@@ -19,11 +19,11 @@ jobs:
     env:
       CI: "true"
       CI_COLLECT_COVERAGE: "1"
-      CLERK_SECRET_KEY: sk_test_ci
+      CLERK_SECRET_KEY: ${{ secrets.CI_CLERK_SECRET_KEY }}
       CODEX_API_KEY: ci-codex-key
       CODEX_MODEL: gpt-5.5
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXktZHVtbXktMS5jbGVyay5hY2NvdW50cy5kZXYk
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CI_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /
       NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
       OPENAI_API_KEY: ci-openai-key
@@ -32,6 +32,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate CI secrets
+        shell: bash
+        run: |
+          missing=()
+
+          if [[ -z "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" ]]; then
+            missing+=("CI_NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
+          fi
+
+          if [[ -z "$CLERK_SECRET_KEY" ]]; then
+            missing+=("CI_CLERK_SECRET_KEY")
+          fi
+
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Missing GitHub Actions secrets: %s\n' "${missing[*]}"
+            printf 'Set these from a Clerk development/test app before relying on the Verify badge.\n'
+            exit 1
+          fi
 
       - name: Use Node.js
         uses: actions/setup-node@v4
