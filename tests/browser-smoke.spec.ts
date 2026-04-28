@@ -26,3 +26,31 @@ test("public pages render primary UI", async ({ page }) => {
     page.getByRole("link", { name: "Generate storefront" })
   ).toBeVisible();
 });
+
+test("public share page renders from the gallery when storefronts exist", async ({
+  page
+}) => {
+  await page.goto(new URL("/storefronts", baseUrl).toString(), {
+    waitUntil: "domcontentloaded"
+  });
+
+  const openStorefrontLinks = page.getByRole("link", {
+    name: "Open storefront"
+  });
+
+  test.skip(
+    (await openStorefrontLinks.count()) === 0,
+    "No public storefront records are available for share-page smoke coverage."
+  );
+
+  await openStorefrontLinks.first().click();
+
+  await expect(page).toHaveURL(/\/s\/[^/]+$/);
+  await expect(page.locator("main article")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Built with vibe-storefront.com" })
+  ).toBeVisible();
+  await expect(
+    page.locator("main article footer").getByText(/Source prompt:/i)
+  ).toBeVisible();
+});

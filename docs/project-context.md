@@ -18,6 +18,10 @@ Supabase service-role writes should stay server-side only. Public storefront rea
 
 Clerk users can create repeat storefronts. Signed-out visitors are limited to one guest storefront by an HttpOnly cookie and database uniqueness constraint.
 
+## Future Feature Notes
+
+- Add a maintainer-only admin cleanup path for production smoke storefronts. It should delete both the storefront row and any associated product image through a guarded server-side flow, so production smoke records can be removed without direct Supabase edits.
+
 ## Product Images
 
 Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`. Each storefront stores the durable public image URL in `content.product.image`.
