@@ -39,6 +39,18 @@ Open `http://localhost:3000`.
 
 Local Supabase requires a Docker-compatible container runtime such as Docker Desktop, OrbStack, Rancher Desktop, or Podman. Use Clerk development keys locally. See [`docs/local-development.md`](docs/local-development.md) for the full local setup and manual smoke-test flow.
 
+## Project Deck
+
+The Reveal.js project deck is available at `http://localhost:3000/deck` in local development and `/deck` in deployed environments. Press `S` while viewing the deck to open Reveal.js speaker view with notes for the current slide.
+
+Export the deck and speaker notes to PDF:
+
+```bash
+npm run deck:pdf
+```
+
+The generated PDF is written to `deck-export/vibe-storefront-codex-deck.pdf`. Open `http://localhost:3000/deck?print-pdf` for manual browser printing.
+
 ## Verification
 
 Run the consolidated check before publishing changes:

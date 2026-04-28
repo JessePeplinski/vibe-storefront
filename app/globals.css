@@ -104,3 +104,408 @@
 a {
   text-decoration: none;
 }
+
+.deck-page {
+  min-height: 100vh;
+  background: #08251d;
+}
+
+.deck-page .deck-reveal {
+  --r-background-color: #f8f7f2;
+  --r-main-color: #0f172a;
+  --r-heading-color: #0f172a;
+  --r-link-color: #047857;
+  --r-main-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --r-heading-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8f7f2;
+  color: #0f172a;
+  width: 100%;
+  height: 100vh;
+}
+
+.deck-page .deck-reveal .slides {
+  text-align: left;
+}
+
+.deck-page .deck-reveal .slides section {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 4.1rem 4.5rem 3.6rem;
+}
+
+.deck-page .deck-reveal h1,
+.deck-page .deck-reveal h2,
+.deck-page .deck-reveal p,
+.deck-page .deck-reveal ul,
+.deck-page .deck-reveal ol {
+  margin: 0;
+}
+
+.deck-page .deck-reveal h1,
+.deck-page .deck-reveal h2 {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.deck-page .deck-reveal h1 {
+  max-width: 980px;
+  font-size: 5.4rem;
+  font-weight: 950;
+  line-height: 0.92;
+}
+
+.deck-page .deck-reveal h2 {
+  max-width: 1000px;
+  font-size: 3.65rem;
+  font-weight: 950;
+  line-height: 0.98;
+}
+
+.deck-page .deck-reveal .deck-kicker {
+  margin-bottom: 1.25rem;
+  color: #047857;
+  font-size: 0.95rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.deck-page .deck-reveal .deck-lede {
+  max-width: 840px;
+  margin-top: 1.7rem;
+  color: #475569;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.32;
+}
+
+.deck-page .deck-title-slide,
+.deck-page .deck-dark-slide {
+  color: #ffffff;
+}
+
+.deck-page .deck-title-slide h1,
+.deck-page .deck-title-slide h2,
+.deck-page .deck-dark-slide h2 {
+  color: #ffffff;
+}
+
+.deck-page .deck-title-slide .deck-kicker,
+.deck-page .deck-dark-slide .deck-kicker {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.deck-page .deck-title-slide .deck-lede,
+.deck-page .deck-dark-slide .deck-lede {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.deck-page .deck-title-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 4.2rem;
+}
+
+.deck-page .deck-title-meta span {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.deck-page .deck-rubric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.deck-page .deck-rubric-grid div {
+  min-height: 10.5rem;
+  border: 1px solid #d8d3c9;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 1.25rem;
+}
+
+.deck-page .deck-rubric-grid strong,
+.deck-page .deck-rubric-grid span {
+  display: block;
+}
+
+.deck-page .deck-rubric-grid strong {
+  color: #0f172a;
+  font-size: 1.15rem;
+  font-weight: 950;
+}
+
+.deck-page .deck-rubric-grid span {
+  margin-top: 1.25rem;
+  color: #64748b;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.deck-page .deck-rubric-grid-tight {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 880px;
+}
+
+.deck-page .deck-rubric-grid-tight div {
+  min-height: 7.5rem;
+}
+
+.deck-page .deck-footnote {
+  margin-top: 1.7rem;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.deck-page .deck-flow-line {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 3.4rem;
+}
+
+.deck-page .deck-flow-line span {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1.2rem 1rem;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 950;
+  text-align: center;
+}
+
+.deck-page .deck-flow-line span:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -0.58rem;
+  z-index: 1;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.58);
+  border-right: 2px solid rgba(255, 255, 255, 0.58);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.deck-page .deck-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 3rem;
+  margin-top: 2.8rem;
+  align-items: center;
+}
+
+.deck-page .deck-large-callout {
+  max-width: 430px;
+  color: #047857;
+  font-size: 3.3rem;
+  font-weight: 950;
+  line-height: 0.98;
+}
+
+.deck-page .deck-check-list,
+.deck-page .deck-final-list {
+  display: grid;
+  gap: 0.95rem;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-page .deck-check-list li,
+.deck-page .deck-final-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: #334155;
+  font-size: 1.15rem;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.deck-page .deck-check-list li::before,
+.deck-page .deck-final-list li::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: #047857;
+  flex: 0 0 auto;
+}
+
+.deck-page .deck-final-list {
+  max-width: 830px;
+  margin-top: 2.5rem;
+}
+
+.deck-page .deck-final-list li {
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 1.35rem;
+}
+
+.deck-page .deck-final-list li::before {
+  background: #34d399;
+}
+
+.deck-page .deck-stack {
+  display: grid;
+  max-width: 920px;
+  gap: 1.1rem;
+  margin-top: 2.7rem;
+}
+
+.deck-page .deck-stack p {
+  border-left: 0.35rem solid #047857;
+  padding-left: 1.2rem;
+  color: #334155;
+  font-size: 1.55rem;
+  font-weight: 820;
+  line-height: 1.32;
+}
+
+.deck-page .deck-stack-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.deck-page .deck-stack-compact p {
+  border: 1px solid #d8d3c9;
+  border-left: 0.35rem solid #047857;
+  border-radius: 0.45rem;
+  background: #ffffff;
+  padding: 1.05rem 1.15rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.deck-page .deck-architecture {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 3.2rem;
+}
+
+.deck-page .deck-architecture span {
+  display: flex;
+  min-height: 8rem;
+  align-items: end;
+  border-radius: 0.5rem;
+  background: #08251d;
+  padding: 1rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.deck-page .deck-number-flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 3rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: runtime-flow;
+}
+
+.deck-page .deck-number-flow li {
+  min-height: 10.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1rem;
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1.3;
+  counter-increment: runtime-flow;
+}
+
+.deck-page .deck-number-flow li::before {
+  content: counter(runtime-flow);
+  display: block;
+  margin-bottom: 2.8rem;
+  color: #34d399;
+  font-size: 2.5rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.deck-page .deck-image-stage {
+  margin-top: 2.1rem;
+  border: 1px solid #d8d3c9;
+  border-radius: 0.55rem;
+  background: #ffffff;
+  padding: 0.85rem;
+}
+
+.deck-page .deck-image-stage img {
+  display: block;
+  width: 100%;
+  max-height: 385px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 0.35rem;
+}
+
+.deck-page .deck-reveal .progress {
+  color: #047857;
+}
+
+.deck-page .deck-reveal .slide-number {
+  border-radius: 999px;
+  background: rgba(8, 37, 29, 0.84);
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.deck-page .deck-reveal aside.notes {
+  display: none;
+}
+
+html.reveal-print .deck-page {
+  background: #f8f7f2;
+}
+
+html.reveal-print .deck-page .deck-reveal .slides section {
+  padding: 4.1rem 4.5rem 3.6rem !important;
+}
+
+html.reveal-print .deck-page .deck-reveal .pdf-page section[hidden] {
+  display: block !important;
+  visibility: visible !important;
+}
+
+html.reveal-print .deck-page .deck-reveal .speaker-notes-pdf {
+  box-sizing: border-box;
+  padding: 4rem 4.5rem !important;
+  min-height: 100%;
+  background: #f8f7f2 !important;
+  color: #0f172a;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+html.reveal-print .deck-page .deck-reveal .speaker-notes-pdf p + p {
+  margin-top: 1rem;
+}
+
+html.reveal-print
+  .deck-page
+  .deck-reveal
+  .speaker-notes-pdf[data-layout="separate-page"]:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}

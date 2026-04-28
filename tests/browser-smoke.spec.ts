@@ -25,6 +25,14 @@ test("public pages render primary UI", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Generate storefront" })
   ).toBeVisible();
+
+  await page.goto(new URL("/deck", baseUrl).toString(), {
+    waitUntil: "domcontentloaded"
+  });
+  await expect(page.locator(".reveal")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Vibe Storefront" })
+  ).toBeVisible();
 });
 
 test("public share page renders from the gallery when storefronts exist", async ({
