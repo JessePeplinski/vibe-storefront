@@ -3,6 +3,7 @@
 [![vercel deploy](https://img.shields.io/website?url=https%3A%2F%2Fvibe-storefront.com&label=vercel%20deploy&up_message=online&down_message=offline&logo=vercel)](https://vibe-storefront.com)
 [![verify](https://github.com/JessePeplinski/vibe-storefront/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/JessePeplinski/vibe-storefront/actions/workflows/verify.yml)
 [![coverage](https://img.shields.io/codecov/c/github/JessePeplinski/vibe-storefront?label=coverage&logo=codecov)](https://codecov.io/gh/JessePeplinski/vibe-storefront)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Vibe Storefront is a Next.js prototype that turns a plain-English product idea into a shareable storefront concept. It generates structured storefront copy with the OpenAI Codex SDK, creates product imagery with the OpenAI Image API, saves the result to Supabase, and publishes a public share page.
 
@@ -53,3 +54,7 @@ npm run verify
 - [`docs/local-development.md`](docs/local-development.md) - local environment setup, Supabase, Clerk, and smoke testing.
 - [`docs/project-context.md`](docs/project-context.md) - runtime architecture, persistence boundaries, guest storefront behavior, and image backfill notes.
 - [`docs/deployment-checklist.md`](docs/deployment-checklist.md) - production environment, migrations, Vercel, and deployment verification.
+
+## License
+
+Open source under the [MIT License](LICENSE). You can use, copy, modify, merge, publish, distribute, sublicense, and sell copies of this project, provided the copyright and license notice stay with the software.
