@@ -21,6 +21,7 @@ vi.mock("@openai/codex-sdk", () => {
 describe("generateStorefront", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.CODEX_MODEL;
     process.env.CODEX_PATH_OVERRIDE = "/tmp/test-codex";
     process.env.CODEX_API_KEY = "test-codex-key";
     mocks.Codex.mockImplementation(function MockCodex() {
@@ -52,7 +53,7 @@ describe("generateStorefront", () => {
 
     expect(storefront).toEqual({
       content: sampleStorefrontContent,
-      model: "gpt-5.3-codex",
+      model: "gpt-5.5",
       usage: {
         cached_input_tokens: 20,
         input_tokens: 100,
@@ -61,7 +62,11 @@ describe("generateStorefront", () => {
     });
     expect(mocks.Codex).toHaveBeenCalledWith(
       expect.objectContaining({
-        codexPathOverride: "/tmp/test-codex"
+        codexPathOverride: "/tmp/test-codex",
+        config: expect.objectContaining({
+          model: "gpt-5.5",
+          model_reasoning_effort: "low"
+        })
       })
     );
     expect(mocks.startThread).toHaveBeenCalledWith({

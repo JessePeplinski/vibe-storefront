@@ -59,6 +59,11 @@ export type UsageCostBreakdown = PublicUsageCost & {
 
 const CODEX_MODEL_PRICING: Record<string, CodexModelPricing> = {
   [DEFAULT_CODEX_MODEL]: {
+    cachedInputUsdPer1M: 0.5,
+    inputUsdPer1M: 5,
+    outputUsdPer1M: 30
+  },
+  "gpt-5.3-codex": {
     cachedInputUsdPer1M: 0.175,
     inputUsdPer1M: 1.75,
     outputUsdPer1M: 14
