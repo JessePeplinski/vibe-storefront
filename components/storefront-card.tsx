@@ -12,6 +12,8 @@ import {
   Trash2
 } from "lucide-react";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 import { formatUsageUsd } from "@/lib/usage-format";
 
@@ -46,9 +48,13 @@ export function StorefrontCard({
   }
 
   return (
-    <article className="grid gap-3 border border-black/10 bg-white p-3 transition sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center">
+    <Card
+      asChild
+      className="grid gap-3 p-3 transition sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center"
+    >
+    <article>
       <StorefrontPreviewImage
-        className="h-16 w-full sm:w-[88px]"
+        className="h-16 w-full rounded-md sm:w-[88px]"
         content={storefront.content}
         sizes="(min-width: 640px) 88px, 100vw"
       />
@@ -80,11 +86,13 @@ export function StorefrontCard({
             : "grid grid-cols-2 gap-2 sm:w-[150px]"
         }
       >
-        <button
+        <Button
           aria-label={`Copy live link for ${storefront.content.name}`}
-          className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-black/10 bg-white px-2 text-xs font-black text-slate-950 transition hover:bg-stone-100"
+          className="px-2 text-xs"
           onClick={() => void handleCopyLink()}
+          size="sm"
           type="button"
+          variant="outline"
         >
           {hasCopied ? (
             <Check className="h-3.5 w-3.5" aria-hidden />
@@ -92,24 +100,27 @@ export function StorefrontCard({
             <Copy className="h-3.5 w-3.5" aria-hidden />
           )}
           {hasCopied ? "Copied" : "Copy"}
-        </button>
-        <Link
-          aria-label={`Open live storefront for ${storefront.content.name}`}
-          className="inline-flex min-h-9 items-center justify-center gap-1.5 bg-slate-950 px-2 text-xs font-black text-white transition hover:bg-slate-800"
-          href={liveHref}
-          rel="noreferrer"
-          target="_blank"
-        >
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-          Live
-        </Link>
+        </Button>
+        <Button asChild className="px-2 text-xs" size="sm">
+          <Link
+            aria-label={`Open live storefront for ${storefront.content.name}`}
+            href={liveHref}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            Live
+          </Link>
+        </Button>
         {canDelete && (
-          <button
+          <Button
             aria-label={`Delete storefront ${storefront.content.name}`}
-            className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-red-200 bg-white px-2 text-xs font-black text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+            className="px-2 text-xs"
             disabled={deleteDisabled}
             onClick={() => onDelete?.(storefront)}
+            size="sm"
             type="button"
+            variant="destructive"
           >
             {isDeleting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -117,9 +128,10 @@ export function StorefrontCard({
               <Trash2 className="h-3.5 w-3.5" aria-hidden />
             )}
             {isDeleting ? "Deleting" : "Delete"}
-          </button>
+          </Button>
         )}
       </div>
     </article>
+    </Card>
   );
 }

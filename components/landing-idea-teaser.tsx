@@ -4,6 +4,8 @@ import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { useStorefrontGeneration } from "@/components/use-storefront-generation";
 import { formatUsageUsd } from "@/lib/usage-format";
 
@@ -38,56 +40,57 @@ export function LandingIdeaTeaser() {
     error || createdStorefrontPath ? (
       <div className="space-y-3">
         {error && (
-          <p className="border border-red-200 bg-red-50 p-3 text-sm font-bold leading-5 text-red-700">
-            {error}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription className="font-bold text-destructive">
+              {error}
+            </AlertDescription>
+          </Alert>
         )}
 
         {createdStorefrontPath && (
-          <div className="border border-emerald-200 bg-emerald-50 p-3">
-            <p className="text-sm font-black text-emerald-950">
-              {resultHeading}
-            </p>
+          <Alert role="status" variant="success">
+            <AlertTitle>{resultHeading}</AlertTitle>
+            <AlertDescription className="font-bold text-emerald-800">
             {result && (
-              <p className="mt-1 text-sm font-bold text-emerald-800">
+              <p className="mt-1">
                 Finished in {result.finishedInText}
               </p>
             )}
             {result?.usageCost ? (
-              <p className="mt-1 text-sm font-bold text-emerald-800">
+              <p className="mt-1">
                 This request cost about{" "}
                 {formatUsageUsd(result.usageCost.totalUsd)}.
               </p>
             ) : result?.status?.startsWith("existing_") ? (
-              <p className="mt-1 text-sm font-bold text-emerald-800">
+              <p className="mt-1">
                 No new API spend.
               </p>
             ) : null}
             {result?.warning && (
-              <p
-                className="mt-3 border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-5 text-amber-800"
-                role="status"
-              >
-                {result.warning}
-              </p>
+              <Alert className="mt-3" role="status" variant="warning">
+                <AlertDescription className="font-bold text-amber-800">
+                  {result.warning}
+                </AlertDescription>
+              </Alert>
             )}
-            <Link
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-emerald-700 px-4 py-3 text-sm font-black text-white transition hover:bg-emerald-800"
-              href={createdStorefrontPath}
-            >
-              {resultLinkText}
-              <ExternalLink className="h-4 w-4" aria-hidden />
-            </Link>
+            <Button asChild className="mt-3 w-full" size="lg" variant="success">
+              <Link href={createdStorefrontPath}>
+                {resultLinkText}
+                <ExternalLink className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
             <div className="mt-3">
-              <button
-                className="w-full border border-emerald-300 px-3 py-2 text-sm font-bold text-emerald-950 transition hover:border-emerald-900"
+              <Button
+                className="w-full border-emerald-300 text-emerald-950 hover:border-emerald-900"
                 onClick={() => openSignIn()}
                 type="button"
+                variant="outline"
               >
                 Sign in for more
-              </button>
+              </Button>
             </div>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     ) : null;

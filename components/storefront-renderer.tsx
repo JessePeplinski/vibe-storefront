@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { ArrowRight, Quote, Sparkles } from "lucide-react";
 import { MockCheckoutButton } from "@/components/mock-checkout-button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { StorefrontContent } from "@/lib/storefront-schema";
 import { deriveStorefrontThemeStyle } from "@/lib/storefront-theme";
 
@@ -28,7 +30,7 @@ export function StorefrontRenderer({
       className={`bg-[var(--sf-bg)] text-[var(--sf-text)] ${
         isLanding
           ? "flex min-h-screen flex-col overflow-hidden"
-          : "overflow-hidden border border-black/10 shadow-glow"
+          : "overflow-hidden rounded-lg border border-black/10 shadow-glow"
       }`}
       style={style}
     >
@@ -74,13 +76,14 @@ export function StorefrontRenderer({
                   productName={content.product.name}
                 />
               ) : (
-                <button
-                  className="inline-flex items-center gap-2 bg-[var(--sf-primary)] px-5 py-3 text-sm font-bold text-[var(--sf-on-primary)] transition hover:brightness-95"
+                <Button
+                  className="bg-[var(--sf-primary)] text-[var(--sf-on-primary)] hover:bg-[var(--sf-primary)] hover:brightness-95"
+                  size="lg"
                   type="button"
                 >
                   {content.cta.label}
                   <ArrowRight className="h-4 w-4" aria-hidden />
-                </button>
+                </Button>
               )}
               <span className="max-w-sm text-sm font-medium text-[var(--sf-muted)]">
                 {content.cta.sublabel}
@@ -90,12 +93,12 @@ export function StorefrontRenderer({
           {!compact && !isLanding && (
             <div className="grid gap-3 sm:grid-cols-3">
               {Object.entries(content.theme.palette).map(([name, color]) => (
-                <div
-                  className="border border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--sf-surface-text)]"
+                <Card
+                  className="gap-0 rounded-md border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--sf-surface-text)]"
                   key={name}
                 >
                   <div
-                    className="mb-3 h-10 border border-[var(--sf-surface-border)]"
+                    className="mb-3 h-10 rounded-sm border border-[var(--sf-surface-border)]"
                     style={{ backgroundColor: color }}
                   />
                   <span className="block text-[var(--sf-surface-muted)]">
@@ -104,16 +107,20 @@ export function StorefrontRenderer({
                   <span className="mt-1 block text-[var(--sf-surface-text)]">
                     {color}
                   </span>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-col justify-between gap-5 border border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)] sm:p-6">
+        <Card
+          asChild
+          className="flex min-w-0 flex-col justify-between gap-5 rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 py-5 text-[var(--sf-surface-text)] sm:p-6 sm:py-6"
+        >
+        <aside>
           <div className="space-y-4">
             <div
-              className={`relative overflow-hidden bg-[var(--sf-secondary)] text-white ${
+              className={`relative overflow-hidden rounded-md bg-[var(--sf-secondary)] text-white ${
                 compact ? "aspect-[4/3] p-3" : "aspect-[4/3] p-4"
               }`}
             >
@@ -142,7 +149,7 @@ export function StorefrontRenderer({
                 </>
               )}
               <div
-                className={`relative flex h-full min-w-0 flex-col justify-between border border-white/25 ${
+                className={`relative flex h-full min-w-0 flex-col justify-between rounded-md border border-white/25 ${
                   productImage ? "bg-black/20" : ""
                 } ${compact ? "p-3" : "p-4"}`}
               >
@@ -175,7 +182,7 @@ export function StorefrontRenderer({
           <ul className="grid gap-3">
             {content.product.highlights.map((highlight) => (
               <li
-                className="border border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-sm font-semibold text-[var(--sf-surface-text)]"
+                className="rounded-md border border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-sm font-semibold text-[var(--sf-surface-text)]"
                 key={highlight}
               >
                 {highlight}
@@ -183,15 +190,18 @@ export function StorefrontRenderer({
             ))}
           </ul>
         </aside>
+        </Card>
       </section>
 
       {!compact && (
         <section className="grid gap-4 border-t border-[var(--sf-border)] bg-[var(--sf-section-bg)] p-6 sm:grid-cols-3 sm:p-8">
           {content.testimonials.map((testimonial) => (
-            <figure
-              className="flex min-h-48 flex-col justify-between border border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)]"
+            <Card
+              asChild
+              className="flex min-h-48 flex-col justify-between rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 py-5 text-[var(--sf-surface-text)]"
               key={testimonial.name}
             >
+            <figure>
               <Quote
                 className="h-5 w-5 text-[var(--sf-surface-highlight)]"
                 aria-hidden
@@ -208,6 +218,7 @@ export function StorefrontRenderer({
                 </span>
               </figcaption>
             </figure>
+            </Card>
           ))}
         </section>
       )}

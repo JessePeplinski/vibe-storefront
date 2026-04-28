@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { LandingIdeaTeaser } from "@/components/landing-idea-teaser";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { listPublishedStorefronts } from "@/lib/storefronts";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -71,7 +73,7 @@ function ExampleStorefronts({
 }) {
   if (storefronts.length === 0) {
     return (
-      <div className="border border-dashed border-slate-300 bg-[#f8f7f2] p-8 text-center">
+      <Card className="border-dashed bg-background p-8 py-8 text-center">
         <h3 className="text-2xl font-black text-slate-950">
           Live examples will appear here.
         </h3>
@@ -79,19 +81,21 @@ function ExampleStorefronts({
           The gallery fills with public storefronts as product ideas are
           generated and shared.
         </p>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {storefronts.map((storefront) => (
-        <article
-          className="flex min-h-full flex-col border border-black/10 bg-white p-3 shadow-sm"
+        <Card
+          asChild
+          className="flex min-h-full flex-col gap-0 p-3 py-3"
           key={storefront.id}
         >
+        <article>
           <StorefrontPreviewImage
-            className="h-44"
+            className="h-44 rounded-md"
             content={storefront.content}
             sizes="(min-width: 768px) 33vw, 100vw"
           />
@@ -105,15 +109,15 @@ function ExampleStorefronts({
             <p className="mt-4 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">
               From: {storefront.idea}
             </p>
-            <Link
-              className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 border border-slate-950 bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800"
-              href={`/s/${storefront.slug}`}
-            >
-              Open storefront
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
+            <Button asChild className="mt-auto" size="lg">
+              <Link href={`/s/${storefront.slug}`}>
+                Open storefront
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
         </article>
+        </Card>
       ))}
     </div>
   );
@@ -202,10 +206,12 @@ export default async function HomePage() {
               const Icon = step.icon;
 
               return (
-                <article
-                  className="border border-black/10 bg-white p-5 shadow-sm"
+                <Card
+                  asChild
+                  className="gap-0 p-5 py-5"
                   key={step.title}
                 >
+                <article>
                   <div className="flex h-11 w-11 items-center justify-center bg-[#083f31] text-white">
                     <Icon className="h-5 w-5" aria-hidden />
                   </div>
@@ -216,6 +222,7 @@ export default async function HomePage() {
                     {step.description}
                   </p>
                 </article>
+                </Card>
               );
             })}
           </div>
@@ -244,13 +251,12 @@ export default async function HomePage() {
                 prompts in the app.
               </p>
             </div>
-            <Link
-              className="inline-flex min-h-11 items-center justify-center gap-2 border border-slate-950 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-950 hover:text-white"
-              href="/storefronts"
-            >
-              Browse gallery
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/storefronts">
+                Browse gallery
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
           <ExampleStorefronts storefronts={exampleStorefronts} />
         </div>
@@ -268,19 +274,24 @@ export default async function HomePage() {
               </h2>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#8ee8b6] px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-[#b8f3cf]"
-                href="#generate"
+              <Button
+                asChild
+                className="bg-[#8ee8b6] text-slate-950 hover:bg-[#b8f3cf]"
+                size="lg"
               >
-                Validate an idea
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:bg-white hover:text-slate-950"
-                href="/storefronts"
+                <Link href="#generate">
+                  Validate an idea
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="border-white/25 bg-transparent text-white hover:bg-white hover:text-slate-950"
+                size="lg"
+                variant="outline"
               >
-                See examples
-              </Link>
+                <Link href="/storefronts">See examples</Link>
+              </Button>
             </div>
           </div>
           <div className="mt-8 border-t border-white/10 pt-5">

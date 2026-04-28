@@ -9,6 +9,9 @@ import {
   UserRound
 } from "lucide-react";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { listPublishedStorefronts } from "@/lib/storefronts";
 import { formatUsageUsd } from "@/lib/usage-format";
 
@@ -83,13 +86,12 @@ export default async function AllStorefrontsPage() {
               Browse every public storefront generated across Vibe Storefront.
             </p>
           </div>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800"
-            href="/"
-          >
-            Generate storefront
-            <Sparkles className="h-4 w-4" aria-hidden />
-          </Link>
+          <Button asChild size="lg">
+            <Link href="/">
+              Generate storefront
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
         </div>
 
         {storefronts.length > 0 ? (
@@ -102,12 +104,14 @@ export default async function AllStorefrontsPage() {
               const storefrontHref = `/s/${storefront.slug}`;
 
               return (
-                <article
-                  className="border border-black/10 bg-white p-4 shadow-sm"
+                <Card
+                  asChild
+                  className="gap-0 p-4 py-4"
                   key={storefront.id}
                 >
+                <article>
                   <StorefrontPreviewImage
-                    className="mb-4 h-24"
+                    className="mb-4 h-24 rounded-md"
                     content={storefront.content}
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                   />
@@ -148,30 +152,33 @@ export default async function AllStorefrontsPage() {
                         )}
                       </p>
                     </div>
-                    <p className="mt-4 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">
+                    <Badge className="mt-4 max-w-full" variant="secondary">
+                      Public
+                    </Badge>
+                    <p className="mt-3 line-clamp-2 text-xs font-semibold leading-5 text-slate-500">
                       Source prompt: {storefront.idea}
                     </p>
                   </div>
-                  <Link
-                    className="mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 border border-slate-900 bg-slate-950 px-3 py-2 text-sm font-black text-white transition hover:bg-slate-800"
-                    href={storefrontHref}
-                  >
-                    Open storefront
-                    <ExternalLink className="h-4 w-4" aria-hidden />
-                  </Link>
+                  <Button asChild className="mt-5 w-full">
+                    <Link href={storefrontHref}>
+                      Open storefront
+                      <ExternalLink className="h-4 w-4" aria-hidden />
+                    </Link>
+                  </Button>
                 </article>
+                </Card>
               );
             })}
           </div>
         ) : (
-          <div className="mt-8 border border-dashed border-slate-300 bg-white p-8 text-center">
+          <Card className="mt-8 border-dashed p-8 py-8 text-center">
             <h2 className="text-2xl font-black text-slate-950">
               No storefronts yet.
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Public storefronts will appear here after the first generation.
             </p>
-          </div>
+          </Card>
         )}
       </section>
     </main>
