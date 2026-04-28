@@ -1,0 +1,78 @@
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CI_COLLECT_COVERAGE: "1"
+      CLERK_SECRET_KEY: sk_test_ci
+      CODEX_API_KEY: ci-codex-key
+      CODEX_MODEL: gpt-5.5
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXktZHVtbXktMS5jbGVyay5hY2NvdW50cy5kZXYk
+      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+      OPENAI_API_KEY: ci-openai-key
+      OPENAI_IMAGE_MODEL: gpt-image-2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Export local Supabase env
+        shell: bash
+        run: |
+          supabase status -o env > supabase.env
+          set -a
+          source supabase.env
+          set +a
+
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run verification
+        run: npm run verify
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: true
+          use_oidc: true

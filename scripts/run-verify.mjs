@@ -1,9 +1,14 @@
 import { spawn } from "node:child_process";
 
+const collectCoverage = process.env.CI_COLLECT_COVERAGE === "1";
+
 const steps = [
   ["typecheck", ["npm", ["run", "typecheck"]]],
   ["lint", ["npm", ["run", "lint"]]],
-  ["unit tests", ["npm", ["test"]]],
+  [
+    collectCoverage ? "unit tests with coverage" : "unit tests",
+    ["npm", ["run", collectCoverage ? "test:coverage" : "test"]]
+  ],
   ["build", ["npm", ["run", "build"]]],
   ["browser smoke", ["npm", ["run", "smoke:browser"]]]
 ];
