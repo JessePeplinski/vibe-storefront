@@ -60,14 +60,14 @@ export function StorefrontGenerationForm({
   return (
     <form
       className={cn(
-        "space-y-4 rounded-lg border bg-card p-3 text-card-foreground shadow-sm sm:p-5",
+        "space-y-4 rounded-lg border bg-card p-4 text-card-foreground shadow-sm sm:p-5",
         className
       )}
       onSubmit={onSubmit}
     >
       <Label className="block" htmlFor={textareaId}>
         {showLabel && (
-          <span className="text-xl font-black text-slate-950">
+          <span className="text-lg font-black leading-tight text-slate-950 sm:text-xl">
             Generate your storefront
           </span>
         )}

@@ -50,7 +50,7 @@ export function LandingIdeaTeaser() {
         {createdStorefrontPath && (
           <Alert role="status" variant="success">
             <AlertTitle>{resultHeading}</AlertTitle>
-            <AlertDescription className="font-bold text-emerald-800">
+            <AlertDescription className="font-bold text-primary">
             {result && (
               <p className="mt-1">
                 Finished in {result.finishedInText}
@@ -81,7 +81,7 @@ export function LandingIdeaTeaser() {
             </Button>
             <div className="mt-3">
               <Button
-                className="w-full border-emerald-300 text-emerald-950 hover:border-emerald-900"
+                className="w-full border-primary/30 text-foreground hover:border-primary hover:bg-accent hover:text-accent-foreground"
                 onClick={() => openSignIn()}
                 type="button"
                 variant="outline"
