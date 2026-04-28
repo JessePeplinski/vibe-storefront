@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StorefrontStudio } from "@/components/storefront-studio";
+import { Toaster } from "@/components/ui/sonner";
 import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
@@ -154,9 +155,12 @@ describe("StorefrontStudio", () => {
     });
 
     render(
-      <StorefrontStudio
-        initialStorefronts={[newestStorefront, olderStorefront]}
-      />
+      <>
+        <StorefrontStudio
+          initialStorefronts={[newestStorefront, olderStorefront]}
+        />
+        <Toaster />
+      </>
     );
 
     const recentStorefronts = screen.getByRole("region", {
@@ -286,7 +290,7 @@ describe("StorefrontStudio", () => {
       })
     );
 
-    const dialog = screen.getByRole("dialog", {
+    const dialog = screen.getByRole("alertdialog", {
       name: "Delete storefront?"
     });
 
@@ -316,10 +320,9 @@ describe("StorefrontStudio", () => {
     });
     expect(within(recentStorefronts).getByText("Lamp Loom")).toBeInTheDocument();
     expect(screen.getByText("1 saved")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Desk Bloom was deleted."
-    );
-    expect(screen.queryByRole("dialog", { name: "Delete storefront?" }))
+    expect(await screen.findByText("Desk Bloom was deleted."))
+      .toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog", { name: "Delete storefront?" }))
       .not.toBeInTheDocument();
   });
 
