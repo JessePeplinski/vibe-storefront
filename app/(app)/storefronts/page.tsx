@@ -106,7 +106,7 @@ export default async function AllStorefrontsPage() {
               return (
                 <Card
                   asChild
-                  className="gap-0 p-4 py-4"
+                  className="gap-0 p-4"
                   key={storefront.id}
                 >
                 <article>
@@ -171,7 +171,7 @@ export default async function AllStorefrontsPage() {
             })}
           </div>
         ) : (
-          <Card className="mt-8 border-dashed p-8 py-8 text-center">
+          <Card className="mt-8 border-dashed p-8 text-center">
             <h2 className="text-2xl font-black text-slate-950">
               No storefronts yet.
             </h2>

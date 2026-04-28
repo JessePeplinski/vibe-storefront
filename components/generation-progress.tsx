@@ -53,11 +53,11 @@ export function GenerationProgress({
         {steps.map((step, index) => {
           const isActive = step.status === "active";
           const isComplete = step.status === "complete";
-          const connectorClass = isComplete ? "bg-emerald-700" : "bg-border";
+          const connectorClass = isComplete ? "bg-primary" : "bg-border";
           const markerClass = isComplete
-            ? "border-emerald-700 bg-emerald-700 text-white"
+            ? "border-primary bg-primary text-primary-foreground"
             : isActive
-              ? "border-slate-950 bg-slate-950 text-white"
+              ? "border-foreground bg-foreground text-background"
               : "border-border bg-card text-slate-400";
           const labelClass =
             isActive || isComplete ? "text-slate-950" : "text-slate-500";

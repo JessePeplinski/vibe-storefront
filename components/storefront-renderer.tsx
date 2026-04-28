@@ -94,7 +94,7 @@ export function StorefrontRenderer({
             <div className="grid gap-3 sm:grid-cols-3">
               {Object.entries(content.theme.palette).map(([name, color]) => (
                 <Card
-                  className="gap-0 rounded-md border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--sf-surface-text)]"
+                  className="gap-0 rounded-md border-[var(--sf-surface-border)] bg-[var(--sf-surface-soft)] p-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--sf-surface-text)]"
                   key={name}
                 >
                   <div
@@ -115,7 +115,7 @@ export function StorefrontRenderer({
 
         <Card
           asChild
-          className="flex min-w-0 flex-col justify-between gap-5 rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 py-5 text-[var(--sf-surface-text)] sm:p-6 sm:py-6"
+          className="flex min-w-0 flex-col justify-between gap-5 rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)] sm:p-6"
         >
         <aside>
           <div className="space-y-4">
@@ -198,7 +198,7 @@ export function StorefrontRenderer({
           {content.testimonials.map((testimonial) => (
             <Card
               asChild
-              className="flex min-h-48 flex-col justify-between rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 py-5 text-[var(--sf-surface-text)]"
+              className="flex min-h-48 flex-col justify-between rounded-lg border-[var(--sf-surface-border)] bg-[var(--sf-surface)] p-5 text-[var(--sf-surface-text)]"
               key={testimonial.name}
             >
             <figure>
@@ -226,7 +226,7 @@ export function StorefrontRenderer({
       {isLanding ? (
         <footer className="flex flex-col gap-2 border-t border-black/10 bg-black px-6 py-4 text-xs font-semibold text-white/70 sm:flex-row sm:items-center sm:justify-between">
           <a
-            className="uppercase tracking-[0.16em] transition hover:text-white"
+            className="inline-flex min-h-11 items-center uppercase tracking-[0.16em] transition hover:text-white"
             href="https://vibe-storefront.com"
           >
             Built with vibe-storefront.com
