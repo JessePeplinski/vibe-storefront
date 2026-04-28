@@ -89,7 +89,7 @@ const sampleStorefrontContentWithImage = {
 function generatedStorefront(content = sampleStorefrontContent) {
   return {
     content,
-    model: "gpt-5.3-codex",
+    model: "gpt-5.5",
     usage: codexUsage
   };
 }

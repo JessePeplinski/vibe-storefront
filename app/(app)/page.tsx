@@ -157,7 +157,7 @@ export default async function HomePage() {
             </h1>
             <p className="mt-5 max-w-4xl text-base leading-7 text-white/80 sm:text-xl sm:leading-8">
               Turn a raw product concept into a basic landing page. Powered by
-              Codex 5.3 and Image API 2.
+              GPT-5.5 and GPT Image 2.
             </p>
           </div>
 

@@ -7,7 +7,20 @@ import {
 import { formatUsageUsd } from "@/lib/usage-format";
 
 describe("usage cost estimates", () => {
-  it("prices Codex usage with cached input tokens", () => {
+  it("prices GPT-5.5 usage with cached input tokens", () => {
+    expect(
+      estimateCodexCost({
+        model: "gpt-5.5",
+        usage: {
+          cached_input_tokens: 100,
+          input_tokens: 1_000,
+          output_tokens: 500
+        }
+      })
+    ).toBe(0.01955);
+  });
+
+  it("keeps pricing for older Codex model usage", () => {
     expect(
       estimateCodexCost({
         model: "gpt-5.3-codex",

@@ -29,10 +29,10 @@ Supabase:
 
 OpenAI:
 
-- Create a secret API key with access to the Codex model used by this app.
+- Create a secret API key with access to the storefront generation model used by this app.
 - Store it as `CODEX_API_KEY`.
 - Use the same key for image generation, or create a separate key and store it as `OPENAI_API_KEY`.
-- Leave `CODEX_MODEL=gpt-5.3-codex` unless the app is intentionally retargeted.
+- Leave `CODEX_MODEL=gpt-5.5` unless the app is intentionally retargeted.
 - Leave `OPENAI_IMAGE_MODEL=gpt-image-2` unless product image generation is intentionally retargeted.
 
 App:
@@ -95,7 +95,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
 CODEX_API_KEY=
-CODEX_MODEL=gpt-5.3-codex
+CODEX_MODEL=gpt-5.5
 OPENAI_API_KEY=
 OPENAI_IMAGE_MODEL=gpt-image-2
 
