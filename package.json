@@ -12,6 +12,7 @@
     "backfill:product-images": "node scripts/backfill-product-images.mjs",
     "start": "next start",
     "smoke:browser": "node scripts/run-browser-smoke.mjs",
+    "smoke:production": "node scripts/run-production-smoke.mjs",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
