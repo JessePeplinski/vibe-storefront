@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  defaultStorefrontThemeAppearance,
   sampleStorefrontContent,
+  type StorefrontContent,
   storefrontContentSchema
 } from "@/lib/storefront-schema";
 
@@ -18,6 +20,11 @@ vi.mock("@openai/codex-sdk", () => {
   };
 });
 
+const generatedStorefrontContent = {
+  ...sampleStorefrontContent,
+  name: sampleStorefrontContent.product.name
+} satisfies StorefrontContent;
+
 describe("generateStorefront", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,7 +40,7 @@ describe("generateStorefront", () => {
       run: mocks.run
     });
     mocks.run.mockResolvedValue({
-      finalResponse: JSON.stringify(sampleStorefrontContent),
+      finalResponse: JSON.stringify(generatedStorefrontContent),
       usage: {
         cached_input_tokens: 20,
         input_tokens: 100,
@@ -52,7 +59,7 @@ describe("generateStorefront", () => {
     );
 
     expect(storefront).toEqual({
-      content: sampleStorefrontContent,
+      content: generatedStorefrontContent,
       model: "gpt-5.5",
       usage: {
         cached_input_tokens: 20,
@@ -84,6 +91,21 @@ describe("generateStorefront", () => {
     const prompt = __testables.buildPrompt("small-batch hot sauce from Brooklyn");
 
     expect(prompt).toContain(
+      'Set presentationVersion to exactly "2.0".'
+    );
+    expect(prompt).toContain(
+      "Set the top-level name to exactly the same string as product.name."
+    );
+    expect(prompt).toContain(
+      "Do not shorten, rebrand, or create a separate brand-style name for the top-level name."
+    );
+    expect(prompt).toContain(
+      "Choose theme.appearance from the allowed enum values based on the product idea."
+    );
+    expect(prompt).toContain(
+      "Do not include Tailwind classes, CSS, layout instructions, or arbitrary style strings."
+    );
+    expect(prompt).toContain(
       "The palette background and text colors must never be identical or near-identical."
     );
     expect(prompt).toContain(
@@ -91,14 +113,25 @@ describe("generateStorefront", () => {
     );
     const outputSchema = __testables.storefrontJsonSchema as {
       properties: {
+        presentationVersion?: unknown;
         product: {
           properties: {
             image?: unknown;
           };
         };
+        theme: {
+          properties: {
+            appearance?: unknown;
+          };
+        };
       };
     };
 
+    expect(outputSchema.properties.presentationVersion).toBeDefined();
+    expect(JSON.stringify(outputSchema.properties.presentationVersion)).toContain(
+      "2.0"
+    );
+    expect(outputSchema.properties.theme.properties.appearance).toBeDefined();
     expect(outputSchema.properties.product.properties.image).toBeUndefined();
   });
 
@@ -109,6 +142,14 @@ describe("generateStorefront", () => {
       "Enter a more specific product idea."
     );
     expect(mocks.run).not.toHaveBeenCalled();
+  });
+
+  it("rejects generated content with a different top-level and product name", async () => {
+    const { __testables } = await import("@/lib/codex-storefront");
+
+    expect(() =>
+      __testables.parseCodexResponse(JSON.stringify(sampleStorefrontContent))
+    ).toThrow("Generated storefront name must match product name.");
   });
 
   it("accepts persisted storefront content with or without product image metadata", () => {
@@ -134,5 +175,32 @@ describe("generateStorefront", () => {
     expect(storefrontContentSchema.parse(contentWithImage)).toEqual(
       contentWithImage
     );
+  });
+
+  it("defaults legacy persisted storefront content to v1 presentation metadata", () => {
+    const contentWithoutVersion: Partial<typeof sampleStorefrontContent> = {
+      ...sampleStorefrontContent
+    };
+    const themeWithoutAppearance: Partial<typeof sampleStorefrontContent.theme> =
+      {
+        ...sampleStorefrontContent.theme
+      };
+
+    delete contentWithoutVersion.presentationVersion;
+    delete themeWithoutAppearance.appearance;
+
+    const legacyContent = {
+      ...contentWithoutVersion,
+      theme: themeWithoutAppearance
+    };
+
+    expect(storefrontContentSchema.parse(legacyContent)).toEqual({
+      ...legacyContent,
+      presentationVersion: "1.0",
+      theme: {
+        ...themeWithoutAppearance,
+        appearance: defaultStorefrontThemeAppearance
+      }
+    });
   });
 });

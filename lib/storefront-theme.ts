@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react";
-import type { StorefrontContent } from "@/lib/storefront-schema";
+import {
+  defaultStorefrontThemeAppearance,
+  type StorefrontContent,
+  type StorefrontThemeAppearance
+} from "@/lib/storefront-schema";
 
 type StorefrontPalette = StorefrontContent["theme"]["palette"];
 
@@ -10,6 +14,25 @@ type Rgb = {
 };
 
 export type StorefrontThemeStyle = CSSProperties & {
+  "--accent": string;
+  "--accent-foreground": string;
+  "--background": string;
+  "--border": string;
+  "--card": string;
+  "--card-foreground": string;
+  "--destructive": string;
+  "--foreground": string;
+  "--input": string;
+  "--muted": string;
+  "--muted-foreground": string;
+  "--popover": string;
+  "--popover-foreground": string;
+  "--primary": string;
+  "--primary-foreground": string;
+  "--radius": string;
+  "--ring": string;
+  "--secondary": string;
+  "--secondary-foreground": string;
   "--sf-accent": string;
   "--sf-bg": string;
   "--sf-border": string;
@@ -31,6 +54,7 @@ export type StorefrontThemeStyle = CSSProperties & {
 
 const DARK_TEXT = "#0f172a";
 const LIGHT_TEXT = "#f8fafc";
+const DESTRUCTIVE = "#b91c1c";
 const MIN_TEXT_CONTRAST = 4.5;
 
 function hexToRgb(hex: string): Rgb {
@@ -126,8 +150,21 @@ function mutedReadableColor(text: string, background: string): string {
   return text;
 }
 
+function radiusForAppearance(radius: StorefrontThemeAppearance["radius"]): string {
+  if (radius === "sharp") {
+    return "0.125rem";
+  }
+
+  if (radius === "soft") {
+    return "0.5rem";
+  }
+
+  return "0.375rem";
+}
+
 export function deriveStorefrontThemeStyle(
-  palette: StorefrontPalette
+  palette: StorefrontPalette,
+  appearance: StorefrontThemeAppearance = defaultStorefrontThemeAppearance
 ): StorefrontThemeStyle {
   const pageText = readableColor({
     background: palette.background,
@@ -137,27 +174,56 @@ export function deriveStorefrontThemeStyle(
     background: palette.surface,
     candidates: [palette.text]
   });
+  const pageBorder = blendColors(pageText, palette.background, 0.16);
+  const pageMuted = mutedReadableColor(pageText, palette.background);
+  const surfaceBorder = blendColors(surfaceText, palette.surface, 0.14);
+  const surfaceMuted = mutedReadableColor(surfaceText, palette.surface);
+  const primaryForeground = strongestReadableText(palette.primary);
+  const secondaryForeground = strongestReadableText(palette.secondary);
+  const accentForeground = strongestReadableText(palette.accent);
 
   return {
+    "--accent": palette.accent,
+    "--accent-foreground": accentForeground,
+    "--background": palette.background,
+    "--border": pageBorder,
+    "--card": palette.surface,
+    "--card-foreground": surfaceText,
+    "--destructive": DESTRUCTIVE,
+    "--foreground": pageText,
+    "--input": pageBorder,
+    "--muted": blendColors(pageText, palette.background, 0.08),
+    "--muted-foreground": pageMuted,
+    "--popover": palette.surface,
+    "--popover-foreground": surfaceText,
+    "--primary": palette.primary,
+    "--primary-foreground": primaryForeground,
+    "--radius": radiusForAppearance(appearance.radius),
+    "--ring": readableColor({
+      background: palette.background,
+      candidates: [palette.primary, palette.secondary, palette.accent]
+    }),
+    "--secondary": palette.secondary,
+    "--secondary-foreground": secondaryForeground,
     "--sf-accent": palette.accent,
     "--sf-bg": palette.background,
-    "--sf-border": blendColors(pageText, palette.background, 0.16),
+    "--sf-border": pageBorder,
     "--sf-eyebrow": readableColor({
       background: palette.background,
       candidates: [palette.primary, palette.secondary, palette.accent]
     }),
-    "--sf-muted": mutedReadableColor(pageText, palette.background),
-    "--sf-on-primary": strongestReadableText(palette.primary),
+    "--sf-muted": pageMuted,
+    "--sf-on-primary": primaryForeground,
     "--sf-primary": palette.primary,
     "--sf-secondary": palette.secondary,
     "--sf-section-bg": blendColors(palette.surface, palette.background, 0.76),
     "--sf-surface": palette.surface,
-    "--sf-surface-border": blendColors(surfaceText, palette.surface, 0.14),
+    "--sf-surface-border": surfaceBorder,
     "--sf-surface-highlight": readableColor({
       background: palette.surface,
       candidates: [palette.primary, palette.secondary, palette.accent]
     }),
-    "--sf-surface-muted": mutedReadableColor(surfaceText, palette.surface),
+    "--sf-surface-muted": surfaceMuted,
     "--sf-surface-soft": blendColors(surfaceText, palette.surface, 0.04),
     "--sf-surface-text": surfaceText,
     "--sf-support": readableColor({
