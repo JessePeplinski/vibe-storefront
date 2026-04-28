@@ -1,5 +1,8 @@
 import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import type { GenerationProgressStep } from "@/components/use-generation-countdown";
+import { cn } from "@/lib/utils";
 
 type GenerationProgressProps = {
   currentPhaseIndex: number;
@@ -24,14 +27,14 @@ export function GenerationProgress({
   return (
     <div
       aria-label="Generation progress"
-      className="border-t border-slate-200 pt-4"
+      className="border-t pt-4"
       role="status"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+          <Badge className="uppercase tracking-[0.14em]" variant="success">
             Step {currentPhaseIndex + 1} of {steps.length}
-          </p>
+          </Badge>
           <p className="mt-1 text-sm font-black leading-5 text-slate-950">
             {activeStep?.label ?? "Generating storefront"}
           </p>
@@ -44,23 +47,18 @@ export function GenerationProgress({
         </p>
       </div>
 
-      <div className="mt-4 h-1.5 overflow-hidden bg-slate-100" aria-hidden>
-        <div
-          className="h-full bg-emerald-700 transition-[width] duration-300 ease-out"
-          style={{ width: `${boundedProgress}%` }}
-        />
-      </div>
+      <Progress className="mt-4 h-1.5" value={boundedProgress} />
 
       <ol className="mt-4 grid grid-cols-1 gap-0 sm:grid-cols-4 sm:gap-x-4">
         {steps.map((step, index) => {
           const isActive = step.status === "active";
           const isComplete = step.status === "complete";
-          const connectorClass = isComplete ? "bg-emerald-700" : "bg-slate-200";
+          const connectorClass = isComplete ? "bg-emerald-700" : "bg-border";
           const markerClass = isComplete
             ? "border-emerald-700 bg-emerald-700 text-white"
             : isActive
               ? "border-slate-950 bg-slate-950 text-white"
-              : "border-slate-300 bg-white text-slate-400";
+              : "border-border bg-card text-slate-400";
           const labelClass =
             isActive || isComplete ? "text-slate-950" : "text-slate-500";
           const timeClass =
@@ -73,13 +71,19 @@ export function GenerationProgress({
             >
               {index < steps.length - 1 && (
                 <span
-                  className={`absolute bottom-1 left-3.5 top-8 w-px sm:hidden ${connectorClass}`}
+                  className={cn(
+                    "absolute bottom-1 left-3.5 top-8 w-px sm:hidden",
+                    connectorClass
+                  )}
                   data-generation-connector="true"
                   aria-hidden
                 />
               )}
               <span
-                className={`relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black ${markerClass}`}
+                className={cn(
+                  "relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black",
+                  markerClass
+                )}
               >
                 {isComplete ? (
                   <Check className="h-3.5 w-3.5" aria-hidden />
@@ -89,12 +93,15 @@ export function GenerationProgress({
               </span>
               <span className="min-w-0">
                 <span
-                  className={`block text-xs font-black leading-4 ${labelClass}`}
+                  className={cn("block text-xs font-black leading-4", labelClass)}
                 >
                   {step.label}
                 </span>
                 <span
-                  className={`mt-1 block text-xs font-bold tabular-nums ${timeClass}`}
+                  className={cn(
+                    "mt-1 block text-xs font-bold tabular-nums",
+                    timeClass
+                  )}
                 >
                   {step.elapsedText
                     ? `Elapsed ${step.elapsedText}`

@@ -1,6 +1,7 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 type AuthButtonsProps = {
   variant?: "header" | "panel";
@@ -11,23 +12,20 @@ export function AuthButtons({ variant = "header" }: AuthButtonsProps) {
 
   if (variant === "panel") {
     return (
-      <button
-        className="inline-flex items-center justify-center gap-2 bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+      <Button
+        className="w-full sm:w-auto"
         onClick={() => openSignIn()}
         type="button"
+        size="lg"
       >
         Sign in
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      className="bg-slate-950 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
-      onClick={() => openSignIn()}
-      type="button"
-    >
+    <Button onClick={() => openSignIn()} size="sm" type="button">
       Sign in
-    </button>
+    </Button>
   );
 }

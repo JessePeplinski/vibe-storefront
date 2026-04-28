@@ -81,18 +81,15 @@ describe("app layout", () => {
     );
 
     const menuButton = screen.getByRole("button", { name: "Open menu" });
-    const menu = document.getElementById("signed-in-navigation-menu");
 
-    expect(menu).toHaveClass("hidden");
+    expect(screen.queryByRole("dialog", { name: "Navigation" }))
+      .not.toBeInTheDocument();
 
     fireEvent.click(menuButton);
 
-    expect(
-      screen.getByRole("button", { name: "Close menu" })
-    ).toHaveAttribute("aria-expanded", "true");
-    expect(menu).toHaveClass("flex");
-    expect(menu).not.toHaveClass("hidden");
-    const dashboardLink = within(menu as HTMLElement).getByRole("link", {
+    expect(menuButton).toHaveAttribute("aria-expanded", "true");
+    let menu = screen.getByRole("dialog", { name: "Navigation" });
+    const dashboardLink = within(menu).getByRole("link", {
       name: "Your storefronts"
     });
 
@@ -101,16 +98,16 @@ describe("app layout", () => {
       "/dashboard#your-storefronts"
     );
     expect(
-      within(menu as HTMLElement).getByRole("link", {
+      within(menu).getByRole("link", {
         name: "All storefronts"
       })
     ).toHaveAttribute("href", "/storefronts");
     expect(
-      within(menu as HTMLElement).getByRole("button", {
+      within(menu).getByRole("button", {
         name: "Manage account"
       })
     ).toBeInTheDocument();
-    expect(within(menu as HTMLElement).getByRole("button", { name: "Sign out" }))
+    expect(within(menu).getByRole("button", { name: "Sign out" }))
       .toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
@@ -119,29 +116,35 @@ describe("app layout", () => {
       "aria-expanded",
       "false"
     );
-    expect(menu).toHaveClass("hidden");
+    expect(screen.queryByRole("dialog", { name: "Navigation" }))
+      .not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
-    dashboardLink.addEventListener("click", (event) => event.preventDefault());
-    fireEvent.click(dashboardLink);
+    menu = screen.getByRole("dialog", { name: "Navigation" });
+    fireEvent.click(within(menu).getByRole("button", { name: "Close" }));
 
-    expect(menu).toHaveClass("hidden");
+    expect(screen.queryByRole("dialog", { name: "Navigation" }))
+      .not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    menu = screen.getByRole("dialog", { name: "Navigation" });
     fireEvent.click(
-      within(menu as HTMLElement).getByRole("button", {
+      within(menu).getByRole("button", {
         name: "Manage account"
       })
     );
 
     expect(mocks.openUserProfile).toHaveBeenCalledTimes(1);
-    expect(menu).toHaveClass("hidden");
+    expect(screen.queryByRole("dialog", { name: "Navigation" }))
+      .not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
-    fireEvent.click(within(menu as HTMLElement).getByRole("button", { name: "Sign out" }));
+    menu = screen.getByRole("dialog", { name: "Navigation" });
+    fireEvent.click(within(menu).getByRole("button", { name: "Sign out" }));
 
     expect(mocks.signOut).toHaveBeenCalledWith({ redirectUrl: "/" });
-    expect(menu).toHaveClass("hidden");
+    expect(screen.queryByRole("dialog", { name: "Navigation" }))
+      .not.toBeInTheDocument();
   });
 
   it("keeps the signed-out header focused on sign in", async () => {

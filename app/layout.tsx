@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
       <html lang="en">
         <body className="min-h-screen antialiased">
           {children}
+          <Toaster closeButton position="bottom-center" richColors />
         </body>
       </html>
     </ClerkProvider>
