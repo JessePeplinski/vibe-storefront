@@ -50,7 +50,7 @@ export function StorefrontCard({
   return (
     <Card
       asChild
-      className="grid gap-3 p-3 transition sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center"
+      className="grid gap-4 p-4 transition sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center"
     >
     <article>
       <StorefrontPreviewImage
@@ -88,7 +88,7 @@ export function StorefrontCard({
       >
         <Button
           aria-label={`Copy live link for ${storefront.content.name}`}
-          className="px-2 text-xs"
+          className="h-11 px-2 text-xs sm:h-10"
           onClick={() => void handleCopyLink()}
           size="sm"
           type="button"
@@ -101,7 +101,7 @@ export function StorefrontCard({
           )}
           {hasCopied ? "Copied" : "Copy"}
         </Button>
-        <Button asChild className="px-2 text-xs" size="sm">
+        <Button asChild className="h-11 px-2 text-xs sm:h-10" size="sm">
           <Link
             aria-label={`Open live storefront for ${storefront.content.name}`}
             href={liveHref}
@@ -115,7 +115,7 @@ export function StorefrontCard({
         {canDelete && (
           <Button
             aria-label={`Delete storefront ${storefront.content.name}`}
-            className="px-2 text-xs"
+            className="h-11 px-2 text-xs sm:h-10"
             disabled={deleteDisabled}
             onClick={() => onDelete?.(storefront)}
             size="sm"

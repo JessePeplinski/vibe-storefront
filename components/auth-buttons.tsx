@@ -24,7 +24,7 @@ export function AuthButtons({ variant = "header" }: AuthButtonsProps) {
   }
 
   return (
-    <Button onClick={() => openSignIn()} size="sm" type="button">
+    <Button onClick={() => openSignIn()} type="button">
       Sign in
     </Button>
   );

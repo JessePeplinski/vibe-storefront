@@ -62,7 +62,7 @@ export function AppHeaderNav() {
             </Button>
           </SheetTrigger>
           <SheetContent
-            className="top-[65px] h-auto w-full border-t p-0 sm:hidden"
+            className="top-16 h-auto w-full border-t p-0 sm:hidden"
             id={menuId}
             side="top"
           >
@@ -73,7 +73,7 @@ export function AppHeaderNav() {
             <div className="grid gap-1 px-4 py-4">
               <SheetClose asChild>
                 <Link
-                  className="rounded-md px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-slate-950"
+                  className="rounded-md px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-accent-foreground"
                   href="/dashboard#your-storefronts"
                 >
                   Your storefronts
@@ -81,7 +81,7 @@ export function AppHeaderNav() {
               </SheetClose>
               <SheetClose asChild>
                 <Link
-                  className="rounded-md px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-slate-950"
+                  className="rounded-md px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-accent-foreground"
                   href="/storefronts"
                 >
                   All storefronts
@@ -103,7 +103,7 @@ export function AppHeaderNav() {
                       {user?.imageUrl ? (
                         <AvatarImage alt="" src={user.imageUrl} />
                       ) : null}
-                      <AvatarFallback className="bg-slate-950 text-white">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
                         <UserRound className="size-4" aria-hidden />
                       </AvatarFallback>
                     </Avatar>
@@ -138,13 +138,13 @@ export function AppHeaderNav() {
         </Sheet>
         <div className="hidden items-center justify-end gap-1 sm:flex">
           <Link
-            className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-slate-950"
+            className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-accent-foreground"
             href="/dashboard#your-storefronts"
           >
             Your storefronts
           </Link>
           <Link
-            className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-slate-950"
+            className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-accent hover:text-accent-foreground"
             href="/storefronts"
           >
             All storefronts

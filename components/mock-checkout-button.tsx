@@ -55,7 +55,7 @@ export function MockCheckoutButton({
             <Button
               aria-label="Close checkout"
               className="shrink-0"
-              size="icon-sm"
+              size="icon"
               type="button"
               variant="outline"
             >

@@ -73,8 +73,8 @@ function ExampleStorefronts({
 }) {
   if (storefronts.length === 0) {
     return (
-      <Card className="border-dashed bg-background p-8 py-8 text-center">
-        <h3 className="text-2xl font-black text-slate-950">
+      <Card className="border-dashed bg-background p-8 text-center">
+        <h3 className="text-xl font-black text-slate-950 sm:text-2xl">
           Live examples will appear here.
         </h3>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
@@ -90,7 +90,7 @@ function ExampleStorefronts({
       {storefronts.map((storefront) => (
         <Card
           asChild
-          className="flex min-h-full flex-col gap-0 p-3 py-3"
+          className="flex min-h-full flex-col gap-0 p-4"
           key={storefront.id}
         >
         <article>
@@ -99,8 +99,8 @@ function ExampleStorefronts({
             content={storefront.content}
             sizes="(min-width: 768px) 33vw, 100vw"
           />
-          <div className="flex flex-1 flex-col p-2 pt-4">
-            <h3 className="text-2xl font-black leading-tight text-slate-950">
+          <div className="flex flex-1 flex-col pt-4">
+            <h3 className="text-xl font-black leading-tight text-slate-950">
               {storefront.content.name}
             </h3>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
@@ -169,7 +169,7 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-14">
           <div className="pt-2 sm:pt-4">
-            <h1 className="max-w-none text-4xl font-black leading-[0.94] text-white sm:text-6xl lg:text-[5rem] xl:text-[5.4rem]">
+            <h1 className="max-w-none text-4xl font-black leading-[0.96] text-white sm:text-6xl lg:text-[4.6rem] xl:text-[5rem]">
               Validate product ideas
               <br className="hidden sm:block" /> with a storefront.
             </h1>
@@ -185,14 +185,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
+      <section className="px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
-            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary">
               <BadgeCheck className="h-4 w-4" aria-hidden />
               Fast signal
             </p>
-            <h2 className="mt-4 max-w-xl text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
+            <h2 className="mt-4 max-w-xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl">
               Find out if the story is clear before the roadmap gets expensive.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -208,11 +208,11 @@ export default async function HomePage() {
               return (
                 <Card
                   asChild
-                  className="gap-0 p-5 py-5"
+                  className="gap-0 p-5"
                   key={step.title}
                 >
                 <article>
-                  <div className="flex h-11 w-11 items-center justify-center bg-[#083f31] text-white">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
                     <Icon className="h-5 w-5" aria-hidden />
                   </div>
                   <h3 className="mt-5 text-xl font-black text-slate-950">
@@ -231,17 +231,17 @@ export default async function HomePage() {
 
       <section
         aria-labelledby="examples-title"
-        className="bg-white px-4 py-16 sm:px-6 lg:px-8"
+        className="bg-white px-4 py-14 sm:px-6 sm:py-16 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
-              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary">
                 <BarChart3 className="h-4 w-4" aria-hidden />
                 Live output
               </p>
               <h2
-                className="mt-4 text-4xl font-black leading-tight text-slate-950 sm:text-5xl"
+                className="mt-4 text-3xl font-black leading-tight text-slate-950 sm:text-5xl"
                 id="examples-title"
               >
                 See what product ideas become.
@@ -266,7 +266,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-200">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary-foreground/75">
                 Build the first signal
               </p>
               <h2 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">
@@ -274,11 +274,7 @@ export default async function HomePage() {
               </h2>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                asChild
-                className="bg-[#8ee8b6] text-slate-950 hover:bg-[#b8f3cf]"
-                size="lg"
-              >
+              <Button asChild size="lg">
                 <Link href="#generate">
                   Validate an idea
                   <ArrowRight className="h-4 w-4" aria-hidden />
@@ -296,7 +292,7 @@ export default async function HomePage() {
           </div>
           <div className="mt-8 border-t border-white/10 pt-5">
             <a
-              className="inline-flex items-center gap-2 text-sm font-bold text-white/65 transition hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-white/65 transition hover:text-white"
               href={githubRepoUrl}
               rel="noreferrer"
               target="_blank"

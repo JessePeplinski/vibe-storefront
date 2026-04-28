@@ -180,7 +180,7 @@ export function StorefrontStudio({
         {result && (
           <Alert role="status" variant="success">
             <AlertTitle>{resultStatusText}</AlertTitle>
-            <AlertDescription className="font-bold text-emerald-800">
+            <AlertDescription className="font-bold text-primary">
               <p className="mt-1">Finished in {result.finishedInText}</p>
             {result.usageCost ? (
               <p className="mt-1">
@@ -199,7 +199,7 @@ export function StorefrontStudio({
                 </AlertDescription>
               </Alert>
             )}
-            <Button asChild className="mt-3" size="sm" variant="success">
+            <Button asChild className="mt-3" variant="success">
               <Link
                 href={`/s/${result.storefront.slug}`}
                 rel="noreferrer"
@@ -212,7 +212,7 @@ export function StorefrontStudio({
             {isGuestMode && guestGenerationUsed && (
               <div className="mt-3">
                 <Button
-                  className="border-emerald-300 text-emerald-950 hover:border-emerald-900"
+                  className="border-primary/30 text-foreground hover:border-primary hover:bg-accent hover:text-accent-foreground"
                   onClick={() => openSignIn()}
                   type="button"
                   variant="outline"
