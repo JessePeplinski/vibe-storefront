@@ -20,15 +20,9 @@ jobs:
       CI: "true"
       CI_COLLECT_COVERAGE: "1"
       CI_SKIP_BROWSER_SMOKE: "1"
-      # Public CI uses fake Clerk values for build-time validation only.
-      # Browser smoke runs locally and against production, where real Clerk env stays out of GitHub Actions.
-      CLERK_SECRET_KEY: sk_test_ci_not_a_real_secret
       CODEX_API_KEY: ci-codex-key
       CODEX_MODEL: gpt-5.5
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXktZHVtbXktMS5jbGVyay5hY2NvdW50cy5kZXYk
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
       OPENAI_API_KEY: ci-openai-key
       OPENAI_IMAGE_MODEL: gpt-image-2
 
