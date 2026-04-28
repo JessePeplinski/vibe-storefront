@@ -50,6 +50,7 @@ export function StorefrontCard({
       <StorefrontPreviewImage
         className="h-16 w-full sm:w-[88px]"
         content={storefront.content}
+        sizes="(min-width: 640px) 88px, 100vw"
       />
       <div className="min-w-0">
         <h3 className="truncate text-sm font-black leading-tight text-slate-950">

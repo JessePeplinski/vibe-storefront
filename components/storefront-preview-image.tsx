@@ -1,31 +1,46 @@
+import Image from "next/image";
 import type { StorefrontContent } from "@/lib/storefront-schema";
 
 type StorefrontPreviewImageProps = {
   className?: string;
   content: StorefrontContent;
+  preload?: boolean;
+  sizes: string;
 };
-
-function cssImageUrl(url: string): string {
-  return `url("${url.replace(/"/g, '\\"')}")`;
-}
 
 export function StorefrontPreviewImage({
   className = "",
-  content
+  content,
+  preload = false,
+  sizes
 }: StorefrontPreviewImageProps) {
   const image = content.product.image;
   const gradient = `linear-gradient(135deg, ${content.theme.palette.primary}, ${content.theme.palette.accent})`;
-  const background = image
-    ? `linear-gradient(135deg, ${content.theme.palette.primary}cc, ${content.theme.palette.accent}66), ${cssImageUrl(image.url)}`
-    : gradient;
+  const imageOverlay = `linear-gradient(135deg, ${content.theme.palette.primary}cc, ${content.theme.palette.accent}66)`;
 
   return (
     <div
       aria-hidden={image ? undefined : true}
-      aria-label={image?.alt}
-      className={`border border-black/10 bg-cover bg-center ${className}`}
-      role={image ? "img" : undefined}
-      style={{ backgroundImage: background }}
-    />
+      className={`relative overflow-hidden border border-black/10 ${className}`}
+      style={{ backgroundImage: gradient }}
+    >
+      {image && (
+        <>
+          <Image
+            alt={image.alt}
+            className="object-cover"
+            fill
+            preload={preload}
+            sizes={sizes}
+            src={image.url}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{ backgroundImage: imageOverlay }}
+          />
+        </>
+      )}
+    </div>
   );
 }

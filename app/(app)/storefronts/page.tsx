@@ -109,6 +109,7 @@ export default async function AllStorefrontsPage() {
                   <StorefrontPreviewImage
                     className="mb-4 h-24"
                     content={storefront.content}
+                    sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                   />
                   <div className="min-w-0">
                     <h2 className="text-xl font-black text-slate-950">

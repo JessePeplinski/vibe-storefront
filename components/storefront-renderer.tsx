@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowRight, Quote, Sparkles } from "lucide-react";
 import { MockCheckoutButton } from "@/components/mock-checkout-button";
 import type { StorefrontContent } from "@/lib/storefront-schema";
@@ -10,10 +11,6 @@ type StorefrontRendererProps = {
   publicUrl?: string;
   variant?: "framed" | "landing";
 };
-
-function cssImageUrl(url: string): string {
-  return `url("${url.replace(/"/g, '\\"')}")`;
-}
 
 export function StorefrontRenderer({
   compact = false,
@@ -121,16 +118,28 @@ export function StorefrontRenderer({
               }`}
             >
               {productImage && (
-                <div
-                  aria-label={productImage.alt}
-                  className="absolute inset-0 bg-cover bg-center"
-                  role="img"
-                  style={{
-                    backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.48)), ${cssImageUrl(
-                      productImage.url
-                    )}`
-                  }}
-                />
+                <>
+                  <Image
+                    alt={productImage.alt}
+                    className="object-cover"
+                    fill
+                    preload={isLanding}
+                    sizes={
+                      compact
+                        ? "(min-width: 1024px) 360px, 100vw"
+                        : "(min-width: 1024px) 48vw, 100vw"
+                    }
+                    src={productImage.url}
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.48))"
+                    }}
+                  />
+                </>
               )}
               <div
                 className={`relative flex h-full min-w-0 flex-col justify-between border border-white/25 ${
