@@ -91,6 +91,8 @@ npm run verify
 
 `npm run verify` runs typecheck, lint, unit tests, production build, and the Playwright browser smoke test sequentially. The smoke test starts the built app, verifies the homepage and all-storefronts page in Chromium, verifies the first public share page when public storefront data exists, and stops the temporary server afterward.
 
+`npm run smoke:production` runs the same Playwright smoke test against `https://vibe-storefront.com` without starting a local server. Set `PLAYWRIGHT_BASE_URL` to test another deployed URL.
+
 `npm run smoke:browser` expects `npm run build` to have already created `.next`. If Playwright cannot find Chromium, run:
 
 ```bash

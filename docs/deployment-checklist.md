@@ -115,6 +115,18 @@ npm run backfill:product-images -- --env .env.prod --write --confirm-production
 
 ## Production Verification
 
+Run the production browser smoke against the canonical host:
+
+```bash
+npm run smoke:production
+```
+
+Override the target only when verifying a specific deployment URL:
+
+```bash
+PLAYWRIGHT_BASE_URL=https://vibe-storefront-two.vercel.app npm run smoke:production
+```
+
 Verify on `https://vibe-storefront.com`:
 
 - Signed-out homepage renders.
