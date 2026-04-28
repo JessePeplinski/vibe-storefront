@@ -182,7 +182,7 @@ describe("home page", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Turn a raw product concept into a basic landing page. Powered by Codex 5.3 and Image API 2."
+        "Turn a raw product concept into a basic landing page. Powered by GPT-5.5 and GPT Image 2."
       )
     ).toBeInTheDocument();
     expect(screen.queryByText(/Models:/)).not.toBeInTheDocument();
