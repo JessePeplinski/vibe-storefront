@@ -57,6 +57,12 @@ function buildPrompt(idea: string): string {
     "Generate one polished ecommerce storefront concept from the user's plain-English product idea.",
     "Return only JSON that matches the provided schema. Do not include markdown.",
     "The page should feel specific, demo-ready, and plausible. Testimonials must be fictional.",
+    'Set presentationVersion to exactly "2.0".',
+    "Set the top-level name to exactly the same string as product.name.",
+    "Do not shorten, rebrand, or create a separate brand-style name for the top-level name.",
+    "Choose theme.appearance from the allowed enum values based on the product idea.",
+    "Use theme.appearance.treatment for overall visual tone, radius for corner feel, and surface for card treatment.",
+    "Do not include Tailwind classes, CSS, layout instructions, or arbitrary style strings.",
     "Use accessible color contrast. Use hex colors only.",
     "The palette background and text colors must never be identical or near-identical.",
     "For dark backgrounds, choose a light text color. For light backgrounds, choose a dark text color.",
@@ -68,7 +74,13 @@ function buildPrompt(idea: string): string {
 
 function parseCodexResponse(finalResponse: string): StorefrontContent {
   const parsed = JSON.parse(finalResponse);
-  return storefrontContentSchema.parse(parsed);
+  const content = codexStorefrontContentSchema.parse(parsed);
+
+  if (content.name !== content.product.name) {
+    throw new Error("Generated storefront name must match product name.");
+  }
+
+  return storefrontContentSchema.parse(content);
 }
 
 export type GeneratedStorefrontContent = {
