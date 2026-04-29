@@ -38,7 +38,25 @@ describe("deck page", () => {
     expect(
       screen.getByRole("heading", {
         level: 2,
-        name: "Ship one complete product loop."
+        name: "Ideas need something concrete."
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "One sentence becomes a storefront."
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Scope one complete loop."
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Use Codex in scoped slices."
       })
     ).toBeInTheDocument();
     expect(
@@ -55,7 +73,12 @@ describe("deck page", () => {
     ).toHaveAttribute("src", expect.stringContaining("vibe-storefront"));
     expect(
       screen.getByText(
-        /For part two, I am going to walk through how I built this app using Codex./
+        /For part two, I am going to walk through how I planned and executed Vibe Storefront using Codex./
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /plan with Codex, execute in scoped slices, review the output, and verify the user path/
       )
     ).toBeInTheDocument();
 
