@@ -9,7 +9,8 @@ export type StorefrontGenerationMode = "guest" | "signed-in";
 export type StorefrontGenerationStatus =
   | "created"
   | "existing_guest_storefront"
-  | "existing_prompt_storefront";
+  | "existing_prompt_storefront"
+  | "generation_quota_exceeded";
 
 export type ApiUsageCost = {
   currency: "USD";
@@ -124,7 +125,7 @@ export function useStorefrontGeneration({
 
       if (!response.ok) {
         if (
-          response.status === 409 &&
+          (response.status === 409 || response.status === 429) &&
           "error" in payload &&
           "storefront" in payload &&
           payload.storefront &&

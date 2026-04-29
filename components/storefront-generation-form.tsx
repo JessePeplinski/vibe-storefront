@@ -36,6 +36,9 @@ type StorefrontGenerationFormProps = {
   secondaryAction?: SecondaryAction;
   showLabel?: boolean;
   showOverallEstimate?: boolean;
+  submitIcon?: ReactNode;
+  submitLabel?: string;
+  textareaDisabled?: boolean;
   textareaId: string;
 };
 
@@ -51,6 +54,9 @@ export function StorefrontGenerationForm({
   secondaryAction,
   showLabel = true,
   showOverallEstimate = true,
+  submitIcon,
+  submitLabel = "Generate storefront",
+  textareaDisabled = false,
   textareaId
 }: StorefrontGenerationFormProps) {
   const actionLayout = secondaryAction
@@ -84,6 +90,7 @@ export function StorefrontGenerationForm({
           onChange={(event) => onIdeaChange(event.target.value)}
           placeholder={IDEA_PLACEHOLDER}
           required
+          disabled={textareaDisabled}
           value={idea}
         />
       </Label>
@@ -107,10 +114,12 @@ export function StorefrontGenerationForm({
           type="submit"
         >
           <span>
-            {isGenerating ? "Generating storefront" : "Generate storefront"}
+            {isGenerating ? "Generating storefront" : submitLabel}
           </span>
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : submitIcon ? (
+            submitIcon
           ) : (
             <Send className="h-4 w-4" aria-hidden />
           )}

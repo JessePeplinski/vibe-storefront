@@ -1,11 +1,9 @@
 import {
-  act,
   fireEvent,
   render,
-  screen,
-  waitFor
+  screen
 } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   sampleStorefrontContent,
   type StorefrontRecord
@@ -37,17 +35,6 @@ const productImage = {
   model: "gpt-image-2",
   storagePath: "storefronts/ember-table-abc123/product.webp",
   url: "https://supabase.example/storage/v1/object/public/storefront-product-images/storefronts/ember-table-abc123/product.webp"
-};
-
-const productImageWarning =
-  "Storefront created, but the product image could not be generated.";
-const usageCost = {
-  currency: "USD" as const,
-  imageUsd: 0.05,
-  isEstimate: true as const,
-  textUsd: 0.006,
-  totalUsd: 0.056,
-  unavailableLineItems: []
 };
 
 function exampleStorefront(
@@ -133,41 +120,12 @@ describe("home page", () => {
     });
   });
 
-  it("lets signed-out visitors generate from the hero and view the created storefront", async () => {
-    const createdStorefront: StorefrontRecord = {
-      id: "guest-storefront-id",
-      owner_clerk_user_id: null,
-      anonymous_session_id: "00000000-0000-4000-8000-000000000001",
-      slug: "guest-hot-sauce-abc123",
-      idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContent,
-      published: true,
-      created_at: "2026-04-23T00:00:00.000Z",
-      updated_at: "2026-04-23T00:00:00.000Z"
-    };
-    let resolveFetch!: (response: {
-      ok: boolean;
-      json: () => Promise<{
-        storefront: typeof createdStorefront;
-        shareUrl: string;
-        status: "created";
-        usageCost?: typeof usageCost;
-        warning?: string;
-      }>;
-    }) => void;
-    const fetchPromise = new Promise<{
-      ok: boolean;
-      json: () => Promise<{
-        storefront: typeof createdStorefront;
-        shareUrl: string;
-        status: "created";
-        usageCost?: typeof usageCost;
-        warning?: string;
-      }>;
-    }>((resolve) => {
-      resolveFetch = resolve;
-    });
-    const fetchMock = vi.fn().mockReturnValue(fetchPromise);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("routes signed-out generation intent through sign-in", async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const Page = (await import("@/app/(app)/page")).default;
 
@@ -215,113 +173,25 @@ describe("home page", () => {
       ideaPlaceholder
     );
     expect(
-      screen.getByRole("button", { name: "Generate storefront" })
+      screen.getByRole("button", { name: "Sign in to generate" })
     ).not.toBeDisabled();
-
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
-      target: { value: typedIdea }
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
-
-    expect(screen.queryByRole("group", { name: "Example product ideas" }))
-      .not.toBeInTheDocument();
-    expect(screen.getByLabelText("Generate your storefront")).toHaveValue(
-      typedIdea
-    );
-    const generatingButton = await screen.findByRole("button", {
-      name: /generating storefront/i
-    });
-    expect(generatingButton).toBeDisabled();
-    expect(generatingButton).not.toHaveTextContent("0:00");
-
-    const generationProgress = screen.getByRole("status", {
-      name: "Generation progress"
-    });
+    expect(screen.getByText("Sign-in required")).toBeInTheDocument();
     expect(
-      screen.getAllByRole("status", { name: "Generation progress" })
-    ).toHaveLength(1);
-    expect(generationProgress).toHaveTextContent("Step 1 of 4");
-    expect(generationProgress).toHaveTextContent("Total 0:00");
-    expect(generationProgress).toHaveTextContent("Draft storefront copy");
-    expect(generationProgress).toHaveTextContent("Elapsed 0:00");
-    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
-    expect(generationProgress).toHaveTextContent("Usually takes 1-3 minutes");
-    expect(screen.queryByText(/Estimated completion/i)).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/storefronts",
-        expect.objectContaining({
-          body: JSON.stringify({ idea: typedIdea }),
-          method: "POST"
-        })
-      );
-    });
-
-    await act(async () => {
-      resolveFetch({
-        ok: true,
-        json: async () => ({
-          storefront: createdStorefront,
-          shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
-          status: "created",
-          usageCost,
-          warning: productImageWarning
-        })
-      });
-      await fetchPromise;
-    });
-
-    expect(
-      await screen.findByRole("link", { name: /view your storefront/i })
-    ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
-    expect(screen.getByText(/Finished in \d+:\d{2}/)).toBeInTheDocument();
-    expect(screen.getByText("This request cost about $0.06."))
-      .toBeInTheDocument();
-    expect(screen.getByText(productImageWarning)).toBeInTheDocument();
-  });
-
-  it("makes the existing guest storefront state explicit", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 409,
-      json: vi.fn().mockResolvedValue({
-        error:
-          "This browser already generated Brooklyn Ember Co.; open it below or sign in to create more storefronts.",
-        storefront: {
-          id: "guest-storefront-id",
-          owner_clerk_user_id: null,
-          anonymous_session_id: "00000000-0000-4000-8000-000000000001",
-          slug: "guest-hot-sauce-abc123",
-          idea: "small-batch hot sauce from Brooklyn",
-          content: sampleStorefrontContent,
-          published: true,
-          created_at: "2026-04-23T00:00:00.000Z",
-          updated_at: "2026-04-23T00:00:00.000Z"
-        },
-        shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
-        status: "existing_guest_storefront"
-      })
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    const Page = (await import("@/app/(app)/page")).default;
-
-    render(await Page());
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
-      target: { value: typedIdea }
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
-
-    expect(
-      await screen.findByText(
-        "This browser already generated Brooklyn Ember Co.; open it below or sign in to create more storefronts."
+      screen.getByText(
+        "Public generation is temporarily locked down. Sign in to generate one storefront."
       )
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Brooklyn Ember Co. is already ready.")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /open existing storefront/i })
-    ).toHaveAttribute("href", "/s/guest-hot-sauce-abc123");
-    expect(screen.getByText("No new API spend.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
+      target: { value: typedIdea }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in to generate" }));
+
+    expect(mocks.openSignIn).toHaveBeenCalledTimes(1);
+    expect(window.localStorage.setItem).toHaveBeenCalledWith(
+      "vibe-storefront:draft-idea",
+      typedIdea
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

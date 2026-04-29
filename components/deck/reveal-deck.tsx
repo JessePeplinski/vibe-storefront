@@ -372,7 +372,7 @@ export function RevealDeck() {
             <div className="deck-kicker">Guardrails + verification</div>
             <h2>Verify the path, not the promise.</h2>
             <p className="deck-lead">
-              Secrets, RLS, Zod, guest limit, local and production checks.
+              Secrets, RLS, Zod, sign-in gate, quota, local and production checks.
             </p>
             <ul className="deck-bullet-list">
               <li>
@@ -388,8 +388,8 @@ export function RevealDeck() {
                 <span>Model output is checked before save.</span>
               </li>
               <li>
-                <strong>Guest limit</strong>
-                <span>Cookie plus database uniqueness.</span>
+                <strong>Generation limits</strong>
+                <span>Sign-in required plus one storefront per account.</span>
               </li>
               <li>
                 <strong>Checks</strong>
@@ -399,7 +399,8 @@ export function RevealDeck() {
             <aside className="notes">
               <p>
                 This is where the app became production-shaped. Secrets stay
-                server-side, public reads use RLS, guest runs are limited, and
+                server-side, public reads use RLS, generation requires sign-in,
+                account quotas limit spend, and
                 verification covers code checks, browser smoke, and production
                 smoke for auth, storage, env vars, and deployment assumptions.
               </p>
