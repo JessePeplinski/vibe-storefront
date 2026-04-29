@@ -16,22 +16,22 @@ function shouldShowPrintNotes() {
 
 function exposePrintSlideContent(attempt = 0) {
   window.setTimeout(() => {
+    const printPages = document.querySelectorAll(".pdf-page");
     const hiddenPrintSlides = document.querySelectorAll<HTMLElement>(
       ".pdf-page section[hidden]"
     );
 
-    if (hiddenPrintSlides.length === 0 && attempt < 80) {
+    hiddenPrintSlides.forEach((slide) => {
+      slide.removeAttribute("hidden");
+      slide.setAttribute("aria-hidden", "false");
+    });
+
+    if (
+      (printPages.length === 0 || hiddenPrintSlides.length > 0) &&
+      attempt < 600
+    ) {
       exposePrintSlideContent(attempt + 1);
-
-      return;
     }
-
-    document
-      .querySelectorAll<HTMLElement>(".pdf-page section[hidden]")
-      .forEach((slide) => {
-        slide.removeAttribute("hidden");
-        slide.setAttribute("aria-hidden", "false");
-      });
   }, 50);
 }
 
@@ -351,6 +351,33 @@ export function RevealDeck() {
                 persists the storefront, and returns a share URL. Public pages
                 read through the anon-safe path, while privileged writes stay
                 server-side.
+              </p>
+            </aside>
+          </section>
+
+          <section className="deck-slide deck-generated-architecture-slide">
+            <div className="deck-image-stage deck-generated-image-stage">
+              <Image
+                alt="Image API generated diagram showing the Vibe Storefront stack from product idea through web app, Codex generation, validation, storage, deployment, and browser verification"
+                height={941}
+                priority
+                sizes="100vw"
+                src="/deck-assets/stack-architecture-gpt-image-2-clean.png"
+                width={1672}
+              />
+            </div>
+            <aside className="notes">
+              <p>
+                This is a deliberately light follow-up to the stack list. I
+                generated the visual with the OpenAI Image API using
+                gpt-image-2, then committed it as a static deck asset so the
+                presentation does not depend on a live image call.
+              </p>
+              <p>
+                I would skim this slide quickly. The point is not that the model
+                drew perfect system architecture. The point is that I can use
+                the same image-generation path from the app to produce a
+                presentation-ready visual artifact.
               </p>
             </aside>
           </section>
