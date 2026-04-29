@@ -100,163 +100,188 @@ export function RevealDeck() {
             <div className="deck-kicker">Codex-powered storefronts</div>
             <h1>Vibe Storefront</h1>
             <p className="deck-lede">
-              Validate product ideas with a storefront.
+              How I planned and executed a Codex-built app.
             </p>
             <p className="deck-title-meta">Created by Jesse Peplinski</p>
             <aside className="notes">
               <p>
-                For part two, I am going to walk through how I built this app
-                using Codex. The focus here is the build process: how I scoped
-                it, what I asked Codex to do, where I kept control, and how I
-                got from a rough product idea to a working demo.
+                For part two, I am going to walk through how I planned and
+                executed Vibe Storefront using Codex. The focus is the build
+                process: how I narrowed the scope, how I split the work into
+                scoped slices, where I reviewed the output, and how I verified
+                the app as it moved from local demo to production-shaped build.
               </p>
               <p>
-                The app is Vibe Storefront. You give it a plain-English product
-                idea, and it turns that into a shareable storefront concept. The
-                important detail is that Codex was part of both sides of the
-                work: I used it to build the app, and the app uses Codex at
-                runtime to generate the storefront content.
-              </p>
-              <p>
-                I also used Codex to generate this PDF deck. That is the bigger
-                point for me: I am not treating Codex as a one-off prompt box. I
-                use it as a work tool for almost everything now, closer to an
-                integrated agent, assistant, and operating layer than a chat
-                window on the side.
+                The app itself is simple on purpose. A visitor enters a
+                plain-English product idea, Codex generates structured
+                storefront content at runtime, and the app turns that output
+                into a public page. I used Codex both as a build partner and as
+                the runtime engine behind the product.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide">
-            <div className="deck-kicker">Project goals</div>
-            <h2>Ship one complete product loop.</h2>
+            <div className="deck-kicker">Problem</div>
+            <h2>Ideas need something concrete.</h2>
             <p className="deck-lead">
-              Auth, persistence, tests, and runtime Codex.
+              A rough product idea is hard to judge while it stays text.
             </p>
-            <ul aria-label="Project goals" className="deck-bullet-list">
+            <ul aria-label="Problem framing" className="deck-bullet-list">
               <li>
-                <strong>Working product</strong>
-                <span>Minimal features, fully baked UX.</span>
+                <strong>Too abstract</strong>
+                <span>Text alone hides what the product might feel like.</span>
               </li>
               <li>
-                <strong>Immediate payoff</strong>
-                <span>Visible wow moment for the demo.</span>
+                <strong>Slow feedback</strong>
+                <span>People need an artifact they can inspect and react to.</span>
               </li>
               <li>
-                <strong>Readable code</strong>
-                <span>Readable enough to open source.</span>
+                <strong>Hard to share</strong>
+                <span>A prompt is not as useful as a visible concept.</span>
               </li>
               <li>
-                <strong>Clear walkthrough</strong>
-                <span>Explain the build, not just the result.</span>
+                <strong>Good Codex target</strong>
+                <span>Structured generation can create the first artifact fast.</span>
               </li>
             </ul>
             <aside className="notes">
               <p>
-                I started by forcing the scope down to one complete product
-                loop. I did not want a pile of half-finished features. I wanted
-                someone to land on the app, type an idea, get a result, save it,
-                and share it.
+                The problem I chose was intentionally small. People have rough
+                product ideas all the time, but those ideas are hard to judge
+                while they only exist as a sentence. You need something concrete
+                to react to.
               </p>
               <p>
-                That meant the app still needed real product plumbing: auth,
-                persistence, tests, and a runtime Codex call. My bar was that it
-                should feel small, but not fake. If I was going to show it as a
-                working demo, the core path needed to actually hold together.
+                That made it a good Codex build target. The app did not need to
+                become a full commerce platform. It needed to turn a vague idea
+                into a visible artifact quickly enough that someone could
+                inspect it, share it, and decide whether the direction was worth
+                more work.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide deck-dark-slide">
-            <div className="deck-kicker">Product bet</div>
-            <h2>One sentence should become a real storefront.</h2>
+            <div className="deck-kicker">Solution</div>
+            <h2>One sentence becomes a storefront.</h2>
             <p className="deck-lead">
-              A product page materializes from a plain-English prompt.
+              Codex generates the concept; the app makes it shareable.
             </p>
             <ol aria-label="Product flow" className="deck-bullet-list">
               <li>
                 <strong>Input</strong>
-                <span>Idea</span>
+                <span>Plain-English product idea</span>
               </li>
               <li>
                 <strong>Generation</strong>
-                <span>Codex</span>
+                <span>Structured storefront content from Codex</span>
               </li>
               <li>
                 <strong>Output</strong>
-                <span>Storefront</span>
+                <span>Rendered product page with generated imagery</span>
               </li>
               <li>
                 <strong>Distribution</strong>
-                <span>Share URL</span>
+                <span>Public URL for review and feedback</span>
               </li>
             </ol>
             <aside className="notes">
               <p>
-                The product bet was simple: one sentence should be enough to get
-                a useful storefront draft. Not a final business, not a full
-                Shopify replacement, but something that feels like a real first
-                pass at a market-facing page.
+                The solution was to make the first artifact immediate. A user
+                types a product idea, Codex turns that idea into structured
+                storefront content, and the app renders a public concept page
+                that is real enough to review.
               </p>
               <p>
-                I liked this because the value is obvious without explaining the
-                implementation. The user types an idea. Codex turns that into a
-                storefront structure. The app renders it and gives them a public
-                URL they can open or share.
+                I kept the framing practical rather than startup-pitchy. The
+                important signal for this walkthrough is that I picked a product
+                loop where Codex could clearly accelerate both the engineering
+                work and the runtime user experience.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide">
-            <div className="deck-kicker">Why this demo fits</div>
-            <h2>A hackathon demo should be fast to grasp.</h2>
-            <p className="deck-lead">Sign in, generate, save, share.</p>
-            <ul className="deck-bullet-list">
-              <li>Strong ecommerce framing</li>
-              <li>Immediate visitor payoff</li>
-              <li>Runtime Codex call is the product</li>
-              <li>Public URL makes the output portable</li>
-            </ul>
-            <aside className="notes">
-              <p>
-                I wanted the demo to be fast to understand. The flow is sign in,
-                generate, save, share. Even if someone only watches for a few
-                seconds, they can see what the app is supposed to do.
-              </p>
-              <p>
-                I also made one product decision very intentionally: the public
-                homepage lets a visitor do one guest generation before sign-in.
-                Requiring sign-in first would be safer from an abuse standpoint,
-                but it would hide the actual wow moment. So I kept the first run
-                immediate, and then made sign-in the path for ownership and
-                history.
-              </p>
-            </aside>
-          </section>
-
-          <section className="deck-slide">
-            <div className="deck-kicker">Planning with Codex</div>
-            <h2>Scope the smallest impressive app.</h2>
+            <div className="deck-kicker">Build strategy</div>
+            <h2>Scope one complete loop.</h2>
             <p className="deck-lead">
               Four moves: auth, generate, save, share.
             </p>
-            <ul className="deck-bullet-list">
+            <ul aria-label="Build strategy" className="deck-bullet-list">
               <li>
-                Used Codex across planning, build, tests, fixes, and polish.
+                <strong>Auth</strong>
+                <span>Ownership and history after the first interaction.</span>
+              </li>
+              <li>
+                <strong>Generate</strong>
+                <span>The wow moment stays on the critical path.</span>
+              </li>
+              <li>
+                <strong>Save</strong>
+                <span>The output persists instead of disappearing after demo.</span>
+              </li>
+              <li>
+                <strong>Share</strong>
+                <span>The result becomes portable and reviewable.</span>
               </li>
             </ul>
             <aside className="notes">
               <p>
-                The planning work with Codex was mostly about narrowing. I used
-                it to pressure-test the scope, but I kept coming back to the
-                same four moves: auth, generate, save, and share.
+                My first planning move with Codex was narrowing the build. I
+                kept pushing the scope back to one complete product loop: auth,
+                generate, save, and share. That gave Codex a clear shape to work
+                inside, and it kept me from spending time on nice-to-have
+                features before the core path worked.
               </p>
               <p>
-                After that, I used Codex across the actual implementation. It
-                helped with route structure, component work, tests, production
-                fixes, and polish. But I tried not to hand it a vague request
-                like &quot;build me a startup.&quot; I gave it smaller
-                slices and kept the product shape in my head.
+                I also made one product decision deliberately: the homepage lets
+                a visitor run one guest generation before sign-in. Requiring
+                sign-in first would hide the payoff. I kept the first run
+                immediate, then used sign-in for ownership, history, and repeat
+                usage.
+              </p>
+            </aside>
+          </section>
+
+          <section className="deck-slide">
+            <div className="deck-kicker">Codex operating model</div>
+            <h2>Use Codex in scoped slices.</h2>
+            <p className="deck-lead">
+              Plan, implement, debug, verify, polish.
+            </p>
+            <ul aria-label="Codex operating model" className="deck-bullet-list">
+              <li>
+                <strong>Plan</strong>
+                <span>Use Codex to pressure-test scope and sequence.</span>
+              </li>
+              <li>
+                <strong>Implement</strong>
+                <span>Hand it concrete routes, components, and tests.</span>
+              </li>
+              <li>
+                <strong>Review</strong>
+                <span>Keep product judgment and code review with me.</span>
+              </li>
+              <li>
+                <strong>Verify</strong>
+                <span>Run local checks, browser smoke, and production checks.</span>
+              </li>
+            </ul>
+            <aside className="notes">
+              <p>
+                This was the operating model for the build. I did not ask Codex
+                to magically build a startup. I used it to plan the sequence,
+                then gave it smaller implementation slices: route behavior,
+                component work, schema validation, tests, production fixes, and
+                UI polish.
+              </p>
+              <p>
+                The important part is that I stayed in the loop. Codex
+                accelerated the work, but I still reviewed the output, checked
+                whether it matched the product goal, ran the verification suite,
+                and used the browser when the user-facing path needed visual
+                confirmation.
               </p>
             </aside>
           </section>
@@ -316,68 +341,70 @@ export function RevealDeck() {
               <p>
                 The architecture is intentionally boring around the AI part.
                 Next.js is the app, Clerk handles auth, Supabase stores the
-                generated storefronts, and Vercel hosts it. I did not want the
-                surrounding stack to be the interesting or fragile part.
+                generated storefronts and images, and Vercel hosts it. I did not
+                want the surrounding stack to be the interesting or fragile
+                part.
               </p>
               <p>
                 The interesting part is where Codex sits in the loop. The server
                 route takes the idea, calls Codex, validates the response,
                 persists the storefront, and returns a share URL. Public pages
-                read through the anon-safe path, while the privileged writes
-                stay server-side.
+                read through the anon-safe path, while privileged writes stay
+                server-side.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide deck-dark-slide">
-            <div className="deck-kicker">Runtime flow</div>
-            <h2>Constrain the model, then trust the app.</h2>
+            <div className="deck-kicker">Runtime AI contract</div>
+            <h2>Constrain, validate, persist.</h2>
             <p className="deck-lead">
-              Constrain, validate, persist, render.
+              Treat the model like an external dependency.
             </p>
-            <ol aria-label="Runtime flow" className="deck-bullet-list">
+            <ol aria-label="Runtime AI contract" className="deck-bullet-list">
               <li>
-                <strong>Step 1</strong>
+                <strong>Request</strong>
                 <span>Receive product idea</span>
               </li>
               <li>
-                <strong>Step 2</strong>
+                <strong>Generation</strong>
                 <span>Call Codex with schema guardrails</span>
               </li>
               <li>
-                <strong>Step 3</strong>
+                <strong>Contract</strong>
                 <span>Validate with Zod</span>
               </li>
               <li>
-                <strong>Step 4</strong>
+                <strong>Persistence</strong>
                 <span>Persist in Supabase</span>
               </li>
               <li>
-                <strong>Step 5</strong>
+                <strong>Rendering</strong>
                 <span>Publish share page</span>
               </li>
             </ol>
             <aside className="notes">
               <p>
-                The runtime flow is where I was careful not to treat model text
-                as automatically trustworthy. The app receives the product idea,
-                calls Codex with schema-bound instructions, and then validates
-                the output with Zod before anything gets saved.
+                The runtime Codex call needed a real contract. The app receives
+                the product idea, calls Codex with schema-bound instructions,
+                validates the response with Zod, persists it in Supabase, and
+                then renders the public page from trusted structured data.
               </p>
               <p>
-                That pattern matters. For this kind of product, prompt quality
-                is only part of it. The app still needs a contract around the AI
-                call. My mental model was: constrain the model, validate the
-                response, persist the result, then trust the app renderer.
+                That was a deliberate engineering choice. Prompt quality
+                matters, but it is not enough. I treated model output like any
+                other external dependency: constrain it, validate it, handle
+                failure, and only let the renderer trust data after it has
+                passed the app contract.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide">
-            <div className="deck-kicker">Quality gates</div>
-            <h2>The demo path still has guardrails.</h2>
+            <div className="deck-kicker">Guardrails + verification</div>
+            <h2>Verify the path, not the promise.</h2>
             <p className="deck-lead">
-              Secrets, public reads, model output, guest access.
+              Secrets, RLS, Zod, guest limit, tests, smoke checks.
             </p>
             <ul className="deck-bullet-list">
               <li>
@@ -396,29 +423,33 @@ export function RevealDeck() {
                 <strong>Guest limit</strong>
                 <span>Cookie plus database uniqueness.</span>
               </li>
+              <li>
+                <strong>Checks</strong>
+                <span>Typecheck, lint, unit tests, build, browser smoke.</span>
+              </li>
             </ul>
             <aside className="notes">
               <p>
-                These are the guardrails I cared about for the demo path. Server
-                secrets stay on the server. Public storefront reads use anon
+                I wanted the demo path to be open, but not sloppy. Server
+                secrets stay on the server. Public pages read through anon-safe
                 access and RLS. Model output has to pass the Zod contract before
-                save.
+                save. The guest limit uses a cookie plus database uniqueness to
+                keep the first-run experience simple.
               </p>
               <p>
-                The guest limit is also intentionally simple. It uses a cookie
-                plus a database uniqueness check. That is not a perfect abuse
-                system, but it is enough for this prototype, and it keeps the
-                demo path open without pretending there is a full enterprise
-                rate-limit system behind it.
+                Verification was part of the workflow, not a final cleanup step.
+                I used tests and type checks for code confidence, browser smoke
+                for the real user path, and production checks when the problem
+                involved auth, environment variables, storage, or deployment.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide">
-            <div className="deck-kicker">Velocity</div>
+            <div className="deck-kicker">Velocity evidence</div>
             <h2>From MVP to production-shaped.</h2>
             <p className="deck-lead">
-              Auth, persistence, tests, and runtime Codex in the first build.
+              MVP in 2.5-3 hours; hardening after that.
             </p>
             <div className="deck-image-stage">
               <Image
@@ -438,20 +469,20 @@ export function RevealDeck() {
                 Codex running at runtime.
               </p>
               <p>
-                The rest of the time was not about inventing more features. It
-                was integration quality. I added product image generation,
-                tightened the UI, fixed production auth and environment issues,
-                worked through the deployment details, and kept verifying the
-                real user path in the browser.
+                That is the best evidence for how I used Codex. The early speed
+                came from narrow scope and scoped implementation asks. The work
+                after that was not feature sprawl. It was production hardening:
+                generated product images, UI polish, auth and environment fixes,
+                deployment details, and repeated browser verification.
               </p>
             </aside>
           </section>
 
           <section className="deck-slide">
-            <div className="deck-kicker">Production integration</div>
-            <h2>The slow work was the real work.</h2>
+            <div className="deck-kicker">Production hardening</div>
+            <h2>Make localhost assumptions fail safely.</h2>
             <p className="deck-lead">
-              Production work means making localhost assumptions fail safely.
+              Auth, storage, env vars, domain, AI runtime.
             </p>
             <ul className="deck-bullet-list">
               <li>
@@ -477,17 +508,18 @@ export function RevealDeck() {
             </ul>
             <aside className="notes">
               <p>
-                This is the part that always looks less flashy in a demo, but it
-                is where a lot of real work happened. Localhost is one thing.
-                Making the app behave correctly in production is a different
-                level of detail.
+                This is the part that looks less flashy in a demo, but it is
+                where a lot of real engineering judgment mattered. Localhost is
+                forgiving. Production forces the assumptions to become explicit.
               </p>
               <p>
                 I had to deal with Clerk production auth, Supabase keys and
                 storage, Vercel environment variables, DNS, domain verification,
                 and a Codex CLI packaging issue. Codex helped with a lot of that
                 debugging, but I still had to verify each layer instead of
-                assuming the first answer was right.
+                assuming the first answer was right. That is the pattern I want
+                to emphasize: Codex accelerated the work, and verification made
+                it reliable.
               </p>
             </aside>
           </section>
@@ -514,9 +546,10 @@ export function RevealDeck() {
               <p>
                 If I kept going, I would add analytics around generated share
                 pages and a stronger admin cleanup path for production smoke
-                data. But the core loop is the right shape: a simple product
-                idea goes in, Codex generates a structured storefront, and the
-                app turns it into something real enough to share.
+                data. But the core loop is the right shape, and the build
+                process is the important takeaway: plan with Codex, execute in
+                scoped slices, review the output, and verify the user path
+                before calling the work done.
               </p>
             </aside>
           </section>

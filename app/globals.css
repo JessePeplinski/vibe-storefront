@@ -360,6 +360,12 @@ html.reveal-print .deck-page {
   background: #f8f7f2;
 }
 
+html.reveal-print,
+html.reveal-print body,
+html.reveal-print .deck-page .deck-reveal .pdf-page {
+  background: #f8f7f2 !important;
+}
+
 html.reveal-print .deck-page .deck-reveal .slides section {
   padding: 4.1rem 4.5rem 4.25rem !important;
 }
@@ -376,6 +382,7 @@ html.reveal-print .deck-page .deck-reveal .pdf-page section[hidden] {
 html.reveal-print .deck-page .deck-reveal .speaker-notes-pdf {
   box-sizing: border-box;
   padding: 4rem 4.5rem !important;
+  height: 100%;
   min-height: 100%;
   background: #f8f7f2 !important;
   color: #0f172a;
