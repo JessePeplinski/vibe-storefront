@@ -578,6 +578,14 @@ export function RevealDeck() {
                 scoped slices, review the output, and verify the user path
                 before calling the work done.
               </p>
+              <p>
+                I will close by saying this role matters a lot to me because it
+                is exactly the kind of work I want to be doing: taking
+                fast-moving AI capability and turning it into reliable, useful
+                systems people can actually use. If I am considered for the
+                opportunity, I know I would bring urgency, judgment, and
+                hands-on execution from day one.
+              </p>
             </aside>
           </section>
         </div>
