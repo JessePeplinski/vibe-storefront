@@ -65,6 +65,14 @@ describe("deck page", () => {
     expect(screen.getByText(/shadcn\/ui patterns/)).toBeInTheDocument();
     expect(screen.getByText(/OpenAI Codex SDK/)).toBeInTheDocument();
     expect(screen.getByText("OpenAI Image API")).toBeInTheDocument();
+    expect(
+      screen.getByAltText(
+        /Image API generated diagram showing the Vibe Storefront stack/
+      )
+    ).toHaveAttribute(
+      "src",
+      expect.stringContaining("stack-architecture-gpt-image-2")
+    );
     expect(screen.getByText("Zod contract")).toBeInTheDocument();
     expect(
       screen.getByAltText(
