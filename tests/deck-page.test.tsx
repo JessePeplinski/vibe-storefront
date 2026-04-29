@@ -81,14 +81,20 @@ describe("deck page", () => {
     ).toHaveAttribute("src", expect.stringContaining("vibe-storefront"));
     expect(
       screen.getByText(
-        /For part two, I am going to walk through how I planned and executed Vibe Storefront using Codex./
+        /Vibe Storefront turns a product idea into a shareable storefront concept./
       )
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /plan with Codex, execute in scoped slices, review the output, and verify the user path/
+        /narrow the loop, hand it concrete slices, review what it returns/
       )
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        level: 2,
+        name: "Make localhost assumptions fail safely."
+      })
+    ).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(mocks.revealConstructor).toHaveBeenCalledWith(
