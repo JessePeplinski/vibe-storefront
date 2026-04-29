@@ -41,8 +41,12 @@ describe("deck page", () => {
         name: "Ship one complete product loop."
       })
     ).toBeInTheDocument();
-    expect(screen.getByText("Next.js App Router")).toBeInTheDocument();
-    expect(screen.getByText("Codex SDK")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Next\.js 16 App Router, React, TypeScript/)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/shadcn\/ui patterns/)).toBeInTheDocument();
+    expect(screen.getByText(/OpenAI Codex SDK/)).toBeInTheDocument();
+    expect(screen.getByText("OpenAI Image API")).toBeInTheDocument();
     expect(screen.getByText("Zod contract")).toBeInTheDocument();
     expect(
       screen.getByAltText(

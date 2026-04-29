@@ -100,13 +100,9 @@ export function RevealDeck() {
             <div className="deck-kicker">Codex-powered storefronts</div>
             <h1>Vibe Storefront</h1>
             <p className="deck-lede">
-              Turning a raw ecommerce idea into a shareable storefront with
-              Codex in the product loop.
+              Validate product ideas with a storefront.
             </p>
-            <div className="deck-title-meta">
-              <span>Jesse Peplinski</span>
-              <span>Product concept to working demo</span>
-            </div>
+            <p className="deck-title-meta">Created by Jesse Peplinski</p>
             <aside className="notes">
               <p>
                 For part two, I am going to walk through how I built this app
@@ -135,27 +131,26 @@ export function RevealDeck() {
             <div className="deck-kicker">Project goals</div>
             <h2>Ship one complete product loop.</h2>
             <p className="deck-lead">
-              Core ingredients: auth, persistence, meaningful tests, and Codex
-              at runtime.
+              Auth, persistence, tests, and runtime Codex.
             </p>
-            <div className="deck-rubric-grid" aria-label="Project goals">
-              <div>
+            <ul aria-label="Project goals" className="deck-bullet-list">
+              <li>
                 <strong>Working product</strong>
                 <span>Minimal features, fully baked UX.</span>
-              </div>
-              <div>
+              </li>
+              <li>
                 <strong>Immediate payoff</strong>
-                <span>A hackathon demo with a visible wow moment.</span>
-              </div>
-              <div>
+                <span>Visible wow moment for the demo.</span>
+              </li>
+              <li>
                 <strong>Readable code</strong>
                 <span>Readable enough to open source.</span>
-              </div>
-              <div>
+              </li>
+              <li>
                 <strong>Clear walkthrough</strong>
                 <span>Explain the build, not just the result.</span>
-              </div>
-            </div>
+              </li>
+            </ul>
             <aside className="notes">
               <p>
                 I started by forcing the scope down to one complete product
@@ -176,15 +171,26 @@ export function RevealDeck() {
             <div className="deck-kicker">Product bet</div>
             <h2>One sentence should become a real storefront.</h2>
             <p className="deck-lead">
-              The wow moment is watching a product page materialize from a
-              plain-English prompt.
+              A product page materializes from a plain-English prompt.
             </p>
-            <div className="deck-flow-line">
-              <span>Idea</span>
-              <span>Codex</span>
-              <span>Storefront</span>
-              <span>Share URL</span>
-            </div>
+            <ol aria-label="Product flow" className="deck-bullet-list">
+              <li>
+                <strong>Input</strong>
+                <span>Idea</span>
+              </li>
+              <li>
+                <strong>Generation</strong>
+                <span>Codex</span>
+              </li>
+              <li>
+                <strong>Output</strong>
+                <span>Storefront</span>
+              </li>
+              <li>
+                <strong>Distribution</strong>
+                <span>Share URL</span>
+              </li>
+            </ol>
             <aside className="notes">
               <p>
                 The product bet was simple: one sentence should be enough to get
@@ -205,7 +211,7 @@ export function RevealDeck() {
             <div className="deck-kicker">Why this demo fits</div>
             <h2>A hackathon demo should be fast to grasp.</h2>
             <p className="deck-lead">Sign in, generate, save, share.</p>
-            <ul className="deck-check-list">
+            <ul className="deck-bullet-list">
               <li>Strong ecommerce framing</li>
               <li>Immediate visitor payoff</li>
               <li>Runtime Codex call is the product</li>
@@ -232,15 +238,13 @@ export function RevealDeck() {
             <div className="deck-kicker">Planning with Codex</div>
             <h2>Scope the smallest impressive app.</h2>
             <p className="deck-lead">
-              I mapped the prompt to four product moves: auth, generate, save,
-              and share.
+              Four moves: auth, generate, save, share.
             </p>
-            <div className="deck-stack deck-stack-single">
-              <p>
-                Then I used Codex for planning, implementation, tests,
-                production fixes, and final submission polish.
-              </p>
-            </div>
+            <ul className="deck-bullet-list">
+              <li>
+                Used Codex across planning, build, tests, fixes, and polish.
+              </li>
+            </ul>
             <aside className="notes">
               <p>
                 The planning work with Codex was mostly about narrowing. I used
@@ -261,15 +265,53 @@ export function RevealDeck() {
             <div className="deck-kicker">Architecture</div>
             <h2>Simple stack, real integration surface.</h2>
             <p className="deck-lead">
-              Generation runs server-side. Public storefronts read through RLS.
+              App, UI, auth, data, AI, validation, and deployment.
             </p>
-            <div className="deck-architecture" aria-label="Architecture">
-              <span>Next.js App Router</span>
-              <span>Clerk auth</span>
-              <span>Supabase Postgres</span>
-              <span>Codex SDK</span>
-              <span>Vercel</span>
-            </div>
+            <ul
+              aria-label="Architecture"
+              className="deck-bullet-list deck-architecture"
+            >
+              <li>
+                <strong>App framework</strong>
+                <span>Next.js 16 App Router, React, TypeScript</span>
+              </li>
+              <li>
+                <strong>UI system</strong>
+                <span>shadcn/ui patterns, Radix UI, Tailwind CSS</span>
+              </li>
+              <li>
+                <strong>Authentication</strong>
+                <span>Clerk</span>
+              </li>
+              <li>
+                <strong>Database</strong>
+                <span>Supabase Postgres with Row Level Security</span>
+              </li>
+              <li>
+                <strong>Storage</strong>
+                <span>Supabase Storage for generated product images</span>
+              </li>
+              <li>
+                <strong>Storefront AI</strong>
+                <span>OpenAI Codex SDK and packaged Codex CLI</span>
+              </li>
+              <li>
+                <strong>Image generation</strong>
+                <span>OpenAI Image API</span>
+              </li>
+              <li>
+                <strong>Schema contract</strong>
+                <span>Zod and zod-to-json-schema</span>
+              </li>
+              <li>
+                <strong>Deployment</strong>
+                <span>Vercel on Node.js 24</span>
+              </li>
+              <li>
+                <strong>Verification</strong>
+                <span>Vitest, Testing Library, Playwright</span>
+              </li>
+            </ul>
             <aside className="notes">
               <p>
                 The architecture is intentionally boring around the AI part.
@@ -291,14 +333,29 @@ export function RevealDeck() {
             <div className="deck-kicker">Runtime flow</div>
             <h2>Constrain the model, then trust the app.</h2>
             <p className="deck-lead">
-              Constrain, validate, persist, and render.
+              Constrain, validate, persist, render.
             </p>
-            <ol className="deck-number-flow">
-              <li>Receive product idea</li>
-              <li>Call Codex with schema-bound instructions</li>
-              <li>Validate with Zod</li>
-              <li>Persist to Supabase</li>
-              <li>Publish the share page</li>
+            <ol aria-label="Runtime flow" className="deck-bullet-list">
+              <li>
+                <strong>Step 1</strong>
+                <span>Receive product idea</span>
+              </li>
+              <li>
+                <strong>Step 2</strong>
+                <span>Call Codex with schema guardrails</span>
+              </li>
+              <li>
+                <strong>Step 3</strong>
+                <span>Validate with Zod</span>
+              </li>
+              <li>
+                <strong>Step 4</strong>
+                <span>Persist in Supabase</span>
+              </li>
+              <li>
+                <strong>Step 5</strong>
+                <span>Publish share page</span>
+              </li>
             </ol>
             <aside className="notes">
               <p>
@@ -320,27 +377,26 @@ export function RevealDeck() {
             <div className="deck-kicker">Quality gates</div>
             <h2>The demo path still has guardrails.</h2>
             <p className="deck-lead">
-              Product guardrails around secrets, public reads, model output, and
-              guest access.
+              Secrets, public reads, model output, guest access.
             </p>
-            <div className="deck-rubric-grid deck-rubric-grid-tight">
-              <div>
+            <ul className="deck-bullet-list">
+              <li>
                 <strong>Server secrets</strong>
                 <span>No service keys in the browser.</span>
-              </div>
-              <div>
+              </li>
+              <li>
                 <strong>RLS reads</strong>
                 <span>Public pages use anon-safe access.</span>
-              </div>
-              <div>
+              </li>
+              <li>
                 <strong>Zod contract</strong>
                 <span>Model output is checked before save.</span>
-              </div>
-              <div>
+              </li>
+              <li>
                 <strong>Guest limit</strong>
                 <span>Cookie plus database uniqueness.</span>
-              </div>
-            </div>
+              </li>
+            </ul>
             <aside className="notes">
               <p>
                 These are the guardrails I cared about for the demo path. Server
@@ -362,7 +418,7 @@ export function RevealDeck() {
             <div className="deck-kicker">Velocity</div>
             <h2>From MVP to production-shaped.</h2>
             <p className="deck-lead">
-              First working app: auth, persistence, tests, and Codex at runtime.
+              Auth, persistence, tests, and runtime Codex in the first build.
             </p>
             <div className="deck-image-stage">
               <Image
@@ -395,16 +451,30 @@ export function RevealDeck() {
             <div className="deck-kicker">Production integration</div>
             <h2>The slow work was the real work.</h2>
             <p className="deck-lead">
-              Making the app work outside localhost was the production-shaped
-              part.
+              Production work means making localhost assumptions fail safely.
             </p>
-            <div className="deck-stack deck-stack-compact">
-              <p>Clerk production auth</p>
-              <p>Supabase keys and storage</p>
-              <p>Vercel environment variables</p>
-              <p>DNS and domain verification</p>
-              <p>Codex CLI packaging fix</p>
-            </div>
+            <ul className="deck-bullet-list">
+              <li>
+                <strong>Authentication</strong>
+                <span>Clerk production auth.</span>
+              </li>
+              <li>
+                <strong>Data and storage</strong>
+                <span>Supabase keys and storage buckets.</span>
+              </li>
+              <li>
+                <strong>Environment</strong>
+                <span>Vercel environment variables.</span>
+              </li>
+              <li>
+                <strong>Domain</strong>
+                <span>DNS and verification.</span>
+              </li>
+              <li>
+                <strong>AI runtime</strong>
+                <span>Codex CLI packaging fix.</span>
+              </li>
+            </ul>
             <aside className="notes">
               <p>
                 This is the part that always looks less flashy in a demo, but it
@@ -426,10 +496,9 @@ export function RevealDeck() {
             <div className="deck-kicker">What I learned</div>
             <h2>Codex is strongest when the work is shaped well.</h2>
             <p className="deck-lead">
-              Speed came from narrowing the problem, giving strong context, and
-              verifying each layer.
+              Speed came from narrow scope, strong context, and verification.
             </p>
-            <ul className="deck-final-list">
+            <ul className="deck-bullet-list">
               <li>Plan harder before implementation.</li>
               <li>Keep the product loop narrow.</li>
               <li>Validate model output like any external dependency.</li>
