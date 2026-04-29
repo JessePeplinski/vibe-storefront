@@ -16,6 +16,15 @@ type StorefrontRow = Omit<StorefrontRecord, "content" | "generation_cost"> & {
   generation_cost?: unknown | null;
 };
 
+type StorefrontGenerationSlotRow = {
+  id: string;
+};
+
+type SupabaseError = {
+  code?: string;
+  message: string;
+};
+
 type StorefrontOwner =
   | {
       ownerClerkUserId: string;
@@ -58,6 +67,13 @@ function isMissingGenerationCostColumnError(message: string): boolean {
   return (
     message.includes("generation_cost") &&
     (message.includes("schema cache") || message.includes("column"))
+  );
+}
+
+function isUniqueViolationError(error: SupabaseError): boolean {
+  return (
+    error.code === "23505" ||
+    error.message.toLowerCase().includes("duplicate key")
   );
 }
 
@@ -111,6 +127,63 @@ export async function createStorefront(
   }
 
   return parseStorefront(data as StorefrontRow);
+}
+
+export async function reserveStorefrontGenerationSlot(
+  ownerClerkUserId: string
+): Promise<StorefrontGenerationSlotRow | null> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("storefront_generation_slots")
+    .insert({
+      owner_clerk_user_id: ownerClerkUserId,
+      status: "pending"
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (isUniqueViolationError(error)) {
+      return null;
+    }
+
+    throw new Error(`Unable to reserve generation slot: ${error.message}`);
+  }
+
+  return data as StorefrontGenerationSlotRow;
+}
+
+export async function completeStorefrontGenerationSlot(params: {
+  reservationId: string;
+  storefrontId: string;
+}): Promise<void> {
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from("storefront_generation_slots")
+    .update({
+      status: "created",
+      storefront_id: params.storefrontId
+    })
+    .eq("id", params.reservationId);
+
+  if (error) {
+    throw new Error(`Unable to complete generation slot: ${error.message}`);
+  }
+}
+
+export async function releaseStorefrontGenerationSlot(
+  reservationId: string
+): Promise<void> {
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from("storefront_generation_slots")
+    .delete()
+    .eq("id", reservationId)
+    .eq("status", "pending");
+
+  if (error) {
+    throw new Error(`Unable to release generation slot: ${error.message}`);
+  }
 }
 
 export async function listStorefrontsForOwner(
@@ -200,23 +273,6 @@ export async function getStorefrontByOwnerAndIdea(
       (storefront) => normalizeStorefrontIdea(storefront.idea) === normalizedIdea
     ) ?? null
   );
-}
-
-export async function getStorefrontByAnonymousSession(
-  anonymousSessionId: string
-): Promise<StorefrontRecord | null> {
-  const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from("storefronts")
-    .select("*")
-    .eq("anonymous_session_id", anonymousSessionId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Unable to load guest storefront: ${error.message}`);
-  }
-
-  return data ? parseStorefront(data as StorefrontRow) : null;
 }
 
 export async function getPublicStorefrontBySlug(

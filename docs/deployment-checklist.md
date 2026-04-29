@@ -130,8 +130,10 @@ PLAYWRIGHT_BASE_URL=https://vibe-storefront-two.vercel.app npm run smoke:product
 Verify on `https://vibe-storefront.com`:
 
 - Signed-out homepage renders.
+- Signed-out generation prompts for sign-in and does not call `/api/storefronts`.
 - Clerk sign-in works, including account creation and Google sign-in from `/sign-in`.
-- Signed-in generation succeeds.
+- Signed-in generation succeeds once for a new account.
+- A second different signed-in generation attempt is blocked by the one-storefront quota.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.
 - Product images appear on newly generated and backfilled storefronts.

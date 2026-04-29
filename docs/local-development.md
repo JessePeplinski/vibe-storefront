@@ -78,10 +78,10 @@ After the dev server is running:
 1. Sign in with a Clerk development user.
 2. Open the signed-out homepage in a private browser window.
 3. Confirm `See all storefronts` opens the public storefront gallery.
-4. Generate one guest storefront from the homepage input and confirm the success state links to the new share URL.
-5. Reload the homepage, submit again as the same guest, and confirm the existing share URL is returned without another generation.
-6. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation still creates saved storefronts.
-7. Open a generated share URL in a signed-out browser and confirm the public share page renders.
+4. Confirm the signed-out homepage prompts for sign-in instead of submitting public generation.
+5. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation creates one saved storefront.
+6. Try to generate a second different storefront from the same signed-in account and confirm the one-storefront limit blocks it without another generation.
+7. Open the generated share URL in a signed-out browser and confirm the public share page renders.
 
 ## Automated Verification
 

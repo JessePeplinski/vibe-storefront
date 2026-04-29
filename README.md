@@ -64,7 +64,7 @@ npm run verify
 ## Project Docs
 
 - [`docs/local-development.md`](docs/local-development.md) - local environment setup, Supabase, Clerk, and smoke testing.
-- [`docs/project-context.md`](docs/project-context.md) - runtime architecture, persistence boundaries, guest storefront behavior, and image backfill notes.
+- [`docs/project-context.md`](docs/project-context.md) - runtime architecture, persistence boundaries, generation limits, and image backfill notes.
 - [`docs/deployment-checklist.md`](docs/deployment-checklist.md) - production environment, migrations, Vercel, and deployment verification.
 
 ## License

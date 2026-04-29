@@ -220,6 +220,20 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("href", "/s/lamp-loom-def456");
   });
 
+  it("disables signed-in generation after one saved storefront", () => {
+    render(<StorefrontStudio initialStorefronts={[storefront()]} />);
+
+    expect(
+      screen.getByRole("button", { name: "Generate storefront" })
+    ).toBeDisabled();
+    expect(screen.getByText("Generation limit reached.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Generation is currently limited to one storefront per account. Your saved storefront is still available below."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("renders every saved storefront in the library", () => {
     const savedStorefronts = Array.from({ length: 5 }, (_, index) =>
       storefront({
