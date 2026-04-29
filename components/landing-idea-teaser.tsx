@@ -1,113 +1,59 @@
 "use client";
 
+import { useState, type FormEvent } from "react";
 import { useClerk } from "@clerk/nextjs";
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { useStorefrontGeneration } from "@/components/use-storefront-generation";
-import { formatUsageUsd } from "@/lib/usage-format";
+import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
+
+const idleProgress = {
+  currentPhaseIndex: 0,
+  elapsedText: null,
+  estimateText: "",
+  progressPercent: 0,
+  steps: []
+};
 
 export function LandingIdeaTeaser() {
   const { openSignIn } = useClerk();
-  const {
-    error,
-    generationDisabled,
-    handleSubmit,
-    idea,
-    isGenerating,
-    progress: generationProgress,
-    result,
-    setIdea
-  } = useStorefrontGeneration({
-    disableAfterResult: true,
-    mode: "guest"
-  });
+  const [idea, setIdea] = useState("");
 
-  const createdStorefrontPath = result
-    ? `/s/${result.storefront.slug}`
-    : undefined;
-  const existingGuestStorefront =
-    result?.status === "existing_guest_storefront";
-  const resultHeading = existingGuestStorefront
-    ? `${result?.storefront.content.name} is already ready.`
-    : "Storefront ready.";
-  const resultLinkText = existingGuestStorefront
-    ? "Open existing storefront"
-    : "View your storefront";
-  const generationFeedback =
-    error || createdStorefrontPath ? (
-      <div className="space-y-3">
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription className="font-bold text-destructive">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-        {createdStorefrontPath && (
-          <Alert role="status" variant="success">
-            <AlertTitle>{resultHeading}</AlertTitle>
-            <AlertDescription className="font-bold text-primary">
-            {result && (
-              <p className="mt-1">
-                Finished in {result.finishedInText}
-              </p>
-            )}
-            {result?.usageCost ? (
-              <p className="mt-1">
-                This request cost about{" "}
-                {formatUsageUsd(result.usageCost.totalUsd)}.
-              </p>
-            ) : result?.status?.startsWith("existing_") ? (
-              <p className="mt-1">
-                No new API spend.
-              </p>
-            ) : null}
-            {result?.warning && (
-              <Alert className="mt-3" role="status" variant="warning">
-                <AlertDescription className="font-bold text-amber-800">
-                  {result.warning}
-                </AlertDescription>
-              </Alert>
-            )}
-            <Button asChild className="mt-3 w-full" size="lg" variant="success">
-              <Link href={createdStorefrontPath}>
-                {resultLinkText}
-                <ExternalLink className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-            <div className="mt-3">
-              <Button
-                className="w-full border-primary/30 text-foreground hover:border-primary hover:bg-accent hover:text-accent-foreground"
-                onClick={() => openSignIn()}
-                type="button"
-                variant="outline"
-              >
-                Sign in for more
-              </Button>
-            </div>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-    ) : null;
+    const trimmedIdea = idea.trim();
+
+    if (trimmedIdea.length >= 6) {
+      window.localStorage.setItem(DRAFT_IDEA_STORAGE_KEY, trimmedIdea);
+    }
+
+    openSignIn();
+  }
 
   return (
     <StorefrontGenerationForm
-      feedback={generationFeedback}
-      generationDisabled={generationDisabled}
+      feedback={
+        <Alert variant="warning">
+          <AlertTitle>Sign-in required</AlertTitle>
+          <AlertDescription>
+            Public generation is temporarily locked down. Sign in to generate
+            one storefront.
+          </AlertDescription>
+        </Alert>
+      }
+      generationDisabled={false}
       idea={idea}
-      isGenerating={isGenerating}
+      isGenerating={false}
       onIdeaChange={setIdea}
       onSubmit={handleSubmit}
-      progress={generationProgress}
+      progress={idleProgress}
       secondaryAction={{
         href: "/storefronts",
         label: "See all storefronts"
       }}
+      submitIcon={<LogIn className="h-4 w-4" aria-hidden />}
+      submitLabel="Sign in to generate"
       textareaId="landing-product-idea"
     />
   );

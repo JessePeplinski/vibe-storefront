@@ -155,13 +155,25 @@ export function StorefrontStudio({
   }
 
   const isGuestMode = mode === "guest";
-  const resultStatusText = isGuestMode
-    ? result?.status === "existing_guest_storefront"
-      ? `${result.storefront.content.name} is already ready.`
-      : "Guest storefront ready."
-    : result?.status === "existing_prompt_storefront"
-      ? `You already generated this idea. ${result.storefront.content.name} is ready.`
-      : "Storefront saved.";
+  const accountGenerationLimitReached =
+    !isGuestMode && recentStorefronts.length > 0;
+  const resultStatusText = (() => {
+    if (isGuestMode) {
+      return result?.status === "existing_guest_storefront"
+        ? `${result.storefront.content.name} is already ready.`
+        : "Guest storefront ready.";
+    }
+
+    if (result?.status === "generation_quota_exceeded") {
+      return "Generation limit reached.";
+    }
+
+    if (result?.status === "existing_prompt_storefront") {
+      return `You already generated this idea. ${result.storefront.content.name} is ready.`;
+    }
+
+    return "Storefront saved.";
+  })();
   const recentStorefrontsTitle = isGuestMode
     ? "Guest storefront"
     : "Your storefronts";
@@ -226,6 +238,16 @@ export function StorefrontStudio({
           </Alert>
         )}
       </div>
+    ) : null;
+  const quotaFeedback =
+    accountGenerationLimitReached && !result && !error && !isGenerating ? (
+      <Alert role="status" variant="warning">
+        <AlertTitle>Generation limit reached.</AlertTitle>
+        <AlertDescription className="font-bold text-amber-800">
+          Generation is currently limited to one storefront per account. Your
+          saved storefront is still available below.
+        </AlertDescription>
+      </Alert>
     ) : null;
 
   return (
@@ -296,8 +318,10 @@ export function StorefrontStudio({
 
         <StorefrontGenerationForm
           className="mt-6"
-          feedback={generationFeedback}
-          generationDisabled={generationDisabled}
+          feedback={generationFeedback ?? quotaFeedback}
+          generationDisabled={
+            generationDisabled || accountGenerationLimitReached
+          }
           idea={idea}
           isGenerating={isGenerating}
           onIdeaChange={setIdea}

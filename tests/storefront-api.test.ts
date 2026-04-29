@@ -6,14 +6,17 @@ const mocks = vi.hoisted(() => {
   return {
     auth: vi.fn(),
     buildStorefrontSlug: vi.fn(),
+    checkStorefrontGenerationRateLimit: vi.fn(),
+    completeStorefrontGenerationSlot: vi.fn(),
     createStorefront: vi.fn(),
     deleteStorefrontForOwner: vi.fn(),
     deleteProductImage: vi.fn(),
     generateProductImage: vi.fn(),
     generateStorefront: vi.fn(),
-    getStorefrontByAnonymousSession: vi.fn(),
     getStorefrontByOwnerAndIdea: vi.fn(),
-    listStorefrontsForOwner: vi.fn()
+    listStorefrontsForOwner: vi.fn(),
+    releaseStorefrontGenerationSlot: vi.fn(),
+    reserveStorefrontGenerationSlot: vi.fn()
   };
 });
 
@@ -34,12 +37,18 @@ vi.mock("@/lib/slug", () => ({
   buildStorefrontSlug: mocks.buildStorefrontSlug
 }));
 
+vi.mock("@/lib/generation-rate-limit", () => ({
+  checkStorefrontGenerationRateLimit: mocks.checkStorefrontGenerationRateLimit
+}));
+
 vi.mock("@/lib/storefronts", () => ({
+  completeStorefrontGenerationSlot: mocks.completeStorefrontGenerationSlot,
   createStorefront: mocks.createStorefront,
   deleteStorefrontForOwner: mocks.deleteStorefrontForOwner,
-  getStorefrontByAnonymousSession: mocks.getStorefrontByAnonymousSession,
   getStorefrontByOwnerAndIdea: mocks.getStorefrontByOwnerAndIdea,
-  listStorefrontsForOwner: mocks.listStorefrontsForOwner
+  listStorefrontsForOwner: mocks.listStorefrontsForOwner,
+  releaseStorefrontGenerationSlot: mocks.releaseStorefrontGenerationSlot,
+  reserveStorefrontGenerationSlot: mocks.reserveStorefrontGenerationSlot
 }));
 
 const productImage = {
@@ -100,11 +109,20 @@ describe("storefront API", () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
+    mocks.checkStorefrontGenerationRateLimit.mockReturnValue({
+      allowed: true
+    });
+    mocks.completeStorefrontGenerationSlot.mockResolvedValue(undefined);
     mocks.deleteProductImage.mockResolvedValue(undefined);
     mocks.deleteStorefrontForOwner.mockResolvedValue(null);
     mocks.generateProductImage.mockResolvedValue(generatedProductImage);
     mocks.generateStorefront.mockResolvedValue(generatedStorefront());
     mocks.getStorefrontByOwnerAndIdea.mockResolvedValue(null);
+    mocks.listStorefrontsForOwner.mockResolvedValue([]);
+    mocks.releaseStorefrontGenerationSlot.mockResolvedValue(undefined);
+    mocks.reserveStorefrontGenerationSlot.mockResolvedValue({
+      id: "generation-slot-id"
+    });
   });
 
   it("rejects unauthenticated list requests", async () => {
@@ -149,6 +167,13 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn"
     });
+    expect(mocks.listStorefrontsForOwner).toHaveBeenCalledWith("user_123");
+    expect(mocks.checkStorefrontGenerationRateLimit).toHaveBeenCalledWith(
+      "user_123"
+    );
+    expect(mocks.reserveStorefrontGenerationSlot).toHaveBeenCalledWith(
+      "user_123"
+    );
     expect(mocks.buildStorefrontSlug).toHaveBeenCalledWith("Brooklyn Ember Co.");
     expect(mocks.generateProductImage).toHaveBeenCalledWith({
       content: sampleStorefrontContent,
@@ -179,6 +204,11 @@ describe("storefront API", () => {
     expect(payload.storefront.generation_cost).toMatchObject(
       payload.usageCost
     );
+    expect(mocks.completeStorefrontGenerationSlot).toHaveBeenCalledWith({
+      reservationId: "generation-slot-id",
+      storefrontId: "storefront-id"
+    });
+    expect(mocks.releaseStorefrontGenerationSlot).not.toHaveBeenCalled();
   });
 
   it("rejects blocked Clerk user prompts before generation", async () => {
@@ -186,7 +216,7 @@ describe("storefront API", () => {
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
-      body: JSON.stringify({ idea: "nsfw poster subscription boxes" })
+      body: JSON.stringify({ idea: "Pornhub traffic analytics dashboard" })
     });
 
     const response = await POST(request);
@@ -195,25 +225,29 @@ describe("storefront API", () => {
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: contentCannotBeGenerated });
     expect(mocks.getStorefrontByOwnerAndIdea).not.toHaveBeenCalled();
+    expect(mocks.listStorefrontsForOwner).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
     expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
   });
 
-  it("rejects blocked guest prompts without creating a guest session", async () => {
+  it("rejects unauthenticated generation before creating work", async () => {
     mocks.auth.mockResolvedValue({ userId: null });
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
-      body: JSON.stringify({ idea: "adult-toy travel organizer" })
+      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
     });
 
     const response = await POST(request);
     const payload = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(payload).toEqual({ error: contentCannotBeGenerated });
-    expect(mocks.getStorefrontByAnonymousSession).not.toHaveBeenCalled();
+    expect(response.status).toBe(401);
+    expect(payload).toEqual({ error: "Sign in to generate a storefront." });
+    expect(mocks.getStorefrontByOwnerAndIdea).not.toHaveBeenCalled();
+    expect(mocks.listStorefrontsForOwner).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
     expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
@@ -239,12 +273,19 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: contentCannotBeGenerated });
+    expect(mocks.reserveStorefrontGenerationSlot).toHaveBeenCalledWith(
+      "user_123"
+    );
     expect(mocks.generateStorefront).toHaveBeenCalledWith(
       "limited-run poster subscription boxes"
     );
     expect(mocks.buildStorefrontSlug).not.toHaveBeenCalled();
     expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
+    expect(mocks.releaseStorefrontGenerationSlot).toHaveBeenCalledWith(
+      "generation-slot-id"
+    );
+    expect(mocks.completeStorefrontGenerationSlot).not.toHaveBeenCalled();
   });
 
   it("retries product image generation and saves the storefront when a retry succeeds", async () => {
@@ -322,6 +363,8 @@ describe("storefront API", () => {
       ownerClerkUserId: "user_123",
       idea: "small-batch   hot sauce from Brooklyn"
     });
+    expect(mocks.listStorefrontsForOwner).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
     expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
@@ -332,69 +375,11 @@ describe("storefront API", () => {
     });
   });
 
-  it("generates one storefront for an anonymous guest and sets a session cookie", async () => {
-    const guestSessionId = "00000000-0000-4000-8000-000000000001";
-
-    vi.spyOn(crypto, "randomUUID").mockReturnValue(guestSessionId);
-    mocks.auth.mockResolvedValue({ userId: null });
-    mocks.getStorefrontByAnonymousSession.mockResolvedValue(null);
-    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
-    mocks.createStorefront.mockResolvedValue({
-      id: "guest-storefront-id",
-      owner_clerk_user_id: null,
-      anonymous_session_id: guestSessionId,
-      slug: "brooklyn-ember-co-image123",
-      idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContentWithImage,
-      published: true,
-      created_at: "2026-04-23T00:00:00.000Z",
-      updated_at: "2026-04-23T00:00:00.000Z"
-    });
-    const { POST } = await import("@/app/api/storefronts/route");
-    const request = new NextRequest("https://vibe.example/api/storefronts", {
-      method: "POST",
-      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
-    });
-
-    const response = await POST(request);
-    const payload = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(mocks.getStorefrontByAnonymousSession).toHaveBeenCalledWith(
-      guestSessionId
-    );
-    expect(mocks.generateStorefront).toHaveBeenCalledWith(
-      "small-batch hot sauce from Brooklyn"
-    );
-    expect(mocks.generateProductImage).toHaveBeenCalledWith({
-      content: sampleStorefrontContent,
-      idea: "small-batch hot sauce from Brooklyn",
-      slug: "brooklyn-ember-co-image123"
-    });
-    expect(mocks.createStorefront).toHaveBeenCalledWith({
-      anonymousSessionId: guestSessionId,
-      idea: "small-batch hot sauce from Brooklyn",
-      content: sampleStorefrontContentWithImage,
-      generationCost: expect.objectContaining({
-        currency: "USD",
-        totalUsd: expect.any(Number)
-      }),
-      slug: "brooklyn-ember-co-image123"
-    });
-    expect(payload.shareUrl).toBe(
-      "https://vibe.example/s/brooklyn-ember-co-image123"
-    );
-    expect(response.headers.get("set-cookie")).toContain(
-      `vibe_storefront_guest_id=${guestSessionId}`
-    );
-  });
-
-  it("returns the existing anonymous storefront without generating again", async () => {
-    const guestSessionId = "00000000-0000-4000-8000-000000000001";
+  it("blocks a second different storefront for the same Clerk user", async () => {
     const existingStorefront = {
-      id: "guest-storefront-id",
-      owner_clerk_user_id: null,
-      anonymous_session_id: guestSessionId,
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
       slug: "guest-hot-sauce-abc123",
       idea: "small-batch hot sauce from Brooklyn",
       content: sampleStorefrontContent,
@@ -403,34 +388,85 @@ describe("storefront API", () => {
       updated_at: "2026-04-23T00:00:00.000Z"
     };
 
-    mocks.auth.mockResolvedValue({ userId: null });
-    mocks.getStorefrontByAnonymousSession.mockResolvedValue(existingStorefront);
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.listStorefrontsForOwner.mockResolvedValue([existingStorefront]);
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
-      headers: {
-        cookie: `vibe_storefront_guest_id=${guestSessionId}`
-      },
       body: JSON.stringify({ idea: "tiny lamp kits for renters" })
     });
 
     const response = await POST(request);
     const payload = await response.json();
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(429);
     expect(payload).toMatchObject({
-      error:
-        "This browser already generated Brooklyn Ember Co.; open it below or sign in to create more storefronts.",
+      error: "Generation is currently limited to one storefront per account.",
       storefront: existingStorefront,
       shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
-      status: "existing_guest_storefront"
+      status: "generation_quota_exceeded"
     });
+    expect(mocks.getStorefrontByOwnerAndIdea).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "tiny lamp kits for renters"
+    });
+    expect(mocks.listStorefrontsForOwner).toHaveBeenCalledWith("user_123");
+    expect(mocks.checkStorefrontGenerationRateLimit).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
     expect(mocks.generateStorefront).not.toHaveBeenCalled();
     expect(mocks.generateProductImage).not.toHaveBeenCalled();
     expect(mocks.createStorefront).not.toHaveBeenCalled();
-    expect(response.headers.get("set-cookie")).toContain(
-      `vibe_storefront_guest_id=${guestSessionId}`
+  });
+
+  it("rate limits signed-in generation before reserving a slot", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.checkStorefrontGenerationRateLimit.mockReturnValue({
+      allowed: false,
+      retryAfterSeconds: 120
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "tiny lamp kits for renters" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("120");
+    expect(payload).toEqual({
+      error: "Too many generation attempts. Try again shortly."
+    });
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
+  });
+
+  it("blocks generation when a durable slot already exists", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.reserveStorefrontGenerationSlot.mockResolvedValue(null);
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "tiny lamp kits for renters" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(payload).toEqual({
+      error: "Generation is currently limited to one storefront per account.",
+      status: "generation_quota_exceeded"
+    });
+    expect(mocks.reserveStorefrontGenerationSlot).toHaveBeenCalledWith(
+      "user_123"
     );
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.generateProductImage).not.toHaveBeenCalled();
+    expect(mocks.createStorefront).not.toHaveBeenCalled();
   });
 
   it("saves the storefront without an image when product image retries are exhausted", async () => {
@@ -482,6 +518,10 @@ describe("storefront API", () => {
       warning: productImageWarning
     });
     expect(payload.storefront.content.product.image).toBeUndefined();
+    expect(mocks.completeStorefrontGenerationSlot).toHaveBeenCalledWith({
+      reservationId: "generation-slot-id",
+      storefrontId: "storefront-id"
+    });
   });
 
   it("deletes an uploaded product image if the database insert fails", async () => {
@@ -504,6 +544,10 @@ describe("storefront API", () => {
       error: "Unable to save storefront: duplicate slug"
     });
     expect(mocks.deleteProductImage).toHaveBeenCalledWith(productImage.storagePath);
+    expect(mocks.releaseStorefrontGenerationSlot).toHaveBeenCalledWith(
+      "generation-slot-id"
+    );
+    expect(mocks.completeStorefrontGenerationSlot).not.toHaveBeenCalled();
   });
 
   it("rejects unauthenticated delete requests", async () => {

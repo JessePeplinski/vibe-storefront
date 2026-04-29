@@ -7,23 +7,50 @@ const BLOCKED_NSFW_TERMS = [
   "adult toy",
   "adult toys",
   "anal",
+  "arse",
+  "arsehole",
+  "ass",
+  "asses",
+  "asshole",
+  "assholes",
+  "bastard",
+  "bastards",
   "bdsm",
+  "bitch",
+  "bitches",
   "blowjob",
   "blowjobs",
+  "boob",
+  "boobs",
+  "boobies",
   "brothel",
   "brothels",
   "cam girl",
   "cam girls",
   "cam boy",
   "cam boys",
+  "chaturbate",
+  "cock",
+  "cocks",
+  "cum",
+  "cumming",
+  "cunt",
+  "cunts",
   "dildo",
   "dildos",
+  "dick",
+  "dicks",
   "erotic",
   "erotica",
   "escort",
   "escorts",
   "fetish",
+  "fuck",
+  "fucked",
+  "fucker",
+  "fucking",
   "hentai",
+  "incest",
   "masturbate",
   "masturbation",
   "naked",
@@ -34,25 +61,48 @@ const BLOCKED_NSFW_TERMS = [
   "only fans",
   "orgy",
   "porn",
+  "porn hub",
+  "pornhub",
   "porno",
   "pornographic",
   "pornography",
   "prostitute",
   "prostitutes",
   "prostitution",
+  "pussy",
+  "pussies",
+  "rape",
+  "raped",
+  "raping",
+  "rapist",
+  "rapists",
   "sex",
   "sexual",
   "sex toy",
   "sex toys",
   "sexting",
+  "shit",
+  "shits",
+  "shitty",
+  "slut",
+  "sluts",
   "strip club",
   "strip clubs",
   "stripper",
   "strippers",
+  "tits",
+  "titties",
+  "titty",
   "vibrator",
   "vibrators",
+  "whore",
+  "whores",
+  "xhamster",
+  "xvideos",
   "xxx"
 ] as const;
+
+const BLOCKED_COMPOUND_ROOTS = ["fuck", "porn", "shit", "xxx"] as const;
 
 type BlockedTermPattern = {
   phrase: string;
@@ -101,6 +151,9 @@ function buildBlockedTermPattern(term: string): BlockedTermPattern {
 }
 
 const blockedTermPatterns = BLOCKED_NSFW_TERMS.map(buildBlockedTermPattern);
+const blockedCompoundRootPatterns = BLOCKED_COMPOUND_ROOTS.map(
+  buildBlockedTermPattern
+);
 
 function hasSplitTokenMatch(tokens: string[], term: string): boolean {
   for (let startIndex = 0; startIndex < tokens.length; startIndex += 1) {
@@ -138,6 +191,14 @@ export function containsBlockedNsfwTerm(text: string): boolean {
   }
 
   const paddedText = ` ${tokens.join(" ")} `;
+
+  if (
+    blockedCompoundRootPatterns.some(({ term }) =>
+      tokens.some((token) => token.startsWith(term))
+    )
+  ) {
+    return true;
+  }
 
   return blockedTermPatterns.some(({ phrase, term, tokens: termTokens }) => {
     if (termTokens.length === 0) {
