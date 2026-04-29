@@ -107,10 +107,22 @@ a {
 
 .deck-page {
   min-height: 100vh;
-  background: #08251d;
+  background: #f8f7f2;
 }
 
 .deck-page .deck-reveal {
+  --deck-brand-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7'/%3E%3Cpath d='M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8'/%3E%3Cpath d='M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4'/%3E%3Cpath d='M2 7h20'/%3E%3Cpath d='M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7'/%3E%3C/svg%3E");
+  --deck-brand-watermark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7'/%3E%3Cpath d='M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8'/%3E%3Cpath d='M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4'/%3E%3Cpath d='M2 7h20'/%3E%3Cpath d='M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7'/%3E%3C/svg%3E");
+  --deck-border: #d8d3c9;
+  --deck-card-bg: #fffdf8;
+  --deck-card-radius: 0.5rem;
+  --deck-card-shadow: 0 18px 50px rgba(8, 37, 29, 0.08);
+  --deck-content-width: 1120px;
+  --deck-green: #047857;
+  --deck-green-dark: #08251d;
+  --deck-heading-size: 2.9rem;
+  --deck-ink: #0f172a;
+  --deck-muted: #64748b;
   --r-background-color: #f8f7f2;
   --r-main-color: #0f172a;
   --r-heading-color: #0f172a;
@@ -128,9 +140,59 @@ a {
 }
 
 .deck-page .deck-reveal .slides section {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: start;
   box-sizing: border-box;
   height: 100%;
-  padding: 4.1rem 4.5rem 3.6rem;
+  padding: 4.1rem 4.5rem 4.25rem;
+  background: #f8f7f2;
+  color: var(--deck-ink);
+}
+
+.deck-page .deck-reveal .slides section > :where(
+  .deck-kicker,
+  h1,
+  h2,
+  .deck-lede,
+  .deck-lead,
+  .deck-title-meta,
+  .deck-rubric-grid,
+  .deck-flow-line,
+  .deck-check-list,
+  .deck-stack,
+  .deck-architecture,
+  .deck-number-flow,
+  .deck-image-stage,
+  .deck-final-list
+) {
+  box-sizing: border-box;
+  width: min(100%, var(--deck-content-width));
+  max-width: var(--deck-content-width);
+}
+
+.deck-page .deck-reveal .slides section::before {
+  content: "";
+  position: absolute;
+  bottom: 2rem;
+  left: 4.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.42rem;
+  background: var(--deck-green) var(--deck-brand-icon) center / 0.95rem 0.95rem no-repeat;
+  box-shadow: 0 10px 24px rgba(8, 37, 29, 0.12);
+}
+
+.deck-page .deck-reveal .slides section::after {
+  content: "vibe-storefront.com";
+  position: absolute;
+  bottom: 2.13rem;
+  left: 6.45rem;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 
 .deck-page .deck-reveal h1,
@@ -145,25 +207,24 @@ a {
 .deck-page .deck-reveal h2 {
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
 }
 
 .deck-page .deck-reveal h1 {
-  max-width: 980px;
-  font-size: 5.4rem;
+  font-size: var(--deck-heading-size);
   font-weight: 950;
-  line-height: 0.92;
+  line-height: 1.02;
 }
 
 .deck-page .deck-reveal h2 {
-  max-width: 1000px;
-  font-size: 3.65rem;
+  font-size: var(--deck-heading-size);
   font-weight: 950;
-  line-height: 0.98;
+  line-height: 1.02;
 }
 
 .deck-page .deck-reveal .deck-kicker {
-  margin-bottom: 1.25rem;
-  color: #047857;
+  margin-bottom: 1.05rem;
+  color: var(--deck-green);
   font-size: 0.95rem;
   font-weight: 950;
   letter-spacing: 0.18em;
@@ -171,47 +232,58 @@ a {
 }
 
 .deck-page .deck-reveal .deck-lede {
-  max-width: 840px;
-  margin-top: 1.7rem;
+  margin-top: 1.55rem;
   color: #475569;
-  font-size: 1.55rem;
-  font-weight: 700;
-  line-height: 1.32;
+  font-size: 1.65rem;
+  font-weight: 760;
+  line-height: 1.26;
+}
+
+.deck-page .deck-reveal .deck-lead {
+  margin-top: 1.35rem;
+  color: #334155;
+  font-size: 1.72rem;
+  font-weight: 800;
+  line-height: 1.24;
 }
 
 .deck-page .deck-title-slide,
 .deck-page .deck-dark-slide {
-  color: #ffffff;
+  background: #f8f7f2;
+  color: var(--deck-ink);
 }
 
 .deck-page .deck-title-slide h1,
 .deck-page .deck-title-slide h2,
 .deck-page .deck-dark-slide h2 {
-  color: #ffffff;
+  color: var(--deck-ink);
 }
 
 .deck-page .deck-title-slide .deck-kicker,
 .deck-page .deck-dark-slide .deck-kicker {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--deck-green);
 }
 
 .deck-page .deck-title-slide .deck-lede,
-.deck-page .deck-dark-slide .deck-lede {
-  color: rgba(255, 255, 255, 0.78);
+.deck-page .deck-dark-slide .deck-lede,
+.deck-page .deck-title-slide .deck-lead,
+.deck-page .deck-dark-slide .deck-lead {
+  color: #334155;
 }
 
 .deck-page .deck-title-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
-  margin-top: 4.2rem;
+  margin-top: 3.7rem;
 }
 
 .deck-page .deck-title-meta span {
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--deck-border);
   border-radius: 999px;
+  background: var(--deck-card-bg);
   padding: 0.55rem 0.9rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: #334155;
   font-size: 0.88rem;
   font-weight: 850;
 }
@@ -219,16 +291,39 @@ a {
 .deck-page .deck-rubric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-top: 3rem;
+  gap: 1.05rem;
+  margin-top: 2.25rem;
 }
 
 .deck-page .deck-rubric-grid div {
-  min-height: 10.5rem;
-  border: 1px solid #d8d3c9;
-  border-radius: 0.5rem;
-  background: #ffffff;
+  position: relative;
+  display: flex;
+  min-height: 9.25rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  overflow: hidden;
   padding: 1.25rem;
+}
+
+.deck-page .deck-rubric-grid div::after,
+.deck-page .deck-check-list li::after,
+.deck-page .deck-final-list li::after,
+.deck-page .deck-stack p::after,
+.deck-page .deck-architecture span::after,
+.deck-page .deck-number-flow li::after {
+  content: "";
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  background: var(--deck-brand-watermark) center / contain no-repeat;
+  opacity: 0.07;
+  pointer-events: none;
 }
 
 .deck-page .deck-rubric-grid strong,
@@ -238,30 +333,30 @@ a {
 
 .deck-page .deck-rubric-grid strong {
   color: #0f172a;
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   font-weight: 950;
+  line-height: 1.12;
 }
 
 .deck-page .deck-rubric-grid span {
-  margin-top: 1.25rem;
-  color: #64748b;
-  font-size: 0.94rem;
-  font-weight: 700;
-  line-height: 1.45;
+  margin-top: 1rem;
+  color: var(--deck-muted);
+  font-size: 0.96rem;
+  font-weight: 730;
+  line-height: 1.38;
 }
 
 .deck-page .deck-rubric-grid-tight {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 880px;
 }
 
 .deck-page .deck-rubric-grid-tight div {
-  min-height: 7.5rem;
+  min-height: 7.15rem;
 }
 
 .deck-page .deck-footnote {
   margin-top: 1.7rem;
-  color: #64748b;
+  color: var(--deck-muted);
   font-size: 1rem;
   font-weight: 800;
   line-height: 1.4;
@@ -270,19 +365,21 @@ a {
 .deck-page .deck-flow-line {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 3.4rem;
+  gap: 0.9rem;
+  margin-top: 2.35rem;
 }
 
 .deck-page .deck-flow-line span {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0.45rem;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1.2rem 1rem;
-  color: #ffffff;
-  font-size: 1.1rem;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  padding: 1.3rem 1rem;
+  color: var(--deck-ink);
+  font-size: 1.15rem;
   font-weight: 950;
+  line-height: 1.1;
   text-align: center;
 }
 
@@ -290,88 +387,96 @@ a {
   content: "";
   position: absolute;
   top: 50%;
-  right: -0.58rem;
+  right: -0.66rem;
   z-index: 1;
   width: 0.4rem;
   height: 0.4rem;
-  border-top: 2px solid rgba(255, 255, 255, 0.58);
-  border-right: 2px solid rgba(255, 255, 255, 0.58);
+  border-top: 2px solid rgba(4, 120, 87, 0.52);
+  border-right: 2px solid rgba(4, 120, 87, 0.52);
   transform: translateY(-50%) rotate(45deg);
-}
-
-.deck-page .deck-split {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
-  gap: 3rem;
-  margin-top: 2.8rem;
-  align-items: center;
-}
-
-.deck-page .deck-large-callout {
-  max-width: 430px;
-  color: #047857;
-  font-size: 3.3rem;
-  font-weight: 950;
-  line-height: 0.98;
 }
 
 .deck-page .deck-check-list,
 .deck-page .deck-final-list {
   display: grid;
-  gap: 0.95rem;
+  gap: 1.05rem;
   padding: 0;
   list-style: none;
 }
 
+.deck-page .deck-check-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 2.25rem;
+}
+
 .deck-page .deck-check-list li,
 .deck-page .deck-final-list li {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.85rem;
+  min-height: 5.8rem;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  overflow: hidden;
+  padding: 1.15rem 1.2rem;
   color: #334155;
-  font-size: 1.15rem;
-  font-weight: 850;
+  font-size: 1.12rem;
+  font-weight: 880;
   line-height: 1.25;
 }
 
 .deck-page .deck-check-list li::before,
 .deck-page .deck-final-list li::before {
   content: "";
-  width: 0.65rem;
-  height: 0.65rem;
+  width: 0.62rem;
+  height: 0.62rem;
   border-radius: 999px;
-  background: #047857;
+  background: var(--deck-green);
   flex: 0 0 auto;
 }
 
 .deck-page .deck-final-list {
-  max-width: 830px;
-  margin-top: 2.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 2.25rem;
 }
 
 .deck-page .deck-final-list li {
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 1.35rem;
+  border-color: var(--deck-border);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  color: #334155;
+  font-size: 1.16rem;
 }
 
 .deck-page .deck-final-list li::before {
-  background: #34d399;
+  background: var(--deck-green);
 }
 
 .deck-page .deck-stack {
   display: grid;
-  max-width: 920px;
-  gap: 1.1rem;
-  margin-top: 2.7rem;
+  gap: 1.05rem;
+  margin-top: 2.25rem;
+}
+
+.deck-page .deck-stack-single {
+  max-width: var(--deck-content-width);
 }
 
 .deck-page .deck-stack p {
-  border-left: 0.35rem solid #047857;
-  padding-left: 1.2rem;
+  position: relative;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  overflow: hidden;
+  padding: 1.2rem 1.25rem;
   color: #334155;
-  font-size: 1.55rem;
-  font-weight: 820;
-  line-height: 1.32;
+  font-size: 1.24rem;
+  font-weight: 830;
+  line-height: 1.3;
 }
 
 .deck-page .deck-stack-compact {
@@ -379,11 +484,8 @@ a {
 }
 
 .deck-page .deck-stack-compact p {
-  border: 1px solid #d8d3c9;
-  border-left: 0.35rem solid #047857;
-  border-radius: 0.45rem;
-  background: #ffffff;
-  padding: 1.05rem 1.15rem;
+  min-height: 5.8rem;
+  padding: 1.15rem 1.2rem;
   font-size: 1.05rem;
   font-weight: 900;
 }
@@ -391,19 +493,23 @@ a {
 .deck-page .deck-architecture {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.85rem;
-  margin-top: 3.2rem;
+  gap: 0.9rem;
+  margin-top: 2.25rem;
 }
 
 .deck-page .deck-architecture span {
+  position: relative;
   display: flex;
-  min-height: 8rem;
+  min-height: 7.6rem;
   align-items: end;
-  border-radius: 0.5rem;
-  background: #08251d;
-  padding: 1rem;
-  color: #ffffff;
-  font-size: 1rem;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  overflow: hidden;
+  padding: 1.15rem 1rem;
+  color: var(--deck-ink);
+  font-size: 1.02rem;
   font-weight: 950;
   line-height: 1.2;
 }
@@ -411,21 +517,24 @@ a {
 .deck-page .deck-number-flow {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.85rem;
-  margin-top: 3rem;
+  gap: 0.9rem;
+  margin-top: 2.25rem;
   padding: 0;
   list-style: none;
   counter-reset: runtime-flow;
 }
 
 .deck-page .deck-number-flow li {
-  min-height: 10.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1rem;
-  color: #ffffff;
-  font-size: 0.98rem;
+  position: relative;
+  min-height: 9.65rem;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  overflow: hidden;
+  padding: 1.15rem 1rem;
+  color: var(--deck-ink);
+  font-size: 0.97rem;
   font-weight: 900;
   line-height: 1.3;
   counter-increment: runtime-flow;
@@ -434,25 +543,26 @@ a {
 .deck-page .deck-number-flow li::before {
   content: counter(runtime-flow);
   display: block;
-  margin-bottom: 2.8rem;
-  color: #34d399;
-  font-size: 2.5rem;
+  margin-bottom: 2.15rem;
+  color: var(--deck-green);
+  font-size: 2.35rem;
   font-weight: 950;
   line-height: 1;
 }
 
 .deck-page .deck-image-stage {
-  margin-top: 2.1rem;
-  border: 1px solid #d8d3c9;
-  border-radius: 0.55rem;
-  background: #ffffff;
-  padding: 0.85rem;
+  margin-top: 2rem;
+  border: 1px solid var(--deck-border);
+  border-radius: var(--deck-card-radius);
+  background: var(--deck-card-bg);
+  box-shadow: var(--deck-card-shadow);
+  padding: 0.8rem;
 }
 
 .deck-page .deck-image-stage img {
   display: block;
   width: 100%;
-  max-height: 385px;
+  max-height: 325px;
   object-fit: cover;
   object-position: top center;
   border-radius: 0.35rem;
@@ -464,8 +574,9 @@ a {
 
 .deck-page .deck-reveal .slide-number {
   border-radius: 999px;
-  background: rgba(8, 37, 29, 0.84);
-  color: #ffffff;
+  border: 1px solid rgba(8, 37, 29, 0.14);
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--deck-ink);
   font-weight: 850;
 }
 
@@ -478,7 +589,11 @@ html.reveal-print .deck-page {
 }
 
 html.reveal-print .deck-page .deck-reveal .slides section {
-  padding: 4.1rem 4.5rem 3.6rem !important;
+  padding: 4.1rem 4.5rem 4.25rem !important;
+}
+
+html.reveal-print .deck-page .deck-reveal .slides section > * {
+  animation: none !important;
 }
 
 html.reveal-print .deck-page .deck-reveal .pdf-page section[hidden] {

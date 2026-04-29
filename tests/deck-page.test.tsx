@@ -51,7 +51,7 @@ describe("deck page", () => {
     ).toHaveAttribute("src", expect.stringContaining("vibe-storefront"));
     expect(
       screen.getByText(
-        /This is the support deck for the second half of the walkthrough./
+        /For part two, I am going to walk through how I built this app using Codex./
       )
     ).toBeInTheDocument();
 
