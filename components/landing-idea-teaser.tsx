@@ -10,7 +10,6 @@ import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 
 const idleProgress = {
   currentPhaseIndex: 0,
-  elapsedSeconds: 0,
   elapsedText: null,
   estimateText: "",
   progressPercent: 0,
