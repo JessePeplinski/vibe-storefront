@@ -13,7 +13,6 @@ const IDEA_PLACEHOLDER =
 
 type GenerationProgressState = {
   currentPhaseIndex: number;
-  elapsedSeconds: number;
   elapsedText: string | null;
   estimateText: string;
   progressPercent: number;
@@ -98,7 +97,6 @@ export function StorefrontGenerationForm({
       {isGenerating && progress.elapsedText && (
         <GenerationProgress
           currentPhaseIndex={progress.currentPhaseIndex}
-          elapsedSeconds={progress.elapsedSeconds}
           elapsedText={progress.elapsedText}
           estimateText={progress.estimateText}
           progressPercent={progress.progressPercent}

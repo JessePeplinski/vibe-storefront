@@ -444,13 +444,11 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getAllByRole("status", { name: "Generation progress" })
     ).toHaveLength(1);
-    expect(generationProgress).toHaveTextContent("Thinking");
-    expect(generationProgress).toHaveTextContent("0:00");
+    expect(generationProgress).toHaveTextContent("Step 1 of 4");
+    expect(generationProgress).toHaveTextContent("Total 0:00");
     expect(generationProgress).toHaveTextContent("Draft storefront copy");
-    expect(generationProgress).toHaveTextContent(
-      "Reading the product idea and shaping a storefront brief."
-    );
-    expect(generationProgress).not.toHaveTextContent("Step 1 of 4");
+    expect(generationProgress).toHaveTextContent("Elapsed 0:00");
+    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
     expect(generationProgress).not.toHaveTextContent(
       "Usually takes 1-3 minutes"
     );
