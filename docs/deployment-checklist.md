@@ -132,8 +132,8 @@ Verify on `https://vibe-storefront.com`:
 - Signed-out homepage renders.
 - Signed-out generation prompts for sign-in and does not call `/api/storefronts`.
 - Clerk sign-in works, including account creation and Google sign-in from `/sign-in`.
-- Signed-in generation succeeds once for a new account.
-- A second different signed-in generation attempt is blocked by the one-storefront quota.
+- Signed-in generation succeeds for the first three storefronts on a new account.
+- A fourth different signed-in generation attempt is blocked by the three-storefront quota.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.
 - Product images appear on newly generated and backfilled storefronts.

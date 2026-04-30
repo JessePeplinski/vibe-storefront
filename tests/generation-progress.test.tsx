@@ -13,6 +13,7 @@ function ProgressHarness() {
   return (
     <GenerationProgress
       currentPhaseIndex={progress.currentPhaseIndex}
+      elapsedSeconds={progress.elapsedSeconds}
       elapsedText={progress.elapsedText}
       estimateText={progress.estimateText}
       progressPercent={progress.progressPercent}
@@ -26,7 +27,7 @@ describe("GenerationProgress", () => {
     vi.useRealTimers();
   });
 
-  it("shows total elapsed time and per-step elapsed estimates", () => {
+  it("shows a thinking panel with elapsed time and deterministic feed lines", () => {
     vi.useFakeTimers();
 
     const { container } = render(<ProgressHarness />);
@@ -35,15 +36,16 @@ describe("GenerationProgress", () => {
       name: "Generation progress"
     });
 
-    expect(generationProgress).toHaveTextContent("Step 1 of 4");
-    expect(generationProgress).toHaveTextContent("Total 0:00");
+    expect(generationProgress).toHaveTextContent("Thinking");
+    expect(generationProgress).toHaveTextContent("0:00");
     expect(generationProgress).toHaveTextContent("Draft storefront copy");
-    expect(generationProgress).toHaveTextContent("Elapsed 0:00");
-    expect(generationProgress).toHaveTextContent("Generate product image");
-    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
+    expect(generationProgress).toHaveTextContent(
+      "Reading the product idea and shaping a storefront brief."
+    );
+    expect(generationProgress).not.toHaveTextContent("Step 1 of 4");
     expect(
       container.querySelectorAll("[data-generation-connector='true']")
-    ).toHaveLength(3);
+    ).toHaveLength(0);
 
     act(() => {
       vi.advanceTimersByTime(31_000);
@@ -53,11 +55,13 @@ describe("GenerationProgress", () => {
       name: "Generation progress"
     });
 
-    expect(generationProgress).toHaveTextContent("Step 2 of 4");
-    expect(generationProgress).toHaveTextContent("Total 0:31");
-    expect(generationProgress).toHaveTextContent("Draft storefront copy");
-    expect(generationProgress).toHaveTextContent("Elapsed 0:30");
+    expect(generationProgress).toHaveTextContent("0:31");
     expect(generationProgress).toHaveTextContent("Generate product image");
-    expect(generationProgress).toHaveTextContent("Elapsed 0:01");
+    expect(generationProgress).toHaveTextContent(
+      "Generating product image direction from the concept."
+    );
+    expect(generationProgress).toHaveTextContent(
+      "Writing launch copy with a clear ecommerce structure."
+    );
   });
 });

@@ -209,7 +209,7 @@ describe("home page", () => {
     expect(screen.getByText("Sign-in required")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Public generation is temporarily locked down. Sign in to generate one storefront."
+        "Public generation is temporarily locked down. Sign in to generate up to 3 storefronts."
       )
     ).toBeInTheDocument();
     const jsonLd = JSON.parse(

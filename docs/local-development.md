@@ -79,9 +79,19 @@ After the dev server is running:
 2. Open the signed-out homepage in a private browser window.
 3. Confirm `See all storefronts` opens the public storefront gallery.
 4. Confirm the signed-out homepage prompts for sign-in instead of submitting public generation.
-5. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation creates one saved storefront.
-6. Try to generate a second different storefront from the same signed-in account and confirm the one-storefront limit blocks it without another generation.
+5. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation creates saved storefronts.
+6. Try to generate a fourth different storefront from the same signed-in account and confirm the three-storefront limit blocks it without another generation.
 7. Open the generated share URL in a signed-out browser and confirm the public share page renders.
+
+To reset a local Clerk development user while testing, remove that user's local generation slots and storefront rows from Supabase Studio or the local SQL editor:
+
+```sql
+delete from public.storefront_generation_slots
+where owner_clerk_user_id = '<clerk user id>';
+
+delete from public.storefronts
+where owner_clerk_user_id = '<clerk user id>';
+```
 
 ## Automated Verification
 

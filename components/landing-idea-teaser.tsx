@@ -5,10 +5,12 @@ import { useClerk } from "@clerk/nextjs";
 import { LogIn } from "lucide-react";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 
 const idleProgress = {
   currentPhaseIndex: 0,
+  elapsedSeconds: 0,
   elapsedText: null,
   estimateText: "",
   progressPercent: 0,
@@ -37,8 +39,8 @@ export function LandingIdeaTeaser() {
         <Alert variant="warning">
           <AlertTitle>Sign-in required</AlertTitle>
           <AlertDescription>
-            Public generation is temporarily locked down. Sign in to generate
-            one storefront.
+            Public generation is temporarily locked down. Sign in to generate up
+            to {SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts.
           </AlertDescription>
         </Alert>
       }
