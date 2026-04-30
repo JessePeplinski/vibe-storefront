@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/json-ld";
 import { StorefrontRenderer } from "@/components/storefront-renderer";
-import { appBaseUrl } from "@/lib/env";
+import {
+  buildPageMetadata,
+  storefrontPageJsonLd,
+  storefrontPublicUrl,
+  storefrontSocialImageUrl
+} from "@/lib/seo";
 import { getPublicStorefrontBySlug } from "@/lib/storefronts";
 
 type PublicStorefrontPageProps = {
@@ -23,34 +29,16 @@ export async function generateMetadata({
   const displayName = storefront.content.product.name;
   const title = `${displayName} | Vibe Storefront`;
   const description = storefront.content.tagline;
-  const publicUrl = `${appBaseUrl()}/s/${storefront.slug}`;
-  const image = storefront.content.product.image;
 
-  return {
-    title,
+  return buildPageMetadata({
     description,
-    openGraph: {
-      title: displayName,
-      description,
-      images: image
-        ? [
-            {
-              alt: image.alt,
-              url: image.url
-            }
-          ]
-        : undefined,
-      siteName: "Vibe Storefront",
-      type: "website",
-      url: publicUrl
+    image: {
+      alt: `${displayName} generated storefront preview`,
+      url: storefrontSocialImageUrl(storefront.slug)
     },
-    twitter: {
-      card: image ? "summary_large_image" : "summary",
-      title: displayName,
-      description,
-      images: image ? [image.url] : undefined
-    }
-  };
+    path: storefrontPublicUrl(storefront.slug),
+    title
+  });
 }
 
 export default async function PublicStorefrontPage({
@@ -64,12 +52,15 @@ export default async function PublicStorefrontPage({
   }
 
   return (
-    <main className="min-h-screen">
-      <StorefrontRenderer
-        content={storefront.content}
-        idea={storefront.idea}
-        variant="landing"
-      />
-    </main>
+    <>
+      <JsonLd data={storefrontPageJsonLd(storefront)} />
+      <main className="min-h-screen">
+        <StorefrontRenderer
+          content={storefront.content}
+          idea={storefront.idea}
+          variant="landing"
+        />
+      </main>
+    </>
   );
 }

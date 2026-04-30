@@ -89,6 +89,7 @@ const latestStorefronts = [
 const typedIdea = "insulated lunch bowls for hybrid workers";
 const ideaPlaceholder =
   "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers.";
+const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 function createStorageMock(): Storage {
   const store = new Map<string, string>();
@@ -112,6 +113,7 @@ function createStorageMock(): Storage {
 describe("home page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.auth.mockResolvedValue({ userId: null });
     mocks.listPublishedStorefronts.mockResolvedValue(latestStorefronts);
     Object.defineProperty(window, "localStorage", {
@@ -121,13 +123,42 @@ describe("home page", () => {
   });
 
   afterEach(() => {
+    if (originalAppUrl) {
+      process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+    } else {
+      delete process.env.NEXT_PUBLIC_APP_URL;
+    }
     vi.unstubAllGlobals();
   });
 
   it("routes signed-out generation intent through sign-in", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const Page = (await import("@/app/(app)/page")).default;
+    const homePageModule = await import("@/app/(app)/page");
+    const Page = homePageModule.default;
+
+    expect(homePageModule.metadata).toMatchObject({
+      alternates: {
+        canonical: "https://vibe.example/"
+      },
+      openGraph: {
+        images: [
+          expect.objectContaining({
+            height: 630,
+            url: "https://vibe.example/opengraph-image",
+            width: 1200
+          })
+        ]
+      },
+      twitter: {
+        card: "summary_large_image",
+        images: [
+          expect.objectContaining({
+            url: "https://vibe.example/opengraph-image"
+          })
+        ]
+      }
+    });
 
     render(await Page());
 
@@ -181,6 +212,18 @@ describe("home page", () => {
         "Public generation is temporarily locked down. Sign in to generate one storefront."
       )
     ).toBeInTheDocument();
+    const jsonLd = JSON.parse(
+      document.querySelector('script[type="application/ld+json"]')?.textContent ??
+        "{}"
+    );
+
+    expect(jsonLd["@graph"]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ "@type": "WebSite" }),
+        expect.objectContaining({ "@type": "WebApplication" }),
+        expect.objectContaining({ "@type": "WebPage" })
+      ])
+    );
 
     fireEvent.change(screen.getByLabelText("Generate your storefront"), {
       target: { value: typedIdea }

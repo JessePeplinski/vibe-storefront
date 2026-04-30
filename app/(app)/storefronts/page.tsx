@@ -8,19 +8,22 @@ import {
   Sparkles,
   UserRound
 } from "lucide-react";
+import { JsonLd } from "@/components/json-ld";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { buildPageMetadata, collectionPageJsonLd } from "@/lib/seo";
 import { listPublishedStorefronts } from "@/lib/storefronts";
 import { formatUsageUsd } from "@/lib/usage-format";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "All storefronts | Vibe Storefront",
-  description: "Browse every public storefront generated with Vibe Storefront."
-};
+export const metadata: Metadata = buildPageMetadata({
+  description: "Browse every public storefront generated with Vibe Storefront.",
+  path: "/storefronts",
+  title: "All storefronts | Vibe Storefront"
+});
 
 const creatorFallback = "Signed-in user";
 
@@ -75,8 +78,10 @@ export default async function AllStorefrontsPage() {
   );
 
   return (
-    <main>
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <>
+      <JsonLd data={collectionPageJsonLd(storefronts)} />
+      <main>
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
@@ -180,7 +185,8 @@ export default async function AllStorefrontsPage() {
             </p>
           </Card>
         )}
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

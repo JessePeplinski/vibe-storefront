@@ -11,18 +11,21 @@ import {
   Layers3,
   WandSparkles
 } from "lucide-react";
+import { JsonLd } from "@/components/json-ld";
 import { LandingIdeaTeaser } from "@/components/landing-idea-teaser";
 import { StorefrontPreviewImage } from "@/components/storefront-preview-image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { buildPageMetadata, homeJsonLd } from "@/lib/seo";
 import { listPublishedStorefronts } from "@/lib/storefronts";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
-export const metadata: Metadata = {
-  title: "Vibe Storefront | Validate product ideas fast",
+export const metadata: Metadata = buildPageMetadata({
   description:
-    "Turn a raw product idea into a shareable storefront concept for fast market validation."
-};
+    "Turn a raw product idea into a shareable storefront concept for fast market validation.",
+  path: "/",
+  title: "Vibe Storefront | Validate product ideas fast"
+});
 
 const validationSteps = [
   {
@@ -134,7 +137,9 @@ export default async function HomePage() {
   const heroProductImage = heroImage(exampleStorefronts);
 
   return (
-    <main className="overflow-hidden bg-[#f8f7f2]">
+    <>
+      <JsonLd data={homeJsonLd()} />
+      <main className="overflow-hidden bg-[#f8f7f2]">
       <section className="relative isolate overflow-hidden bg-[#08251d] text-white">
         <div className="absolute inset-0" aria-hidden="true">
           {heroProductImage ? (
@@ -304,5 +309,6 @@ export default async function HomePage() {
         </div>
       </section>
     </main>
+    </>
   );
 }

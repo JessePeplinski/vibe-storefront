@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
+import { buildPageMetadata, siteName, siteOrigin } from "@/lib/seo";
 import "reveal.js/reveal.css";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Vibe Storefront",
-  description: "Generate and share AI-built storefront landing pages."
+  ...buildPageMetadata({
+    description: "Generate and share AI-built storefront landing pages.",
+    path: "/",
+    title: siteName
+  }),
+  applicationName: siteName,
+  metadataBase: new URL(siteOrigin())
 };
 
 export default function RootLayout({
