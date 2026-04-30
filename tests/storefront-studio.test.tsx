@@ -223,8 +223,34 @@ describe("StorefrontStudio", () => {
     ).toHaveAttribute("href", "/s/lamp-loom-def456");
   });
 
-  it("disables signed-in generation after one saved storefront", () => {
-    render(<StorefrontStudio initialStorefronts={[storefront()]} />);
+  it("keeps signed-in generation enabled below the account limit", () => {
+    render(
+      <StorefrontStudio
+        initialStorefronts={[
+          storefront({ id: "storefront-1" }),
+          storefront({ id: "storefront-2" })
+        ]}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Generate storefront" })
+    ).not.toBeDisabled();
+    expect(
+      screen.queryByText("Generation limit reached.")
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables signed-in generation after three saved storefronts", () => {
+    render(
+      <StorefrontStudio
+        initialStorefronts={[
+          storefront({ id: "storefront-1" }),
+          storefront({ id: "storefront-2" }),
+          storefront({ id: "storefront-3" })
+        ]}
+      />
+    );
 
     expect(
       screen.getByRole("button", { name: "Generate storefront" })
@@ -232,7 +258,7 @@ describe("StorefrontStudio", () => {
     expect(screen.getByText("Generation limit reached.")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Generation is currently limited to one storefront per account. Your saved storefront is still available below."
+        "Generation is currently limited to 3 storefronts per account. Your saved storefronts are still available below."
       )
     ).toBeInTheDocument();
   });
@@ -418,11 +444,13 @@ describe("StorefrontStudio", () => {
     expect(
       screen.getAllByRole("status", { name: "Generation progress" })
     ).toHaveLength(1);
-    expect(generationProgress).toHaveTextContent("Step 1 of 4");
-    expect(generationProgress).toHaveTextContent("Total 0:00");
+    expect(generationProgress).toHaveTextContent("Thinking");
+    expect(generationProgress).toHaveTextContent("0:00");
     expect(generationProgress).toHaveTextContent("Draft storefront copy");
-    expect(generationProgress).toHaveTextContent("Elapsed 0:00");
-    expect(generationProgress).toHaveTextContent("Estimated 0:30-1:50");
+    expect(generationProgress).toHaveTextContent(
+      "Reading the product idea and shaping a storefront brief."
+    );
+    expect(generationProgress).not.toHaveTextContent("Step 1 of 4");
     expect(generationProgress).not.toHaveTextContent(
       "Usually takes 1-3 minutes"
     );

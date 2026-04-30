@@ -411,7 +411,7 @@ describe("storefront API", () => {
     });
   });
 
-  it("blocks a second different storefront for the same Clerk user", async () => {
+  it("blocks a fourth different storefront for the same Clerk user", async () => {
     const existingStorefront = {
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
@@ -425,7 +425,19 @@ describe("storefront API", () => {
     };
 
     mocks.auth.mockResolvedValue({ userId: "user_123" });
-    mocks.listStorefrontsForOwner.mockResolvedValue([existingStorefront]);
+    mocks.listStorefrontsForOwner.mockResolvedValue([
+      existingStorefront,
+      {
+        ...existingStorefront,
+        id: "storefront-id-2",
+        slug: "desk-lamp-kits-def456"
+      },
+      {
+        ...existingStorefront,
+        id: "storefront-id-3",
+        slug: "trail-snacks-ghi789"
+      }
+    ]);
     const { POST } = await import("@/app/api/storefronts/route");
     const request = new NextRequest("https://vibe.example/api/storefronts", {
       method: "POST",
@@ -437,7 +449,7 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(429);
     expect(payload).toMatchObject({
-      error: "Generation is currently limited to one storefront per account.",
+      error: "Generation is currently limited to 3 storefronts per account.",
       storefront: existingStorefront,
       shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
       status: "generation_quota_exceeded"
@@ -494,7 +506,7 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(429);
     expect(payload).toEqual({
-      error: "Generation is currently limited to one storefront per account.",
+      error: "Generation is currently limited to 3 storefronts per account.",
       status: "generation_quota_exceeded"
     });
     expect(mocks.reserveStorefrontGenerationSlot).toHaveBeenCalledWith(

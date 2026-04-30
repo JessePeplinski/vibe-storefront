@@ -8,6 +8,7 @@ import {
 } from "@/lib/content-safety";
 import { generateStorefront } from "@/lib/codex-storefront";
 import { appBaseUrl } from "@/lib/env";
+import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import { deleteProductImage, generateProductImage } from "@/lib/product-images";
 import { buildStorefrontSlug } from "@/lib/slug";
 import {
@@ -39,7 +40,7 @@ const PRODUCT_IMAGE_GENERATION_WARNING =
   "Storefront created, but the product image could not be generated.";
 const GENERATION_REQUIRES_SIGN_IN_ERROR = "Sign in to generate a storefront.";
 const GENERATION_QUOTA_EXCEEDED_ERROR =
-  "Generation is currently limited to one storefront per account.";
+  `Generation is currently limited to ${SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts per account.`;
 const GENERATION_RATE_LIMIT_ERROR =
   "Too many generation attempts. Try again shortly.";
 
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
 
     const ownerStorefronts = await listStorefrontsForOwner(userId);
 
-    if (ownerStorefronts.length > 0) {
+    if (ownerStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT) {
       return generationQuotaExceededResponse(ownerStorefronts[0]);
     }
 

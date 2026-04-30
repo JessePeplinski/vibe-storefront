@@ -389,7 +389,7 @@ export function RevealDeck() {
               </li>
               <li>
                 <strong>Generation limits</strong>
-                <span>Sign-in required plus one storefront per account.</span>
+                <span>Sign-in required plus three storefronts per account.</span>
               </li>
               <li>
                 <strong>Checks</strong>

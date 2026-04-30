@@ -18,7 +18,7 @@ Supabase service-role writes should stay server-side only. Public storefront rea
 
 Storefront generation requires Clerk sign-in. Signed-out visitors can browse public storefronts and share pages, but `/api/storefronts` rejects generation requests before any Codex or image model calls.
 
-Signed-in generation is currently limited to one storefront per Clerk user. The `public.storefront_generation_slots` table reserves the user's single generation slot before expensive model calls, so repeated or concurrent requests fail closed instead of generating more storefronts.
+Signed-in generation is currently limited to three storefronts per Clerk user. The `public.storefront_generation_slots` table reserves one of the user's numbered generation slots before expensive model calls, so repeated or concurrent requests fail closed instead of generating past the account cap.
 
 ## Future Feature Notes
 
