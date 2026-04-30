@@ -112,12 +112,33 @@ describe("public storefront page", () => {
         name: sampleStorefrontContent.product.name
       })
     ).toBeInTheDocument();
-    expect(screen.getByText(sampleStorefrontContent.hero.body)).toBeInTheDocument();
+    expect(
+      screen.getByText(sampleStorefrontContent.hero.body)
+    ).toBeInTheDocument();
     expect(screen.getByText("Reserve a bottle")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Built with vibe-storefront.com" })
     ).toHaveAttribute("href", "https://vibe-storefront.com");
-    expect(screen.getByText("Source prompt: small-batch hot sauce from Brooklyn")).toBeInTheDocument();
+    expect(
+      screen.getByText("Source prompt: small-batch hot sauce from Brooklyn")
+    ).toBeInTheDocument();
+    const jsonLd = JSON.parse(
+      document.querySelector('script[type="application/ld+json"]')?.textContent ??
+        "{}"
+    );
+
+    expect(jsonLd["@graph"]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ "@type": "WebPage" }),
+        expect.objectContaining({
+          "@type": "CreativeWork",
+          about: "small-batch hot sauce from Brooklyn",
+          name: sampleStorefrontContent.name
+        })
+      ])
+    );
+    expect(JSON.stringify(jsonLd)).not.toContain('"Product"');
+    expect(JSON.stringify(jsonLd)).not.toContain('"Review"');
     expect(screen.queryByText(/vibe storefront v2/i)).not.toBeInTheDocument();
     expect(screen.queryByText("background")).not.toBeInTheDocument();
     expect(screen.queryByText("#f7efe5")).not.toBeInTheDocument();
@@ -225,22 +246,39 @@ describe("public storefront page", () => {
     ).resolves.toMatchObject({
       title: "The Borough Blend | Vibe Storefront",
       description: sampleStorefrontContent.tagline,
+      alternates: {
+        canonical: "https://vibe.example/s/brooklyn-ember-co-abc123"
+      },
       openGraph: {
-        title: "The Borough Blend",
         description: sampleStorefrontContent.tagline,
+        images: [
+          {
+            alt: "The Borough Blend generated storefront preview",
+            height: 630,
+            url: "https://vibe.example/s/brooklyn-ember-co-abc123/opengraph-image",
+            width: 1200
+          }
+        ],
         siteName: "Vibe Storefront",
+        title: "The Borough Blend | Vibe Storefront",
         type: "website",
         url: "https://vibe.example/s/brooklyn-ember-co-abc123"
       },
       twitter: {
-        card: "summary",
-        title: "The Borough Blend",
-        description: sampleStorefrontContent.tagline
+        card: "summary_large_image",
+        description: sampleStorefrontContent.tagline,
+        images: [
+          {
+            alt: "The Borough Blend generated storefront preview",
+            url: "https://vibe.example/s/brooklyn-ember-co-abc123/opengraph-image"
+          }
+        ],
+        title: "The Borough Blend | Vibe Storefront"
       }
     });
   });
 
-  it("uses generated product images for public share metadata", async () => {
+  it("uses first-party generated social images for public share metadata", async () => {
     mocks.getPublicStorefrontBySlug.mockResolvedValueOnce({
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
@@ -262,14 +300,19 @@ describe("public storefront page", () => {
       openGraph: {
         images: [
           {
-            alt: productImage.alt,
-            url: productImage.url
+            alt: "The Borough Blend generated storefront preview",
+            url: "https://vibe.example/s/brooklyn-ember-co-abc123/opengraph-image"
           }
         ]
       },
       twitter: {
         card: "summary_large_image",
-        images: [productImage.url]
+        images: [
+          {
+            alt: "The Borough Blend generated storefront preview",
+            url: "https://vibe.example/s/brooklyn-ember-co-abc123/opengraph-image"
+          }
+        ]
       }
     });
   });
