@@ -211,6 +211,42 @@ describe("storefront API", () => {
     expect(mocks.releaseStorefrontGenerationSlot).not.toHaveBeenCalled();
   });
 
+  it("accepts product idea prompts longer than the previous 220 character cap", async () => {
+    const longIdea = [
+      "A modular launch kit for indie founders that turns messy notes, customer interview clips, competitor research, pricing guesses, and half-written product positioning into a clean storefront concept.",
+      "It should preserve the founder's raw language, surface assumptions, and make the first offer feel concrete enough to share."
+    ].join(" ");
+
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.createStorefront.mockResolvedValue({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: longIdea,
+      content: sampleStorefrontContentWithImage,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: longIdea })
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(201);
+    expect(longIdea.length).toBeGreaterThan(220);
+    expect(mocks.generateStorefront).toHaveBeenCalledWith(longIdea);
+    expect(mocks.createStorefront).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idea: longIdea
+      })
+    );
+  });
+
   it("rejects blocked Clerk user prompts before generation", async () => {
     mocks.auth.mockResolvedValue({ userId: "user_123" });
     const { POST } = await import("@/app/api/storefronts/route");

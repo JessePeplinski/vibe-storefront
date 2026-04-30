@@ -84,7 +84,6 @@ export function StorefrontGenerationForm({
             "min-h-32 resize-none bg-muted/40 text-base text-slate-950 placeholder:text-muted-foreground sm:min-h-28"
           )}
           id={textareaId}
-          maxLength={220}
           minLength={6}
           name="idea"
           onChange={(event) => onIdeaChange(event.target.value)}
