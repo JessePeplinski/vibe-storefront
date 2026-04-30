@@ -1,0 +1,17 @@
+# Vibe Storefront
+
+Vibe Storefront is a Next.js prototype that turns plain-English product ideas into shareable storefront concepts.
+
+Public entry points:
+
+- https://vibe-storefront.com/
+- https://vibe-storefront.com/storefronts
+- https://vibe-storefront.com/s/{slug}
+
+Generated storefront pages are concept pages for market validation. They should not be interpreted as real product listings, real inventory, customer reviews, or purchase-ready commerce pages.
+
+Private and non-index targets:
+
+- /dashboard
+- /sign-in
+- /api/*

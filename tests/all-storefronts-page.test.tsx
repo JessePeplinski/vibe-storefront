@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -33,6 +33,7 @@ const generationCost = {
   totalUsd: 0.039593,
   unavailableLineItems: []
 };
+const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 function storefront(
   overrides: Partial<StorefrontRecord> = {}
@@ -69,6 +70,7 @@ function storefrontContent(
 describe("all storefronts page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.clerkClient.mockResolvedValue({
       users: {
         getUserList: mocks.getUserList
@@ -81,6 +83,14 @@ describe("all storefronts page", () => {
         { id: "user_blank", firstName: null, lastName: null }
       ]
     });
+  });
+
+  afterEach(() => {
+    if (originalAppUrl) {
+      process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+    } else {
+      delete process.env.NEXT_PUBLIC_APP_URL;
+    }
   });
 
   it("renders published storefronts with creator labels and creation dates", async () => {
@@ -117,7 +127,26 @@ describe("all storefronts page", () => {
         content: storefrontContent("Guest Sauce")
       })
     ]);
-    const Page = (await import("@/app/(app)/storefronts/page")).default;
+    const storefrontsPageModule = await import("@/app/(app)/storefronts/page");
+    const Page = storefrontsPageModule.default;
+
+    expect(storefrontsPageModule.metadata).toMatchObject({
+      alternates: {
+        canonical: "https://vibe.example/storefronts"
+      },
+      openGraph: {
+        images: [
+          expect.objectContaining({
+            height: 630,
+            url: "https://vibe.example/opengraph-image",
+            width: 1200
+          })
+        ]
+      },
+      twitter: {
+        card: "summary_large_image"
+      }
+    });
 
     render(await Page());
 
@@ -152,6 +181,26 @@ describe("all storefronts page", () => {
       "/s/lamp-loom-ghi789",
       "/s/guest-sauce-jkl012"
     ]);
+    const jsonLd = JSON.parse(
+      document.querySelector('script[type="application/ld+json"]')?.textContent ??
+        "{}"
+    );
+
+    expect(jsonLd["@graph"]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          "@type": "CollectionPage",
+          mainEntity: expect.objectContaining({
+            itemListElement: expect.arrayContaining([
+              expect.objectContaining({
+                name: "Ember Table",
+                url: "https://vibe.example/s/ember-table-abc123"
+              })
+            ])
+          })
+        })
+      ])
+    );
   });
 
   it("renders an empty state without calling Clerk when there are no storefronts", async () => {
