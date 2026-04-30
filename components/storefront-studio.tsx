@@ -26,6 +26,7 @@ import {
   useStorefrontGeneration,
   type StorefrontGenerationResult
 } from "@/components/use-storefront-generation";
+import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 import { formatUsageUsd } from "@/lib/usage-format";
@@ -156,7 +157,8 @@ export function StorefrontStudio({
 
   const isGuestMode = mode === "guest";
   const accountGenerationLimitReached =
-    !isGuestMode && recentStorefronts.length > 0;
+    !isGuestMode &&
+    recentStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT;
   const resultStatusText = (() => {
     if (isGuestMode) {
       return result?.status === "existing_guest_storefront"
@@ -244,8 +246,9 @@ export function StorefrontStudio({
       <Alert role="status" variant="warning">
         <AlertTitle>Generation limit reached.</AlertTitle>
         <AlertDescription className="font-bold text-amber-800">
-          Generation is currently limited to one storefront per account. Your
-          saved storefront is still available below.
+          Generation is currently limited to{" "}
+          {SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts per account. Your
+          saved storefronts are still available below.
         </AlertDescription>
       </Alert>
     ) : null;

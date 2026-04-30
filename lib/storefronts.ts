@@ -1,4 +1,5 @@
 import { buildStorefrontSlug } from "@/lib/slug";
+import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import {
   type StorefrontContent,
   type StorefrontGenerationCost,
@@ -133,24 +134,32 @@ export async function reserveStorefrontGenerationSlot(
   ownerClerkUserId: string
 ): Promise<StorefrontGenerationSlotRow | null> {
   const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from("storefront_generation_slots")
-    .insert({
-      owner_clerk_user_id: ownerClerkUserId,
-      status: "pending"
-    })
-    .select("id")
-    .single();
 
-  if (error) {
-    if (isUniqueViolationError(error)) {
-      return null;
+  for (
+    let slotNumber = 1;
+    slotNumber <= SIGNED_IN_STOREFRONT_GENERATION_LIMIT;
+    slotNumber += 1
+  ) {
+    const { data, error } = await supabase
+      .from("storefront_generation_slots")
+      .insert({
+        owner_clerk_user_id: ownerClerkUserId,
+        slot_number: slotNumber,
+        status: "pending"
+      })
+      .select("id")
+      .single();
+
+    if (!error) {
+      return data as StorefrontGenerationSlotRow;
     }
 
-    throw new Error(`Unable to reserve generation slot: ${error.message}`);
+    if (!isUniqueViolationError(error)) {
+      throw new Error(`Unable to reserve generation slot: ${error.message}`);
+    }
   }
 
-  return data as StorefrontGenerationSlotRow;
+  return null;
 }
 
 export async function completeStorefrontGenerationSlot(params: {

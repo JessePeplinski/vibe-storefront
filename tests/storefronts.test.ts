@@ -3,6 +3,7 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServiceClient: vi.fn(),
+  from: vi.fn(),
   single: vi.fn(),
   insert: vi.fn(),
   select: vi.fn()
@@ -16,9 +17,10 @@ describe("storefront persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createSupabaseServiceClient.mockReturnValue({
-      from: vi.fn(() => ({
-        insert: mocks.insert
-      }))
+      from: mocks.from
+    });
+    mocks.from.mockReturnValue({
+      insert: mocks.insert
     });
     mocks.insert.mockReturnValue({
       select: mocks.select
@@ -83,6 +85,59 @@ describe("storefront persistence", () => {
       2,
       expect.not.objectContaining({
         generation_cost: expect.anything()
+      })
+    );
+  });
+
+  it("reserves the first available signed-in generation slot", async () => {
+    mocks.single
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "23505",
+          message: "duplicate key value violates unique constraint"
+        }
+      })
+      .mockResolvedValueOnce({
+        data: { id: "generation-slot-2" },
+        error: null
+      });
+
+    const { reserveStorefrontGenerationSlot } = await import("@/lib/storefronts");
+    const reservation = await reserveStorefrontGenerationSlot("user_123");
+
+    expect(reservation).toEqual({ id: "generation-slot-2" });
+    expect(mocks.insert).toHaveBeenNthCalledWith(1, {
+      owner_clerk_user_id: "user_123",
+      slot_number: 1,
+      status: "pending"
+    });
+    expect(mocks.insert).toHaveBeenNthCalledWith(2, {
+      owner_clerk_user_id: "user_123",
+      slot_number: 2,
+      status: "pending"
+    });
+  });
+
+  it("returns null when every signed-in generation slot is already reserved", async () => {
+    mocks.single.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23505",
+        message: "duplicate key value violates unique constraint"
+      }
+    });
+
+    const { reserveStorefrontGenerationSlot } = await import("@/lib/storefronts");
+    const reservation = await reserveStorefrontGenerationSlot("user_123");
+
+    expect(reservation).toBeNull();
+    expect(mocks.insert).toHaveBeenCalledTimes(3);
+    expect(mocks.insert).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        owner_clerk_user_id: "user_123",
+        slot_number: 3
       })
     );
   });
