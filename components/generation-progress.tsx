@@ -1,10 +1,11 @@
+import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { GenerationProgressStep } from "@/components/use-generation-countdown";
 import { cn } from "@/lib/utils";
 
 type GenerationProgressProps = {
   currentPhaseIndex: number;
-  elapsedSeconds: number;
   elapsedText: string;
   estimateText: string;
   progressPercent: number;
@@ -12,81 +13,8 @@ type GenerationProgressProps = {
   steps: GenerationProgressStep[];
 };
 
-type GenerationFeedLine = {
-  startsAtSecond: number;
-  text: string;
-};
-
-const VISIBLE_FEED_LINE_COUNT = 4;
-const GENERATION_FEED_LINES: GenerationFeedLine[] = [
-  {
-    startsAtSecond: 0,
-    text: "Reading the product idea and shaping a storefront brief."
-  },
-  {
-    startsAtSecond: 5,
-    text: "Drafting the offer, audience, and product position."
-  },
-  {
-    startsAtSecond: 12,
-    text: "Writing launch copy with a clear ecommerce structure."
-  },
-  {
-    startsAtSecond: 20,
-    text: "Checking the storefront schema before moving forward."
-  },
-  {
-    startsAtSecond: 30,
-    text: "Generating product image direction from the concept."
-  },
-  {
-    startsAtSecond: 42,
-    text: "Composing the product hero and supporting visual details."
-  },
-  {
-    startsAtSecond: 60,
-    text: "Waiting on image generation to finish cleanly."
-  },
-  {
-    startsAtSecond: 82,
-    text: "Reviewing generated visual output for the storefront."
-  },
-  {
-    startsAtSecond: 110,
-    text: "Saving the product image asset."
-  },
-  {
-    startsAtSecond: 118,
-    text: "Attaching the image to the generated storefront."
-  },
-  {
-    startsAtSecond: 125,
-    text: "Publishing the share page and final storefront data."
-  },
-  {
-    startsAtSecond: 132,
-    text: "Preparing the storefront result."
-  },
-  {
-    startsAtSecond: 145,
-    text: "Still working. Some image runs take a little longer."
-  }
-];
-
-function getVisibleFeedLines(elapsedSeconds: number): GenerationFeedLine[] {
-  const availableLines = GENERATION_FEED_LINES.filter(
-    (line) => elapsedSeconds >= line.startsAtSecond
-  );
-
-  return (availableLines.length > 0
-    ? availableLines
-    : [GENERATION_FEED_LINES[0]]
-  ).slice(-VISIBLE_FEED_LINE_COUNT);
-}
-
 export function GenerationProgress({
   currentPhaseIndex,
-  elapsedSeconds,
   elapsedText,
   estimateText,
   progressPercent,
@@ -95,8 +23,6 @@ export function GenerationProgress({
 }: GenerationProgressProps) {
   const boundedProgress = Math.max(0, Math.min(100, progressPercent));
   const activeStep = steps[currentPhaseIndex];
-  const activeLabel = activeStep?.label ?? "Generating storefront";
-  const visibleFeedLines = getVisibleFeedLines(elapsedSeconds);
 
   return (
     <div
@@ -104,78 +30,93 @@ export function GenerationProgress({
       className="border-t pt-4"
       role="status"
     >
-      <p className="sr-only" aria-live="polite">
-        Generating storefront. {activeLabel}. Elapsed {elapsedText}.
-      </p>
-      <div
-        aria-hidden
-        className="overflow-hidden rounded-lg border border-emerald-900/15 bg-[#101511] text-[#edf7f0] shadow-glow"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-200">
-              <span>Thinking</span>
-              <span className="flex items-center gap-0.5" aria-hidden>
-                <span className="h-1 w-1 rounded-full bg-emerald-200 animate-pulse" />
-                <span className="h-1 w-1 rounded-full bg-emerald-200 animate-pulse [animation-delay:160ms]" />
-                <span className="h-1 w-1 rounded-full bg-emerald-200 animate-pulse [animation-delay:320ms]" />
-              </span>
-            </p>
-            <p className="mt-1 text-sm font-black leading-5 text-white">
-              {activeLabel}
-            </p>
-          </div>
-          <p className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-black tabular-nums text-emerald-50">
-            Total {elapsedText}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Badge className="uppercase tracking-[0.14em]" variant="success">
+            Step {currentPhaseIndex + 1} of {steps.length}
+          </Badge>
+          <p className="mt-1 text-sm font-black leading-5 text-slate-950">
+            {activeStep?.label ?? "Generating storefront"}
           </p>
         </div>
-
-        <div className="px-4 py-4">
-          <div className="relative h-40 overflow-hidden sm:h-28">
-            <div className="absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-[#101511] to-transparent" />
-            <ol className="grid gap-1.5 sm:gap-2">
-              {visibleFeedLines.map((line, index) => {
-                const isCurrent = index === visibleFeedLines.length - 1;
-
-                return (
-                  <li
-                    className={cn(
-                      "flex min-w-0 animate-in fade-in-0 slide-in-from-bottom-1 items-start gap-2 text-xs leading-4 transition-opacity duration-300 sm:text-sm sm:leading-5",
-                      isCurrent ? "text-white" : "text-emerald-50/60"
-                    )}
-                    key={line.text}
-                  >
-                    <span
-                      className={cn(
-                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full sm:mt-2",
-                        isCurrent ? "bg-emerald-300" : "bg-emerald-100/30"
-                      )}
-                    />
-                    <span className="min-w-0 text-balance">{line.text}</span>
-                  </li>
-                );
-              })}
-            </ol>
-            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#101511] to-transparent" />
-          </div>
-
-          <div className="mt-4">
-            <Progress
-              className="[&>div]:bg-emerald-300/90 h-1 bg-white/10"
-              value={boundedProgress}
-            />
-            {showOverallEstimate && (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-emerald-50/55">
-                <span>{estimateText}</span>
-                <span>
-                  {Math.round(boundedProgress)}
-                  {"%"}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <p
+          aria-live="polite"
+          className="shrink-0 text-sm font-black tabular-nums text-slate-700"
+        >
+          Total {elapsedText}
+        </p>
       </div>
+
+      <Progress className="mt-4 h-1.5" value={boundedProgress} />
+
+      <ol className="mt-4 grid grid-cols-1 gap-0 sm:grid-cols-4 sm:gap-x-4">
+        {steps.map((step, index) => {
+          const isActive = step.status === "active";
+          const isComplete = step.status === "complete";
+          const connectorClass = isComplete ? "bg-primary" : "bg-border";
+          const markerClass = isComplete
+            ? "border-primary bg-primary text-primary-foreground"
+            : isActive
+              ? "border-foreground bg-foreground text-background"
+              : "border-border bg-card text-slate-400";
+          const labelClass =
+            isActive || isComplete ? "text-slate-950" : "text-slate-500";
+          const timeClass =
+            isActive || isComplete ? "text-slate-700" : "text-slate-400";
+
+          return (
+            <li
+              className="relative flex min-h-[4.5rem] min-w-0 items-start gap-2 pb-3 last:min-h-0 last:pb-0 sm:min-h-[4rem] sm:pb-0"
+              key={step.label}
+            >
+              {index < steps.length - 1 && (
+                <span
+                  className={cn(
+                    "absolute bottom-1 left-3.5 top-8 w-px sm:hidden",
+                    connectorClass
+                  )}
+                  data-generation-connector="true"
+                  aria-hidden
+                />
+              )}
+              <span
+                className={cn(
+                  "relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-black",
+                  markerClass
+                )}
+              >
+                {isComplete ? (
+                  <Check className="h-3.5 w-3.5" aria-hidden />
+                ) : (
+                  index + 1
+                )}
+              </span>
+              <span className="min-w-0">
+                <span
+                  className={cn("block text-xs font-black leading-4", labelClass)}
+                >
+                  {step.label}
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 block text-xs font-bold tabular-nums",
+                    timeClass
+                  )}
+                >
+                  {step.elapsedText
+                    ? `Elapsed ${step.elapsedText}`
+                    : step.estimateLabel}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      {showOverallEstimate && (
+        <p className="mt-2 text-xs font-semibold text-slate-500">
+          {estimateText}
+        </p>
+      )}
     </div>
   );
 }
