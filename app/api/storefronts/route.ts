@@ -44,7 +44,7 @@ const GENERATION_RATE_LIMIT_ERROR =
   "Too many generation attempts. Try again shortly.";
 
 const createStorefrontRequestSchema = z.object({
-  idea: z.string().trim().min(6).max(220)
+  idea: z.string().trim().min(6)
 });
 
 type ProductImageGenerationResult = {
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Enter a product idea between 6 and 220 characters." },
+      { error: "Enter a product idea with at least 6 characters." },
       { status: 400 }
     );
   }

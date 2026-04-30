@@ -125,6 +125,9 @@ describe("StorefrontStudio", () => {
       "placeholder",
       "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers."
     );
+    expect(screen.getByLabelText("Storefront idea")).not.toHaveAttribute(
+      "maxlength"
+    );
     expect(
       screen.getByRole("button", { name: "Generate storefront" })
     ).not.toBeDisabled();
