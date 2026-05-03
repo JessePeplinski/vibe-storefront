@@ -86,29 +86,9 @@ const latestStorefronts = [
   })
 ];
 
-const typedIdea = "insulated lunch bowls for hybrid workers";
-const ideaPlaceholder =
-  "Refillable shampoo bars for busy travelers, modular desk lamp kits for tiny apartments, or plant-based trail snacks for weekend hikers.";
 const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-function createStorageMock(): Storage {
-  const store = new Map<string, string>();
-
-  return {
-    get length() {
-      return store.size;
-    },
-    clear: vi.fn(() => store.clear()),
-    getItem: vi.fn((key: string) => store.get(key) ?? null),
-    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
-    removeItem: vi.fn((key: string) => {
-      store.delete(key);
-    }),
-    setItem: vi.fn((key: string, value: string) => {
-      store.set(key, value);
-    })
-  } as Storage;
-}
+const buildPostUrl =
+  "https://jessepeplinski.com/blog/how-i-used-codex-to-build-vibe-storefront/";
 
 describe("home page", () => {
   beforeEach(() => {
@@ -116,10 +96,6 @@ describe("home page", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.auth.mockResolvedValue({ userId: null });
     mocks.listPublishedStorefronts.mockResolvedValue(latestStorefronts);
-    Object.defineProperty(window, "localStorage", {
-      configurable: true,
-      value: createStorageMock()
-    });
   });
 
   afterEach(() => {
@@ -176,10 +152,18 @@ describe("home page", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/Models:/)).not.toBeInTheDocument();
     expect(
-      screen.getByText("Generate your storefront")
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Sign in to generate storefronts"
+      })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /see all storefronts/i })
+      screen.getByText(
+        "Generation requires an account so usage stays controlled. Sign in to create up to 3 storefront concepts and share the public URLs."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /browse examples/i })
     ).toHaveAttribute("href", "/storefronts");
     expect(
       screen.getByRole("link", { name: /browse gallery/i })
@@ -198,20 +182,24 @@ describe("home page", () => {
     expect(screen.getByText("Trail Crave")).toBeInTheDocument();
     expect(screen.queryByText("Generated example")).not.toBeInTheDocument();
     expect(screen.queryByText("Storefront canvas")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Generate your storefront")).toHaveValue("");
-    expect(screen.getByLabelText("Generate your storefront")).toHaveAttribute(
-      "placeholder",
-      ideaPlaceholder
-    );
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByText("Generate your storefront")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sign-in required")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Public generation is temporarily locked down/)
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Sign in to generate" })
     ).not.toBeDisabled();
-    expect(screen.getByText("Sign-in required")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Public generation is temporarily locked down. Sign in to generate up to 3 storefronts."
-      )
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /why generation requires sign-in/i })
+    ).toHaveAttribute("href", buildPostUrl);
+    expect(
+      screen.getByRole("link", { name: /why generation requires sign-in/i })
+    ).toHaveAttribute("target", "_blank");
+    expect(
+      screen.getByRole("link", { name: /why generation requires sign-in/i })
+    ).toHaveAttribute("rel", "noreferrer");
     const jsonLd = JSON.parse(
       document.querySelector('script[type="application/ld+json"]')?.textContent ??
         "{}"
@@ -225,16 +213,9 @@ describe("home page", () => {
       ])
     );
 
-    fireEvent.change(screen.getByLabelText("Generate your storefront"), {
-      target: { value: typedIdea }
-    });
     fireEvent.click(screen.getByRole("button", { name: "Sign in to generate" }));
 
     expect(mocks.openSignIn).toHaveBeenCalledTimes(1);
-    expect(window.localStorage.setItem).toHaveBeenCalledWith(
-      "vibe-storefront:draft-idea",
-      typedIdea
-    );
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

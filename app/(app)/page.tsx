@@ -184,7 +184,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="mt-6 max-w-5xl" id="generate">
+          <div className="mt-6 max-w-3xl" id="generate">
             <LandingIdeaTeaser />
           </div>
         </div>
@@ -281,7 +281,7 @@ export default async function HomePage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
                 <Link href="#generate">
-                  Validate an idea
+                  Sign in to generate
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </Button>
