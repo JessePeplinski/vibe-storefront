@@ -13,7 +13,19 @@ test("public pages render primary UI", async ({ page }) => {
     })
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /see all storefronts/i }).first()
+    page.getByRole("heading", {
+      level: 2,
+      name: "Sign in to generate storefronts"
+    })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Sign in to generate" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /browse examples/i }).first()
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /why generation requires sign-in/i })
   ).toBeVisible();
 
   await page.goto(new URL("/storefronts", baseUrl).toString(), {
