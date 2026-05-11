@@ -36,7 +36,6 @@ export const runtime = "nodejs";
 export const maxDuration = 180;
 
 const PRODUCT_IMAGE_GENERATION_ATTEMPTS = 3;
-const PRODUCT_IMAGE_GENERATION_DEADLINE_MS = 45_000;
 const PRODUCT_IMAGE_GENERATION_WARNING =
   "Storefront created, but the product image could not be generated.";
 const GENERATION_REQUIRES_SIGN_IN_ERROR = "Sign in to generate a storefront.";
@@ -89,36 +88,34 @@ function generationQuotaExceededResponse(storefront?: StorefrontRecord) {
   );
 }
 
+function errorMessage(caught: unknown): string {
+  return caught instanceof Error ? caught.message : "unknown error";
+}
+
 async function generateProductImageWithRetries(params: {
   content: StorefrontContent;
   idea: string;
   slug: string;
 }): Promise<ProductImageGenerationResult | null> {
-  const deadlineMs = Date.now() + PRODUCT_IMAGE_GENERATION_DEADLINE_MS;
-
   for (
     let attempt = 1;
     attempt <= PRODUCT_IMAGE_GENERATION_ATTEMPTS;
     attempt += 1
   ) {
-    const remainingMs = deadlineMs - Date.now();
-
-    if (remainingMs <= 0) {
-      return null;
-    }
-
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), remainingMs);
-
     try {
-      return await generateProductImage({
-        ...params,
-        signal: abortController.signal
-      });
-    } catch {
+      return await generateProductImage(params);
+    } catch (caught) {
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          msg: "product_image_generation_attempt_failed",
+          route: "/api/storefronts",
+          attempt,
+          maxAttempts: PRODUCT_IMAGE_GENERATION_ATTEMPTS,
+          error: errorMessage(caught)
+        })
+      );
       // The caller falls back to saving the storefront without an image.
-    } finally {
-      clearTimeout(timeoutId);
     }
   }
 

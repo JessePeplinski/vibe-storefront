@@ -15,7 +15,6 @@ const OPENAI_IMAGES_ENDPOINT = "https://api.openai.com/v1/images/generations";
 type GenerateProductImageParams = {
   content: StorefrontContent;
   idea: string;
-  signal?: AbortSignal;
   slug: string;
 };
 
@@ -95,8 +94,7 @@ async function parseOpenAIImageResponse(
 }
 
 async function requestProductImage(
-  prompt: string,
-  signal?: AbortSignal
+  prompt: string
 ): Promise<{ imageBytes: Buffer; usage: OpenAIImageUsage | null }> {
   let response: Response;
 
@@ -113,19 +111,9 @@ async function requestProductImage(
         size: "1024x1024",
         quality: "medium",
         output_format: "webp"
-      }),
-      signal
+      })
     });
   } catch (caught) {
-    if (
-      caught &&
-      typeof caught === "object" &&
-      "name" in caught &&
-      caught.name === "AbortError"
-    ) {
-      throw new Error("Unable to generate product image: timed out.");
-    }
-
     const message = caught instanceof Error ? caught.message : "request failed";
     throw new Error(`Unable to generate product image: ${message}`);
   }
@@ -190,13 +178,12 @@ export async function deleteProductImage(storagePath: string): Promise<void> {
 export async function generateProductImage({
   content,
   idea,
-  signal,
   slug
 }: GenerateProductImageParams): Promise<GeneratedProductImage> {
   const generatedAt = new Date();
   const storagePath = buildProductImageStoragePath(slug, generatedAt);
   const prompt = buildProductImagePrompt({ content, idea });
-  const { imageBytes, usage } = await requestProductImage(prompt, signal);
+  const { imageBytes, usage } = await requestProductImage(prompt);
   const url = await uploadProductImage(imageBytes, storagePath);
   const model = productImageModel();
 
