@@ -2,4 +2,5 @@
 .env.*
 .clerk/
 .playwright-mcp/
+social-video/
 tsconfig.tsbuildinfo

@@ -237,17 +237,24 @@ describe("StorefrontStudio", () => {
       screen.getByRole("button", { name: "Generate storefront" })
     ).not.toBeDisabled();
     expect(
+      screen.getByText(
+        "Signed-in accounts can generate up to 5 storefronts. 2 of 5 storefront generations used. 3 remaining."
+      )
+    ).toBeInTheDocument();
+    expect(
       screen.queryByText("Generation limit reached.")
     ).not.toBeInTheDocument();
   });
 
-  it("disables signed-in generation after three saved storefronts", () => {
+  it("disables signed-in generation after five saved storefronts", () => {
     render(
       <StorefrontStudio
         initialStorefronts={[
           storefront({ id: "storefront-1" }),
           storefront({ id: "storefront-2" }),
-          storefront({ id: "storefront-3" })
+          storefront({ id: "storefront-3" }),
+          storefront({ id: "storefront-4" }),
+          storefront({ id: "storefront-5" })
         ]}
       />
     );
@@ -258,7 +265,12 @@ describe("StorefrontStudio", () => {
     expect(screen.getByText("Generation limit reached.")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Generation is currently limited to 3 storefronts per account. Your saved storefronts are still available below."
+        "Signed-in accounts can generate up to 5 storefronts. You have used all 5 storefront generations for this account."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Generation is currently limited to 5 storefronts per account. Your saved storefronts are still available below."
       )
     ).toBeInTheDocument();
   });
