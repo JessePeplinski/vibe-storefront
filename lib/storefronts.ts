@@ -78,6 +78,23 @@ function isUniqueViolationError(error: SupabaseError): boolean {
   );
 }
 
+function isSlotNumberConstraintViolation(error: SupabaseError): boolean {
+  return (
+    error.code === "23514" &&
+    error.message.includes("storefront_generation_slots_slot_number_check")
+  );
+}
+
+export const STALE_PENDING_GENERATION_SLOT_TTL_MS = 10 * 60 * 1000;
+export const LEGACY_GENERATION_SLOT_RESERVATION_ID =
+  "legacy-generation-slot-schema";
+
+export function stalePendingGenerationSlotCutoff(now = new Date()): string {
+  return new Date(
+    now.getTime() - STALE_PENDING_GENERATION_SLOT_TTL_MS
+  ).toISOString();
+}
+
 export async function createStorefront(
   params: StorefrontOwner & {
     idea: string;
@@ -134,6 +151,19 @@ export async function reserveStorefrontGenerationSlot(
   ownerClerkUserId: string
 ): Promise<StorefrontGenerationSlotRow | null> {
   const supabase = createSupabaseServiceClient();
+  const { error: cleanupError } = await supabase
+    .from("storefront_generation_slots")
+    .delete()
+    .eq("owner_clerk_user_id", ownerClerkUserId)
+    .eq("status", "pending")
+    .is("storefront_id", null)
+    .lt("created_at", stalePendingGenerationSlotCutoff());
+
+  if (cleanupError) {
+    throw new Error(
+      `Unable to release stale generation slots: ${cleanupError.message}`
+    );
+  }
 
   for (
     let slotNumber = 1;
@@ -155,6 +185,10 @@ export async function reserveStorefrontGenerationSlot(
     }
 
     if (!isUniqueViolationError(error)) {
+      if (isSlotNumberConstraintViolation(error)) {
+        return { id: LEGACY_GENERATION_SLOT_RESERVATION_ID };
+      }
+
       throw new Error(`Unable to reserve generation slot: ${error.message}`);
     }
   }
@@ -166,6 +200,10 @@ export async function completeStorefrontGenerationSlot(params: {
   reservationId: string;
   storefrontId: string;
 }): Promise<void> {
+  if (params.reservationId === LEGACY_GENERATION_SLOT_RESERVATION_ID) {
+    return;
+  }
+
   const supabase = createSupabaseServiceClient();
   const { error } = await supabase
     .from("storefront_generation_slots")
@@ -183,6 +221,10 @@ export async function completeStorefrontGenerationSlot(params: {
 export async function releaseStorefrontGenerationSlot(
   reservationId: string
 ): Promise<void> {
+  if (reservationId === LEGACY_GENERATION_SLOT_RESERVATION_ID) {
+    return;
+  }
+
   const supabase = createSupabaseServiceClient();
   const { error } = await supabase
     .from("storefront_generation_slots")

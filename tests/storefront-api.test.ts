@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => {
@@ -125,6 +125,10 @@ describe("storefront API", () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("rejects unauthenticated list requests", async () => {
     mocks.auth.mockResolvedValue({ userId: null });
     const { GET } = await import("@/app/api/storefronts/route");
@@ -175,11 +179,14 @@ describe("storefront API", () => {
       "user_123"
     );
     expect(mocks.buildStorefrontSlug).toHaveBeenCalledWith("Brooklyn Ember Co.");
-    expect(mocks.generateProductImage).toHaveBeenCalledWith({
-      content: sampleStorefrontContent,
-      idea: "small-batch hot sauce from Brooklyn",
-      slug: "brooklyn-ember-co-image123"
-    });
+    expect(mocks.generateProductImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: sampleStorefrontContent,
+        idea: "small-batch hot sauce from Brooklyn",
+        signal: expect.any(AbortSignal),
+        slug: "brooklyn-ember-co-image123"
+      })
+    );
     expect(mocks.createStorefront).toHaveBeenCalledWith({
       ownerClerkUserId: "user_123",
       idea: "small-batch hot sauce from Brooklyn",
@@ -411,7 +418,7 @@ describe("storefront API", () => {
     });
   });
 
-  it("blocks a fourth different storefront for the same Clerk user", async () => {
+  it("blocks a sixth different storefront for the same Clerk user", async () => {
     const existingStorefront = {
       id: "storefront-id",
       owner_clerk_user_id: "user_123",
@@ -436,6 +443,16 @@ describe("storefront API", () => {
         ...existingStorefront,
         id: "storefront-id-3",
         slug: "trail-snacks-ghi789"
+      },
+      {
+        ...existingStorefront,
+        id: "storefront-id-4",
+        slug: "carryall-jkl012"
+      },
+      {
+        ...existingStorefront,
+        id: "storefront-id-5",
+        slug: "starter-kit-mno345"
       }
     ]);
     const { POST } = await import("@/app/api/storefronts/route");
@@ -449,7 +466,7 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(429);
     expect(payload).toMatchObject({
-      error: "Generation is currently limited to 3 storefronts per account.",
+      error: "Generation is currently limited to 5 storefronts per account.",
       storefront: existingStorefront,
       shareUrl: "https://vibe.example/s/guest-hot-sauce-abc123",
       status: "generation_quota_exceeded"
@@ -506,7 +523,7 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(429);
     expect(payload).toEqual({
-      error: "Generation is currently limited to 3 storefronts per account.",
+      error: "Generation is currently limited to 5 storefronts per account.",
       status: "generation_quota_exceeded"
     });
     expect(mocks.reserveStorefrontGenerationSlot).toHaveBeenCalledWith(
@@ -569,6 +586,60 @@ describe("storefront API", () => {
     expect(mocks.completeStorefrontGenerationSlot).toHaveBeenCalledWith({
       reservationId: "generation-slot-id",
       storefrontId: "storefront-id"
+    });
+  });
+
+  it("stops waiting for product image generation after the route image deadline", async () => {
+    vi.spyOn(Date, "now")
+      .mockReturnValue(45_001)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(45_001);
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockResolvedValue(generatedStorefront());
+    mocks.generateProductImage.mockRejectedValue(
+      new Error("Unable to generate product image: timed out.")
+    );
+    mocks.createStorefront.mockResolvedValue({
+      id: "storefront-id",
+      owner_clerk_user_id: "user_123",
+      anonymous_session_id: null,
+      slug: "brooklyn-ember-co-image123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      published: true,
+      created_at: "2026-04-23T00:00:00.000Z",
+      updated_at: "2026-04-23T00:00:00.000Z"
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const request = new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "small-batch hot sauce from Brooklyn" })
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(mocks.generateProductImage).toHaveBeenCalledTimes(1);
+    expect(mocks.generateProductImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signal: expect.any(AbortSignal)
+      })
+    );
+    expect(mocks.createStorefront).toHaveBeenCalledWith({
+      ownerClerkUserId: "user_123",
+      idea: "small-batch hot sauce from Brooklyn",
+      content: sampleStorefrontContent,
+      generationCost: expect.objectContaining({
+        currency: "USD",
+        totalUsd: expect.any(Number)
+      }),
+      slug: "brooklyn-ember-co-image123"
+    });
+    expect(payload).toMatchObject({
+      status: "created",
+      warning: productImageWarning
     });
   });
 
