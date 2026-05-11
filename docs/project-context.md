@@ -18,7 +18,7 @@ Supabase service-role writes should stay server-side only. Public storefront rea
 
 Storefront generation requires Clerk sign-in. Signed-out visitors can browse public storefronts and share pages, but `/api/storefronts` rejects generation requests before any Codex or image model calls.
 
-Signed-in generation is currently limited to three storefronts per Clerk user. The `public.storefront_generation_slots` table reserves one of the user's numbered generation slots before expensive model calls, so repeated or concurrent requests fail closed instead of generating past the account cap.
+Signed-in generation is currently limited to five storefronts per Clerk user. The `public.storefront_generation_slots` table reserves one of the user's numbered generation slots before expensive model calls, so repeated or concurrent requests fail closed instead of generating past the account cap. Before reserving a new slot, the app releases stale pending slots older than ten minutes with no attached storefront, which prevents killed serverless requests from permanently consuming quota.
 
 ## Future Feature Notes
 
@@ -27,6 +27,8 @@ Signed-in generation is currently limited to three storefronts per Clerk user. T
 ## Product Images
 
 Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`. Each storefront stores the durable public image URL in `content.product.image`.
+
+Product image generation is opportunistic. The storefront route gives image generation a bounded deadline and saves the storefront without an image when image generation cannot finish in time.
 
 Existing storefronts can be backfilled after the storage migration is applied:
 

@@ -159,6 +159,17 @@ export function StorefrontStudio({
   const accountGenerationLimitReached =
     !isGuestMode &&
     recentStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT;
+  const remainingGenerations = Math.max(
+    0,
+    SIGNED_IN_STOREFRONT_GENERATION_LIMIT - recentStorefronts.length
+  );
+  const remainingGenerationLabel =
+    remainingGenerations === 1
+      ? "1 remaining"
+      : `${remainingGenerations} remaining`;
+  const generationLimitSummary = accountGenerationLimitReached
+    ? `You have used all ${SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefront generations for this account.`
+    : `${recentStorefronts.length} of ${SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefront generations used. ${remainingGenerationLabel}.`;
   const resultStatusText = (() => {
     if (isGuestMode) {
       return result?.status === "existing_guest_storefront"
@@ -317,6 +328,13 @@ export function StorefrontStudio({
           >
             Generate a storefront
           </h1>
+          {!isGuestMode && (
+            <p className="mx-auto mt-3 max-w-xl text-sm font-bold leading-6 text-slate-600">
+              Signed-in accounts can generate up to{" "}
+              {SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts.{" "}
+              {generationLimitSummary}
+            </p>
+          )}
         </div>
 
         <StorefrontGenerationForm

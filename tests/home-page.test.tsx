@@ -159,7 +159,7 @@ describe("home page", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Generation requires an account so usage stays controlled. Sign in to create up to 3 storefront concepts and share the public URLs."
+        "Generation requires an account so usage stays controlled. Sign in to create up to 5 storefront concepts and share the public URLs."
       )
     ).toBeInTheDocument();
     expect(
