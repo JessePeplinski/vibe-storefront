@@ -14,3 +14,14 @@ dist
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# social video workspaces
+social-video/**/captures/
+social-video/**/renders/
+social-video/**/hyperframes/renders/
+social-video/**/hyperframes/node_modules/
+social-video/**/remotion/node_modules/
+social-video/**/remotion/out/
+social-video/**/remotion/public/audio/*.wav
+social-video/**/remotion/public/captures/
+social-video/**/remotion/public/hyperframes/
