@@ -1,6 +1,22 @@
 export const demoCapture = {
   "baseUrl": "https://vibe-storefront.com",
-  "generatedAt": "mock",
+  "ctaLabel": "Build Your Dock",
+  "ctaSublabel": "Start with a base kit, then add the modules your chaos deserves.",
+  "eyebrow": "Premium desk storage for creative clutter",
+  "generatedAt": "2026-05-11T16:33:18.493559+00:00",
+  "generationProgressAsset": "captures/goblin-dock-generation-progress.png",
+  "heroBody": "Goblin Dock turns workspace mess into an intentional command center, with satisfying compartments, cable paths, and swappable modules designed for the beautifully overextended.",
+  "liveShareAsset": "captures/goblin-dock-live-share.png",
+  "liveShareFullPageAsset": "captures/goblin-dock-live-share-full.png",
+  "localCaptureUrl": "vibe-storefront.com/dashboard",
+  "localDemoVideo": "captures/localhost-goblin-dock-demo.webm",
+  "name": "Goblin Dock",
+  "opengraphImageUrl": "https://vibe-storefront.com/s/goblin-dock-pdgpp8/opengraph-image",
+  "price": "From $89",
+  "productDescription": "A premium modular desktop organizer with configurable trays, cable channels, note slots, adapter wells, and a magnetic catch-all zone for the little things that usually vanish mid-project.",
+  "productImageAsset": "captures/goblin-dock-product.webp",
+  "productImageUrl": "https://zmpfgyfjoxtyrzuaalxo.supabase.co/storage/v1/object/public/storefront-product-images/storefronts/goblin-dock-pdgpp8/product-20260511163202.webp",
   "prompt": "Goblin Dock: a modular desktop organizer for people with too many cables, sticky notes, adapters, and half-finished ideas. Slight goblin energy, but premium enough for a real workspace.",
-  "shareUrl": "https://vibe-storefront.com/s/goblin-dock-demo"
+  "shareUrl": "https://vibe-storefront.com/s/goblin-dock-pdgpp8",
+  "tagline": "Tame the chaos. Keep the spark."
 } as const;

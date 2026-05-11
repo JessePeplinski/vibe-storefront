@@ -20,8 +20,8 @@ Run these from this directory unless noted otherwise.
 npx -y -p node@24 -c 'npm --prefix remotion install'
 ```
 
-The edit intentionally has no music bed or audio track. The current cut keeps
-the story visual and grounded in the product deck language.
+The edit uses a low-volume CC0 lo-fi instrumental bed and no voiceover. Keep
+the story readable from the on-screen deck language.
 
 From the repo root, run production smoke before creating live footage:
 

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import {
   AbsoluteFill,
+  Audio,
   Easing,
+  Img,
   interpolate,
   OffthreadVideo,
   Sequence,
@@ -12,8 +14,11 @@ import {
 import { demoCapture } from "./generated/demo-capture";
 
 const FPS = 30;
-const VIDEO_SECONDS = 40;
-const KINETIC_VIDEO = "hyperframes/kinetic-scenes.mp4";
+const VIDEO_SECONDS = 36;
+const SITE_URL = "vibe-storefront.com";
+const MUSIC_VOLUME = 0.25;
+const SHARE_FULL_PAGE_WIDTH = 1600;
+const SHARE_FULL_PAGE_HEIGHT = 1576;
 
 const colors = {
   accent: "#2be7b8",
@@ -49,36 +54,136 @@ function useFadeSlide(start = 0.1, end = 0.55) {
   return { opacity, transform: `translateY(${translateY}px)` };
 }
 
-const FullBleedVideo = ({
-  src,
-  trimEndSec,
-  trimStartSec
-}: {
-  src: string;
-  trimEndSec: number;
-  trimStartSec: number;
-}) => {
+const sceneBackground =
+  "linear-gradient(135deg, #04110e, #061f18 58%, #0b1724)";
+
+const UrlPill = ({ compact = false }: { compact?: boolean }) => (
+  <div
+    style={{
+      background: colors.highlight,
+      borderRadius: compact ? 13 : 18,
+      color: colors.background,
+      display: "inline-flex",
+      flexShrink: 0,
+      fontSize: compact ? 22 : 38,
+      fontWeight: 950,
+      lineHeight: 1,
+      padding: compact ? "14px 18px" : "22px 34px",
+      whiteSpace: "nowrap"
+    }}
+  >
+    {SITE_URL}
+  </div>
+);
+
+const UrlBadge = () => (
+  <div
+    style={{
+      bottom: 52,
+      position: "absolute",
+      right: 64
+    }}
+  >
+    <UrlPill compact />
+  </div>
+);
+
+const TitleScene = () => {
+  const enter = useFadeSlide(0.08, 0.55);
+
   return (
-    <OffthreadVideo
-      muted
-      src={staticFile(src)}
+    <AbsoluteFill
       style={{
-        height: "100%",
-        objectFit: "cover",
-        width: "100%"
+        background: "linear-gradient(135deg, #04110e 0%, #0b3328 54%, #0b1724 100%)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "118px 150px",
+        position: "relative"
       }}
-      trimAfter={seconds(trimEndSec)}
-      trimBefore={seconds(trimStartSec)}
-    />
+    >
+      <div
+        style={{
+          ...enter,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 28,
+          maxWidth: 1500,
+          textAlign: "center",
+          width: "100%"
+        }}
+      >
+        <h1
+          style={{
+            color: colors.text,
+            fontSize: 118,
+            fontWeight: 950,
+            letterSpacing: 0,
+            lineHeight: 0.92,
+            margin: 0
+          }}
+        >
+          Validate product ideas with a storefront.
+        </h1>
+        <div
+          style={{
+            color: "#c7d9d0",
+            fontSize: 42,
+            fontWeight: 760,
+            lineHeight: 1.12,
+            maxWidth: 1040
+          }}
+        >
+          Turn a raw product concept into a basic landing page.
+        </div>
+      </div>
+      <UrlBadge />
+    </AbsoluteFill>
   );
 };
 
+const FramedVideo = ({
+  objectFit = "cover",
+  scale = 1,
+  src,
+  trimEndSec,
+  trimStartSec,
+  translateX = 0,
+  translateY = 0
+}: {
+  objectFit?: "contain" | "cover";
+  scale?: number;
+  src: string;
+  trimEndSec: number;
+  trimStartSec: number;
+  translateX?: number;
+  translateY?: number;
+}) => (
+  <OffthreadVideo
+    muted
+    src={staticFile(src)}
+    style={{
+      display: "block",
+      height: "100%",
+      objectFit,
+      transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
+      width: "100%"
+    }}
+    trimAfter={seconds(trimEndSec)}
+    trimBefore={seconds(trimStartSec)}
+  />
+);
+
 const BrowserFrame = ({
   children,
-  url = "vibe-storefront.com/dashboard"
+  height = 876,
+  url = "vibe-storefront.com/dashboard",
+  width = 1560
 }: {
   children: ReactNode;
+  height?: number;
   url?: string;
+  width?: number;
 }) => (
   <div
     style={{
@@ -86,9 +191,11 @@ const BrowserFrame = ({
       border: `1px solid ${colors.border}`,
       borderRadius: 24,
       boxShadow: "0 38px 120px rgba(0, 0, 0, 0.34)",
-      height: 876,
+      display: "flex",
+      flexDirection: "column",
+      height,
       overflow: "hidden",
-      width: 1560
+      width
     }}
   >
     <div
@@ -96,6 +203,7 @@ const BrowserFrame = ({
         alignItems: "center",
         background: "#dfe8e4",
         display: "flex",
+        flexShrink: 0,
         gap: 10,
         height: 58,
         padding: "0 22px"
@@ -127,381 +235,444 @@ const BrowserFrame = ({
   </div>
 );
 
-const MockDashboardScene = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+const TextBeatScene = ({
+  eyebrow,
+  headline,
+  tone = "dark"
+}: {
+  eyebrow: string;
+  headline: string;
+  tone?: "dark" | "green";
+}) => {
   const enter = useFadeSlide(0.08, 0.55);
-  const typedCharacters = Math.floor(
-    interpolate(frame, [0.45 * fps, 4.8 * fps], [0, demoCapture.prompt.length], {
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp"
-    })
-  );
-  const prompt = demoCapture.prompt.slice(0, typedCharacters);
-  const buttonProgress = interpolate(frame, [5.2 * fps, 6.5 * fps], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
+  const background =
+    tone === "green"
+      ? "linear-gradient(135deg, #04110e 0%, #0b3328 55%, #10251f 100%)"
+      : sceneBackground;
 
   return (
     <AbsoluteFill
       style={{
         alignItems: "center",
-        background:
-          "linear-gradient(135deg, #04110e, #061f18 58%, #0b1724)",
-        justifyContent: "center"
+        background,
+        justifyContent: "center",
+        position: "relative"
       }}
     >
-      <div style={enter}>
-        <BrowserFrame>
-          <div
-            style={{
-              background: "#f8fff9",
-              color: "#061f18",
-              height: 818,
-              padding: "58px 70px"
-            }}
-          >
-            <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between" }}>
-              <div style={{ alignItems: "center", display: "flex", gap: 16 }}>
-                <div
-                  style={{
-                    alignItems: "center",
-                    background: "#061f18",
-                    borderRadius: 12,
-                    color: colors.accent,
-                    display: "flex",
-                    fontSize: 24,
-                    fontWeight: 950,
-                    height: 54,
-                    justifyContent: "center",
-                    width: 54
-                  }}
-                >
-                  VS
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 950 }}>Vibe Storefront</div>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gap: 56, gridTemplateColumns: "0.78fr 1.22fr", marginTop: 72 }}>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div style={{ color: "#2a6b5a", fontSize: 24, fontWeight: 900 }}>
-                  Input
-                </div>
-                <h1
-                  style={{
-                    color: "#061f18",
-                    fontSize: 84,
-                    fontWeight: 950,
-                    letterSpacing: 0,
-                    lineHeight: 0.92,
-                    margin: "18px 0 0"
-                  }}
-                >
-                  Plain-English product idea.
-                </h1>
-                <p
-                  style={{
-                    color: "#52675e",
-                    fontSize: 29,
-                    fontWeight: 650,
-                    lineHeight: 1.24,
-                    marginTop: 24
-                  }}
-                >
-                  One prompt is enough to create the first visible artifact.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #d9e4df",
-                  borderRadius: 20,
-                  boxShadow: "0 24px 70px rgba(6,31,24,0.1)",
-                  padding: 30
-                }}
-              >
-                <div
-                  style={{
-                    color: "#061f18",
-                    fontSize: 26,
-                    fontWeight: 950,
-                    marginBottom: 16
-                  }}
-                >
-                  Storefront idea
-                </div>
-                <div
-                  style={{
-                    background: "#eef5f2",
-                    border: "1px solid #d9e4df",
-                    borderRadius: 16,
-                    color: "#0d211b",
-                    fontSize: 27,
-                    fontWeight: 700,
-                    height: 310,
-                    lineHeight: 1.24,
-                    overflow: "hidden",
-                    padding: 24
-                  }}
-                >
-                  {prompt}
-                  <span style={{ color: colors.accent }}>|</span>
-                </div>
-                <div
-                  style={{
-                    alignItems: "center",
-                    background: colors.background,
-                    borderRadius: 15,
-                    color: colors.text,
-                    display: "flex",
-                    fontSize: 25,
-                    fontWeight: 950,
-                    justifyContent: "center",
-                    marginTop: 24,
-                    padding: "20px 28px"
-                  }}
-                >
-                  {buttonProgress > 0.45 ? "Generating storefront" : "Generate storefront"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </BrowserFrame>
+      <div
+        style={{
+          ...enter,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 28,
+          height: "100%",
+          justifyContent: "center",
+          padding: "120px 156px",
+          position: "relative",
+          textAlign: "center",
+          width: "100%"
+        }}
+      >
+        <div
+          style={{
+            color: colors.accent,
+            fontSize: 25,
+            fontWeight: 950,
+            letterSpacing: 0,
+            lineHeight: 1,
+            textTransform: "uppercase"
+          }}
+        >
+          {eyebrow}
+        </div>
+        <h2
+          style={{
+            color: colors.text,
+            fontSize: 106,
+            fontWeight: 950,
+            letterSpacing: 0,
+            lineHeight: 0.93,
+            margin: 0,
+            maxWidth: 1240
+          }}
+        >
+          {headline}
+        </h2>
       </div>
+      <UrlBadge />
     </AbsoluteFill>
   );
 };
 
-const ProductImageMock = () => {
+const LocalCaptureVideo = () => {
   const frame = useCurrentFrame();
-  const reveal = interpolate(frame, [0.35 * FPS, 1.1 * FPS], [0, 1], {
+  const scale = interpolate(frame, [0, seconds(1.7), seconds(4.4)], [1, 1, 1.44], {
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const translateY = interpolate(frame, [0, seconds(1.7), seconds(4.4)], [0, 0, -20], {
     easing: Easing.bezier(0.16, 1, 0.3, 1),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
 
   return (
-    <div
-      style={{
-        background:
-          "linear-gradient(135deg, rgba(43,231,184,0.24), rgba(244,211,94,0.14)), #0a2b22",
-        border: "1px solid rgba(248,255,249,0.14)",
-        borderRadius: 26,
-        height: 500,
-        opacity: reveal,
-        overflow: "hidden",
-        position: "relative",
-        transform: `scale(${interpolate(reveal, [0, 1], [0.96, 1])})`,
-        width: 590
-      }}
-    >
-      <div
-        style={{
-          background: "#0d211b",
-          border: "3px solid rgba(248,255,249,0.18)",
-          borderRadius: 28,
-          bottom: 88,
-          height: 138,
-          left: 104,
-          position: "absolute",
-          width: 382
-        }}
-      />
-      <div
-        style={{
-          background: "#f4d35e",
-          borderRadius: 18,
-          bottom: 224,
-          height: 170,
-          left: 140,
-          position: "absolute",
-          transform: "rotate(-7deg)",
-          width: 96
-        }}
-      />
-      <div
-        style={{
-          background: colors.accent,
-          borderRadius: 18,
-          bottom: 224,
-          height: 170,
-          left: 248,
-          position: "absolute",
-          transform: "rotate(3deg)",
-          width: 96
-        }}
-      />
-      <div
-        style={{
-          background: "#f8fff9",
-          borderRadius: 18,
-          bottom: 224,
-          height: 170,
-          left: 356,
-          opacity: 0.94,
-          position: "absolute",
-          transform: "rotate(8deg)",
-          width: 96
-        }}
-      />
-      <div
-        style={{
-          border: "7px solid rgba(248,255,249,0.82)",
-          borderLeftColor: "transparent",
-          borderRadius: 999,
-          bottom: 72,
-          height: 128,
-          left: 178,
-          position: "absolute",
-          transform: "rotate(-12deg)",
-          width: 220
-        }}
-      />
-      <div
-        style={{
-          background: "rgba(4,17,14,0.58)",
-          borderRadius: 999,
-          bottom: 52,
-          filter: "blur(12px)",
-          height: 30,
-          left: 112,
-          position: "absolute",
-          width: 366
-        }}
-      />
-    </div>
+    <FramedVideo
+      objectFit="contain"
+      scale={scale}
+      src={demoCapture.localDemoVideo}
+      trimEndSec={11.2}
+      trimStartSec={0.6}
+      translateY={translateY}
+    />
   );
 };
 
-const MockRevealScene = () => {
-  const enter = useFadeSlide(0.08, 0.55);
+const LocalDemoScene = () => {
+  const enter = useFadeSlide(0.08, 0.5);
 
   return (
     <AbsoluteFill
       style={{
         alignItems: "center",
-        background:
-          "linear-gradient(135deg, #04110e, #061f18 58%, #0b1724)",
+        background: sceneBackground,
         justifyContent: "center"
       }}
     >
-      <div style={enter}>
-        <BrowserFrame url={cleanShareUrl(demoCapture.shareUrl)}>
+      <div
+        style={{
+          ...enter,
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: 20
+        }}
+      >
+        <BrowserFrame height={936} url={demoCapture.localCaptureUrl} width={1560}>
           <div
             style={{
-              background: "#061f18",
-              color: colors.text,
-              display: "grid",
-              gap: 48,
-              gridTemplateColumns: "1fr 0.74fr",
-              height: 818,
-              padding: "66px 72px"
+              background: "#f8f7f2",
+              flex: 1,
+              overflow: "hidden"
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <div style={{ color: colors.accent, fontSize: 24, fontWeight: 950 }}>
-                Output
-              </div>
-              <h1
-                style={{
-                  fontSize: 104,
-                  fontWeight: 950,
-                  letterSpacing: 0,
-                  lineHeight: 0.9,
-                  margin: "20px 0 0"
-                }}
-              >
-                Goblin Dock
-              </h1>
-              <p
-                style={{
-                  color: "#b7cbc2",
-                  fontSize: 35,
-                  fontWeight: 720,
-                  lineHeight: 1.16,
-                  marginTop: 26,
-                  maxWidth: 760
-                }}
-              >
-                A premium desk organizer for cables, adapters, sticky notes,
-                and half-finished ideas.
-              </p>
-              <div
-                style={{
-                  alignItems: "center",
-                  display: "flex",
-                  gap: 22,
-                  marginTop: 44
-                }}
-              >
-                <div
-                  style={{
-                    background: colors.highlight,
-                    borderRadius: 15,
-                    color: colors.background,
-                    fontSize: 25,
-                    fontWeight: 950,
-                    padding: "20px 25px"
-                  }}
-                >
-                  Build my dock
-                </div>
-                <div style={{ color: colors.muted, fontSize: 23, fontWeight: 760 }}>
-                  Public URL ready to share.
-                </div>
-              </div>
-            </div>
-            <div style={{ alignItems: "center", display: "flex", justifyContent: "center" }}>
-              <ProductImageMock />
-            </div>
+            <LocalCaptureVideo />
           </div>
         </BrowserFrame>
+        <div
+          style={{
+            alignItems: "center",
+            background: "rgba(4, 17, 14, 0.86)",
+            border: "1px solid rgba(248, 255, 249, 0.18)",
+            borderRadius: 18,
+            color: colors.text,
+            display: "flex",
+            gap: 22,
+            minHeight: 74,
+            padding: "14px 18px",
+            width: 1560
+          }}
+        >
+          <UrlPill compact />
+          <div
+            style={{
+              color: colors.text,
+              fontSize: 30,
+              fontWeight: 900,
+              lineHeight: 1.05
+            }}
+          >
+            Same prompt, typed live, then generated through the real dashboard UI.
+          </div>
+        </div>
       </div>
     </AbsoluteFill>
   );
 };
 
+const ProofStrip = () => (
+  <div
+    style={{
+      alignItems: "center",
+      background: "rgba(4, 17, 14, 0.86)",
+      border: "1px solid rgba(248, 255, 249, 0.18)",
+      borderRadius: 18,
+      color: colors.text,
+      display: "flex",
+      gap: 22,
+      minHeight: 86,
+      padding: "16px 18px",
+      width: 1500
+    }}
+  >
+    <UrlPill compact />
+    <div
+      style={{
+        color: colors.text,
+        fontSize: 30,
+        fontWeight: 900,
+        letterSpacing: 0,
+        lineHeight: 1.08
+      }}
+    >
+      The generated share page includes the hero, product image, copy, price,
+      CTA, and feature details.
+    </div>
+  </div>
+);
+
+const BridgeScene = () => {
+  const enter = useFadeSlide(0.08, 0.45);
+
+  return (
+    <AbsoluteFill
+      style={{
+        alignItems: "center",
+        background: "linear-gradient(135deg, #04110e 0%, #071b15 50%, #061f18 100%)",
+        justifyContent: "center",
+        position: "relative"
+      }}
+    >
+      <div
+        style={{
+          ...enter,
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+          textAlign: "center"
+        }}
+      >
+        <div
+          style={{
+            color: colors.text,
+            fontSize: 104,
+            fontWeight: 950,
+            letterSpacing: 0,
+            lineHeight: 0.92
+          }}
+        >
+          Two minutes later...
+        </div>
+        <div
+          style={{
+            color: colors.muted,
+            fontSize: 32,
+            fontWeight: 760,
+            lineHeight: 1.15
+          }}
+        >
+          The generated share page is ready to open.
+        </div>
+      </div>
+      <UrlBadge />
+    </AbsoluteFill>
+  );
+};
+
+const ScrollingSharePage = () => {
+  const frame = useCurrentFrame();
+  const browserWidth = 1500;
+  const viewportHeight = 790 - 58;
+  const renderedHeight = (browserWidth / SHARE_FULL_PAGE_WIDTH) * SHARE_FULL_PAGE_HEIGHT;
+  const maxScroll = Math.max(0, renderedHeight - viewportHeight);
+  const translateY = interpolate(frame, [seconds(0.9), seconds(5.9)], [0, -maxScroll], {
+    easing: Easing.bezier(0.45, 0, 0.25, 1),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+
+  return (
+    <Img
+      src={staticFile(demoCapture.liveShareFullPageAsset)}
+      style={{
+        display: "block",
+        height: renderedHeight,
+        transform: `translateY(${translateY}px)`,
+        width: browserWidth
+      }}
+    />
+  );
+};
+
+const LiveStorefrontScene = () => {
+  const enter = useFadeSlide(-0.16, 0.4);
+
+  return (
+    <AbsoluteFill
+      style={{
+        alignItems: "center",
+        background: sceneBackground,
+        justifyContent: "center"
+      }}
+    >
+      <div
+        style={{
+          ...enter,
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+          position: "relative"
+        }}
+      >
+        <BrowserFrame height={790} url={cleanShareUrl(demoCapture.shareUrl)} width={1500}>
+          <div
+            style={{
+              background: "#111827",
+              flex: 1,
+              overflow: "hidden",
+              position: "relative"
+            }}
+          >
+            <ScrollingSharePage />
+          </div>
+        </BrowserFrame>
+        <ProofStrip />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const CtaScene = () => {
+  const enter = useFadeSlide(0.08, 0.5);
+
+  return (
+    <AbsoluteFill
+      style={{
+        alignItems: "center",
+        background: "linear-gradient(135deg, #04110e 0%, #0b3328 55%, #10251f 100%)",
+        justifyContent: "center",
+        padding: "110px 150px",
+        position: "relative"
+      }}
+    >
+      <div
+        style={{
+          ...enter,
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: 30,
+          textAlign: "center"
+        }}
+      >
+        <div
+          style={{
+            color: colors.accent,
+            fontSize: 24,
+            fontWeight: 950,
+            letterSpacing: 0,
+            textTransform: "uppercase"
+          }}
+        >
+          Try it today
+        </div>
+        <div
+          style={{
+            color: colors.text,
+            fontSize: 118,
+            fontWeight: 950,
+            letterSpacing: 0,
+            lineHeight: 0.92,
+            maxWidth: 1180
+          }}
+        >
+          Turn one product idea into a storefront.
+        </div>
+        <UrlPill />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const MusicBed = () => (
+  <Audio
+    src={staticFile("audio/holiznacc0-waiting-around-lofi-calm.mp3")}
+    volume={(frame) => {
+      const fadeIn = interpolate(frame, [0, seconds(1)], [0, MUSIC_VOLUME], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp"
+      });
+      const fadeOut = interpolate(
+        frame,
+        [seconds(VIDEO_SECONDS - 1), seconds(VIDEO_SECONDS)],
+        [MUSIC_VOLUME, 0],
+        {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp"
+        }
+      );
+
+      return Math.min(fadeIn, fadeOut);
+    }}
+  />
+);
+
 export const VibeStorefrontSocialDemo = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: colors.background }}>
+      <MusicBed />
+
       <Sequence durationInFrames={seconds(5)} premountFor={seconds(1)}>
-        <FullBleedVideo src={KINETIC_VIDEO} trimEndSec={5} trimStartSec={0} />
+        <TitleScene />
+      </Sequence>
+
+      <Sequence
+        durationInFrames={seconds(4)}
+        from={seconds(5)}
+        premountFor={seconds(1)}
+      >
+        <TextBeatScene
+          eyebrow="Problem"
+          headline="Raw ideas are hard to judge as text."
+        />
+      </Sequence>
+
+      <Sequence
+        durationInFrames={seconds(4)}
+        from={seconds(9)}
+        premountFor={seconds(1)}
+      >
+        <TextBeatScene
+          eyebrow="Solution"
+          headline="A basic storefront makes the idea easier to react to."
+          tone="green"
+        />
+      </Sequence>
+
+      <Sequence
+        durationInFrames={seconds(10)}
+        from={seconds(13)}
+        premountFor={seconds(1)}
+      >
+        <LocalDemoScene />
+      </Sequence>
+
+      <Sequence
+        durationInFrames={seconds(3)}
+        from={seconds(23)}
+        premountFor={seconds(1)}
+      >
+        <BridgeScene />
       </Sequence>
 
       <Sequence
         durationInFrames={seconds(7)}
-        from={seconds(5)}
+        from={seconds(26)}
         premountFor={seconds(1)}
       >
-        <MockDashboardScene />
+        <LiveStorefrontScene />
       </Sequence>
 
       <Sequence
-        durationInFrames={seconds(11)}
-        from={seconds(12)}
+        durationInFrames={seconds(3)}
+        from={seconds(33)}
         premountFor={seconds(1)}
       >
-        <FullBleedVideo src={KINETIC_VIDEO} trimEndSec={23} trimStartSec={12} />
-      </Sequence>
-
-      <Sequence
-        durationInFrames={seconds(11)}
-        from={seconds(23)}
-        premountFor={seconds(1)}
-      >
-        <MockRevealScene />
-      </Sequence>
-
-      <Sequence
-        durationInFrames={seconds(6)}
-        from={seconds(34)}
-        premountFor={seconds(1)}
-      >
-        <FullBleedVideo src={KINETIC_VIDEO} trimEndSec={40} trimStartSec={34} />
+        <CtaScene />
       </Sequence>
     </AbsoluteFill>
   );

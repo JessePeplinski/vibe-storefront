@@ -71,6 +71,13 @@ The app uses Clerk's prebuilt sign-in component at `/sign-in`; account creation 
 
 Google sign-in can use Clerk's shared OAuth credentials in development. Production Google sign-in requires custom Google OAuth credentials configured in Clerk; see [`deployment-checklist.md`](deployment-checklist.md).
 
+For local video capture or UI-only testing where Clerk blocks the browser,
+start the dev server with `VIBE_STOREFRONT_LOCAL_AUTH_BYPASS=1 npm run dev`.
+This only bypasses the `/dashboard` page in `NODE_ENV=development` and uses a
+fake local owner id. API routes such as `/api/storefronts` still require Clerk
+auth, so generation requests should be intercepted or avoided unless you are
+signed in.
+
 ## Local Smoke Test
 
 After the dev server is running:

@@ -1,9 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { StorefrontStudio } from "@/components/storefront-studio";
+import {
+  isLocalAuthBypassEnabled,
+  LOCAL_AUTH_BYPASS_USER_ID
+} from "@/lib/local-auth-bypass";
 import { listStorefrontsForOwner } from "@/lib/storefronts";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+  const { userId: clerkUserId } = await auth();
+  const userId = clerkUserId ?? (
+    isLocalAuthBypassEnabled() ? LOCAL_AUTH_BYPASS_USER_ID : null
+  );
 
   if (!userId) {
     return null;
