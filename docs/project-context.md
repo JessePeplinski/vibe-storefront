@@ -28,7 +28,7 @@ Signed-in generation is currently limited to five storefronts per Clerk user. Th
 
 Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`. Each storefront stores the durable public image URL in `content.product.image`.
 
-Product image generation is opportunistic. The storefront route gives image generation a bounded deadline and saves the storefront without an image when image generation cannot finish in time.
+Product image generation is part of the synchronous storefront creation path. The app waits for the OpenAI image request and does not impose an additional image deadline beyond the hosting platform's function runtime limit. If all image attempts fail, the storefront is still saved without an image so the generated copy is not lost.
 
 Existing storefronts can be backfilled after the storage migration is applied:
 
