@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #061f18;
+        color: #f8fff9;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 74% 20%, rgba(43, 231, 184, 0.14), transparent 30%),
+          linear-gradient(135deg, #04110e 0%, #061f18 52%, #0b1724 100%);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .scene::before {
+        position: absolute;
+        inset: 82px;
+        border: 1px solid rgba(248, 255, 249, 0.12);
+        border-radius: 28px;
+        content: "";
+      }
+
+      .scene::after {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(248, 255, 249, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(248, 255, 249, 0.025) 1px, transparent 1px);
+        background-size: 96px 96px;
+        content: "";
+        opacity: 0.18;
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 140px 158px;
+        gap: 32px;
+      }
+
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        color: #2be7b8;
+        font-size: 26px;
+        font-weight: 850;
+        letter-spacing: 0;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .headline {
+        max-width: 1260px;
+        color: #f8fff9;
+        font-size: 124px;
+        font-weight: 950;
+        letter-spacing: 0;
+        line-height: 0.92;
+      }
+
+      .headline span {
+        color: #2be7b8;
+      }
+
+      .subhead {
+        max-width: 940px;
+        color: #b7cbc2;
+        font-size: 40px;
+        font-weight: 650;
+        letter-spacing: 0;
+        line-height: 1.2;
+      }
+
+      .quiet-card {
+        width: 880px;
+        max-width: 100%;
+        border-left: 5px solid #2be7b8;
+        background: rgba(248, 255, 249, 0.07);
+        color: #f8fff9;
+        font-size: 36px;
+        font-weight: 780;
+        letter-spacing: 0;
+        line-height: 1.18;
+        padding: 26px 30px;
+      }
+
+      .progress-layout {
+        justify-content: center;
+        gap: 76px;
+      }
+
+      .flow-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 26px;
+        width: 100%;
+      }
+
+      .flow-step {
+        border-top: 3px solid rgba(43, 231, 184, 0.62);
+        padding-top: 22px;
+      }
+
+      .flow-title {
+        color: #f8fff9;
+        font-size: 42px;
+        font-weight: 930;
+        letter-spacing: 0;
+        line-height: 1;
+      }
+
+      .flow-copy {
+        margin-top: 14px;
+        color: #9fb8ad;
+        font-size: 25px;
+        font-weight: 650;
+        letter-spacing: 0;
+        line-height: 1.22;
+      }
+
+      .bar-shell {
+        position: relative;
+        height: 18px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(248, 255, 249, 0.12);
+      }
+
+      .bar-fill {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        transform-origin: left center;
+        background: linear-gradient(90deg, #2be7b8 0%, #f4d35e 100%);
+      }
+
+      .cta .scene-content {
+        align-items: center;
+        text-align: center;
+      }
+
+      .cta .headline {
+        max-width: 1180px;
+      }
+
+      .site-url {
+        color: #2be7b8;
+        font-size: 54px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="40"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="hook"
+        class="clip scene"
+        data-start="0"
+        data-duration="5"
+        data-track-index="1"
+      >
+        <div class="scene-content">
+          <div class="kicker">Vibe Storefront</div>
+          <h1 class="headline">
+            Ideas need something <span>concrete.</span>
+          </h1>
+          <p class="subhead">
+            A rough product idea is hard to judge while it stays text.
+          </p>
+          <div class="quiet-card">
+            Goblin Dock: organize the desk chaos.
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="progress"
+        class="clip scene"
+        data-start="12"
+        data-duration="11"
+        data-track-index="1"
+      >
+        <div class="scene-content progress-layout">
+          <div>
+            <div class="kicker">One complete loop</div>
+            <h2 class="headline">
+              One sentence becomes a storefront.
+            </h2>
+            <p class="subhead">
+              Codex generates the concept; the app makes it shareable.
+            </p>
+          </div>
+
+          <div class="flow-row">
+            <div class="flow-step">
+              <div class="flow-title">Input</div>
+              <div class="flow-copy">Plain-English product idea</div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-title">Generation</div>
+              <div class="flow-copy">Structured storefront content</div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-title">Output</div>
+              <div class="flow-copy">Rendered page with imagery</div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-title">Distribution</div>
+              <div class="flow-copy">Public URL for feedback</div>
+            </div>
+          </div>
+
+          <div class="bar-shell">
+            <div class="bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="cta"
+        class="clip scene cta"
+        data-start="34"
+        data-duration="6"
+        data-track-index="1"
+      >
+        <div class="scene-content">
+          <div class="kicker">What would your idea look like?</div>
+          <h2 class="headline">Generate the first artifact fast.</h2>
+          <div class="site-url">vibe-storefront.com</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#hook .kicker", { opacity: 0, y: 24, duration: 0.42, ease: "power3.out" }, 0);
+      tl.from("#hook .headline", { opacity: 0, y: 54, duration: 0.62, ease: "power3.out" }, 0.14);
+      tl.from("#hook .subhead", { opacity: 0, y: 34, duration: 0.52, ease: "power3.out" }, 0.38);
+      tl.from("#hook .quiet-card", { opacity: 0, y: 36, duration: 0.54, ease: "power3.out" }, 0.78);
+      tl.to("#hook .scene-content", { opacity: 0, duration: 0.38, ease: "power2.in" }, 4.48);
+
+      tl.from("#progress .kicker", { opacity: 0, y: 24, duration: 0.42, ease: "power3.out" }, 12.1);
+      tl.from("#progress .headline", { opacity: 0, y: 48, duration: 0.56, ease: "power3.out" }, 12.24);
+      tl.from("#progress .subhead", { opacity: 0, y: 34, duration: 0.5, ease: "power3.out" }, 12.48);
+      tl.from("#progress .flow-step", { opacity: 0, y: 32, duration: 0.48, stagger: 0.16, ease: "power3.out" }, 13.22);
+      tl.from("#progress .bar-shell", { opacity: 0, y: 18, duration: 0.32, ease: "power2.out" }, 14.18);
+      tl.from("#progress .bar-fill", { scaleX: 0, duration: 7.6, ease: "power1.inOut" }, 14.28);
+      tl.to("#progress .scene-content", { opacity: 0, duration: 0.38, ease: "power2.in" }, 22.48);
+
+      tl.from("#cta .kicker", { opacity: 0, y: 24, duration: 0.42, ease: "power3.out" }, 34.1);
+      tl.from("#cta .headline", { opacity: 0, y: 52, duration: 0.58, ease: "power3.out" }, 34.26);
+      tl.from("#cta .site-url", { opacity: 0, y: 30, duration: 0.48, ease: "power3.out" }, 34.68);
+      tl.to("#cta .site-url", { color: "#f4d35e", duration: 0.55, repeat: 3, yoyo: true, ease: "sine.inOut" }, 36.0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
