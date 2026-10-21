@@ -138,3 +138,9 @@ Verify on `https://vibe-storefront.com`:
 - Public share URL works while signed out.
 - Product images appear on newly generated and backfilled storefronts.
 - Vercel logs show no runtime errors for `/api/storefronts` or `/s/[slug]`.
+
+## Admin Generation Access
+
+Set the server-only `ADMIN_EMAIL` environment variable to the admin account's email address. Clerk must confirm that it is the signed-in user's verified primary email. The dashboard and generation API then bypass the five-storefront cap and generation slot reservations for that account. Other accounts retain the five-storefront limit. The short-term generation rate limit still applies to everyone.
+
+After changing this value, restart the local server or redeploy through the normal production workflow. Keep the actual admin email in environment configuration, not source control. Verify that the admin can generate with at least five saved storefronts and that a regular account is still blocked at five.

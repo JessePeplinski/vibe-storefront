@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { buildPageMetadata, siteName, siteOrigin } from "@/lib/seo";
 import "reveal.js/reveal.css";
@@ -23,6 +24,7 @@ export default function RootLayout({
       <html lang="en">
         <body className="min-h-screen antialiased">
           {children}
+          <Analytics />
           <Toaster closeButton position="bottom-center" richColors />
         </body>
       </html>
