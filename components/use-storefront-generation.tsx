@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useGenerationProgress } from "@/components/use-generation-countdown";
 import { isPendingGenerationJob, type GenerationJob } from "@/lib/generation-job";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
@@ -82,6 +82,13 @@ export function useStorefrontGeneration({
   const [result, setResult] = useState<StorefrontGenerationResult | null>(null);
   const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
   const [job, setJob] = useState<GenerationJob | null>(null);
+  const pendingJobSeen = useRef<string | null>(null);
+  const [completionNotice, setCompletionNotice] = useState<{
+    id: string;
+    name: string;
+    href: string;
+  } | null>(null);
+  const dismissCompletionNotice = useCallback(() => setCompletionNotice(null), []);
   const [isRecovering, setIsRecovering] = useState(recoverOnMount);
   const [statusUnavailable, setStatusUnavailable] = useState(false);
   const progress = useGenerationProgress(isGenerating);
@@ -98,11 +105,21 @@ export function useStorefrontGeneration({
     resetProgress(Date.parse(nextJob.createdAt));
     setIsGenerating(isPendingGenerationJob(nextJob));
     setStatusUnavailable(false);
+    if (isPendingGenerationJob(nextJob)) pendingJobSeen.current = nextJob.id;
     if (nextJob.result) {
+      if (pendingJobSeen.current === nextJob.id) {
+        setCompletionNotice({
+          id: nextJob.result.storefront.id,
+          name: nextJob.result.storefront.content.name,
+          href: `/s/${nextJob.result.storefront.slug}`
+        });
+        pendingJobSeen.current = null;
+      }
       const endedAt = Date.parse(nextJob.finishedAt ?? nextJob.createdAt);
       setResult({ ...nextJob.result, finishedInText: formatDuration(Math.max(0, Math.floor((endedAt - Date.parse(nextJob.createdAt)) / 1000))) });
       setError(null);
     } else if (nextJob.status === "failed") {
+      pendingJobSeen.current = null;
       setError(nextJob.error ?? "Generation failed. Please try again.");
     }
   }, [resetProgress]);
@@ -169,6 +186,7 @@ export function useStorefrontGeneration({
     const startedAtMs = Date.now();
     let acceptedJob = false;
     setJob(null);
+    setCompletionNotice(null);
     setStatusUnavailable(false);
     setError(null);
     resetProgress();
@@ -243,7 +261,9 @@ export function useStorefrontGeneration({
   }
 
   return {
-    clearResult: () => setResult(null),
+    clearResult: () => { setResult(null); setCompletionNotice(null); },
+    completionNotice,
+    dismissCompletionNotice,
     error,
     generateFromIdea,
     generationDisabled,
