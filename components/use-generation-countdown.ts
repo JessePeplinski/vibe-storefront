@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   STOREFRONT_GENERATION_ESTIMATE_LABEL,
   STOREFRONT_GENERATION_ESTIMATE_SECONDS
@@ -102,7 +102,7 @@ type GenerationProgress = {
   estimateText: string;
   phases: GenerationPhase[];
   progressPercent: number;
-  resetProgress: () => void;
+  resetProgress: (startedAtMs?: number) => void;
   steps: GenerationProgressStep[];
 };
 
@@ -110,15 +110,20 @@ export function useGenerationProgress(
   isActive: boolean
 ): GenerationProgress {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const resetProgress = useCallback(() => setElapsedSeconds(0), []);
+  const startTime = useRef<number | null>(null);
+  const resetProgress = useCallback((startedAtMs = Date.now()) => {
+    startTime.current = startedAtMs;
+    setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)));
+  }, []);
 
   useEffect(() => {
     if (!isActive) {
       return;
     }
 
+    startTime.current ??= Date.now();
     const intervalId = window.setInterval(() => {
-      setElapsedSeconds((currentSeconds) => currentSeconds + 1);
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startTime.current!) / 1000)));
     }, MILLIS_PER_SECOND);
 
     return () => window.clearInterval(intervalId);

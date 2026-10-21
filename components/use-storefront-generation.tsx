@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useGenerationProgress } from "@/components/use-generation-countdown";
+import { isPendingGenerationJob, type GenerationJob } from "@/lib/generation-job";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
 export type StorefrontGenerationMode = "guest" | "signed-in";
@@ -46,6 +47,7 @@ type CreateStorefrontErrorResponse = {
 };
 
 type UseStorefrontGenerationParams = {
+  recoverOnMount?: boolean;
   disableAfterResult?: boolean;
   mode?: StorefrontGenerationMode;
 };
@@ -71,6 +73,7 @@ function buildFinishedResult(
 
 export function useStorefrontGeneration({
   disableAfterResult = false,
+  recoverOnMount = false,
   mode = "signed-in"
 }: UseStorefrontGenerationParams = {}) {
   const [idea, setIdea] = useState("");
@@ -78,13 +81,74 @@ export function useStorefrontGeneration({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StorefrontGenerationResult | null>(null);
   const [guestGenerationUsed, setGuestGenerationUsed] = useState(false);
+  const [job, setJob] = useState<GenerationJob | null>(null);
+  const [isRecovering, setIsRecovering] = useState(recoverOnMount);
+  const [statusUnavailable, setStatusUnavailable] = useState(false);
   const progress = useGenerationProgress(isGenerating);
   const { resetProgress } = progress;
   const isGuestMode = mode === "guest";
   const generationDisabled =
-    isGenerating ||
+    isGenerating || isRecovering ||
     (isGuestMode && guestGenerationUsed) ||
     (disableAfterResult && Boolean(result));
+
+  const applyJob = useCallback((nextJob: GenerationJob) => {
+    setJob(nextJob);
+    setIdea(nextJob.idea);
+    resetProgress(Date.parse(nextJob.createdAt));
+    setIsGenerating(isPendingGenerationJob(nextJob));
+    setStatusUnavailable(false);
+    if (nextJob.result) {
+      const endedAt = Date.parse(nextJob.finishedAt ?? nextJob.createdAt);
+      setResult({ ...nextJob.result, finishedInText: formatDuration(Math.max(0, Math.floor((endedAt - Date.parse(nextJob.createdAt)) / 1000))) });
+      setError(null);
+    } else if (nextJob.status === "failed") {
+      setError(nextJob.error ?? "Generation failed. Please try again.");
+    }
+  }, [resetProgress]);
+
+  useEffect(() => {
+    if (!recoverOnMount) return;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/storefront-jobs", { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error("Unable to check generation status. Please try again.");
+        const payload = await response.json() as { job: GenerationJob | null };
+        if (!controller.signal.aborted && payload.job) applyJob(payload.job);
+      } catch {
+        if (!controller.signal.aborted) setError("Unable to check generation status. Please try again.");
+      } finally {
+        if (!controller.signal.aborted) setIsRecovering(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [recoverOnMount, applyJob]);
+
+  const pendingJobId = job && isPendingGenerationJob(job) ? job.id : null;
+  useEffect(() => {
+    if (!pendingJobId) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      try {
+        const response = await fetch("/api/storefront-jobs", { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error("Status unavailable");
+        const payload = await response.json() as { job: GenerationJob | null };
+        if (controller.signal.aborted) return;
+        if (!payload.job) throw new Error("Status unavailable");
+        applyJob(payload.job);
+        if (!isPendingGenerationJob(payload.job)) return;
+      } catch {
+        if (controller.signal.aborted) return;
+        // A temporary connection loss must not cancel the server job or start another one.
+        setStatusUnavailable(true);
+      }
+      timer = setTimeout(() => void poll(), 2000);
+    }
+    void poll();
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, [pendingJobId, applyJob]);
 
   function showResult(nextResult: StorefrontGenerationResult) {
     setResult(nextResult);
@@ -95,7 +159,7 @@ export function useStorefrontGeneration({
 
     if (
       trimmedIdea.length < 6 ||
-      isGenerating ||
+      isGenerating || isRecovering ||
       (isGuestMode && guestGenerationUsed) ||
       (disableAfterResult && result)
     ) {
@@ -103,7 +167,9 @@ export function useStorefrontGeneration({
     }
 
     const startedAtMs = Date.now();
-
+    let acceptedJob = false;
+    setJob(null);
+    setStatusUnavailable(false);
     setError(null);
     resetProgress();
     setIsGenerating(true);
@@ -114,11 +180,12 @@ export function useStorefrontGeneration({
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ idea: trimmedIdea })
+        body: JSON.stringify({ idea: trimmedIdea, background: true })
       });
       const payload = (await response.json()) as
         | CreateStorefrontResponse
-        | CreateStorefrontErrorResponse;
+        | CreateStorefrontErrorResponse
+        | { job: GenerationJob };
 
       if (!response.ok) {
         if (
@@ -147,6 +214,12 @@ export function useStorefrontGeneration({
         throw new Error("error" in payload ? payload.error : "Generation failed");
       }
 
+      if ("job" in payload) {
+        acceptedJob = true;
+        applyJob(payload.job);
+        return;
+      }
+
       const nextResult = buildFinishedResult(
         payload as CreateStorefrontResponse,
         startedAtMs
@@ -160,7 +233,7 @@ export function useStorefrontGeneration({
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Generation failed");
     } finally {
-      setIsGenerating(false);
+      if (!acceptedJob) setIsGenerating(false);
     }
   }
 
@@ -178,6 +251,8 @@ export function useStorefrontGeneration({
     handleSubmit,
     idea,
     isGenerating,
+    isRecovering,
+    statusUnavailable,
     progress,
     result,
     setIdea
@@ -192,12 +267,14 @@ export function useGenerationSession() {
 
 export function StorefrontGenerationProvider({
   children,
-  mode = "signed-in"
+  mode = "signed-in",
+  recoverOnMount = false
 }: {
   children: ReactNode;
   mode?: StorefrontGenerationMode;
+  recoverOnMount?: boolean;
 }) {
-  const generation = useStorefrontGeneration({ mode });
+  const generation = useStorefrontGeneration({ mode, recoverOnMount });
 
   return (
     <GenerationContext.Provider value={generation}>

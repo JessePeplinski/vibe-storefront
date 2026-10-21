@@ -60,6 +60,8 @@ After setup, verify Google sign-in from `https://vibe-storefront.com/sign-in`. R
 
 Run new Supabase migrations against the production database as a separate deployment step. Vercel deploys app code only and does not apply database migrations.
 
+Before deploying the background-generation app changes, apply `20261021173832_persistent_generation_jobs.sql` to production through the approved migration flow below. Deploying the code before that table exists will block job creation/recovery. This migration adds a private table and indexes; it does not modify saved storefronts. No new environment variables or external queue service are required.
+
 Recommended CLI flow:
 
 ```bash
@@ -134,6 +136,8 @@ Verify on `https://vibe-storefront.com`:
 - Clerk sign-in works, including account creation and Google sign-in from `/sign-in`.
 - Signed-in generation succeeds for the first five storefronts on a new account.
 - A sixth different signed-in generation attempt is blocked by the five-storefront quota.
+- Start a generation, refresh the dashboard while pending, close the tab, and reopen while signed in. Confirm the same job returns and completes without another model request or quota reservation.
+- A failed/expired job shows an actionable error and releases its unused quota.
 - Dashboard lists the saved storefront.
 - Public share URL works while signed out.
 - Product images appear on newly generated and backfilled storefronts.

@@ -480,7 +480,7 @@ describe("StorefrontStudio", () => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/storefronts",
         expect.objectContaining({
-          body: JSON.stringify({ idea: selectedIdea }),
+          body: JSON.stringify({ idea: selectedIdea, background: true }),
           method: "POST"
         })
       );
@@ -584,6 +584,49 @@ describe("StorefrontStudio", () => {
     expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
     expect(screen.queryByRole("status", { name: "Generating your storefront" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, true])("recovers a server job after a full page remount (finished while closed: %s)", async (finishedWhileClosed) => {
+    const createdAt = new Date(Date.now() - 31_000).toISOString();
+    let serverJob = {
+      id: "persisted-job", idea: STARTER_IDEAS[0], status: "running",
+      createdAt, finishedAt: null as string | null, error: null,
+      result: null as null | { storefront: StorefrontRecord; shareUrl: string; status: string }
+    };
+    const fetchMock = vi.fn().mockImplementation(async () => ({ ok: true, json: async () => ({ job: serverJob }) }));
+    vi.stubGlobal("fetch", fetchMock);
+    const view = () => <StorefrontGenerationProvider recoverOnMount><StorefrontStudio /></StorefrontGenerationProvider>;
+    const firstPage = render(view());
+    expect(await screen.findByRole("status", { name: "Generating your storefront" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Generation progress" })).toHaveTextContent("Total 0:31");
+    firstPage.unmount();
+    const complete = () => { serverJob = {
+      ...serverJob, status: "completed", finishedAt: new Date().toISOString(),
+      result: { storefront: storefront(), shareUrl: "/s/test", status: "created" }
+    }; };
+    if (finishedWhileClosed) complete();
+    render(view());
+    if (!finishedWhileClosed) {
+      expect(await screen.findByRole("status", { name: "Generating your storefront" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Storefront idea")).toHaveValue(STARTER_IDEAS[0]);
+      complete();
+    }
+    expect(await screen.findByText("Storefront saved.", {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Brooklyn Ember Co." })).toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Generating your storefront" })).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.every(([url, options]) => url === "/api/storefront-jobs" && options?.method !== "POST")).toBe(true);
+  });
+
+  it("restores a failed background job as an error instead of a permanent skeleton", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ job: {
+      id: "failed-job", idea: STARTER_IDEAS[0], status: "failed",
+      createdAt: new Date().toISOString(), finishedAt: new Date().toISOString(),
+      error: "Generation timed out. Please try again.", result: null
+    } }) }));
+    render(<StorefrontGenerationProvider recoverOnMount><StorefrontStudio /></StorefrontGenerationProvider>);
+    expect(await screen.findByText("Generation timed out. Please try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Generating your storefront" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Generate storefront" })).not.toBeDisabled();
   });
 
   it("frames repeated signed-in prompts as reusing the existing storefront", async () => {

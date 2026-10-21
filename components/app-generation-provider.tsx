@@ -8,7 +8,7 @@ export function AppGenerationProvider({ children }: { children: ReactNode }) {
   const { userId } = useAuth();
 
   return (
-    <StorefrontGenerationProvider key={userId ?? "signed-out"}>
+    <StorefrontGenerationProvider key={userId ?? "signed-out"} recoverOnMount={Boolean(userId)}>
       {children}
     </StorefrontGenerationProvider>
   );
