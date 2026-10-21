@@ -4,6 +4,11 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => {
   return {
+    after: vi.fn(),
+    getLatestGenerationJob: vi.fn(),
+    createGenerationJob: vi.fn(),
+    claimGenerationJob: vi.fn(),
+    finishGenerationJob: vi.fn(),
     isCurrentUserAdmin: vi.fn(),
   auth: vi.fn(),
     buildStorefrontSlug: vi.fn(),
@@ -20,6 +25,18 @@ const mocks = vi.hoisted(() => {
     reserveStorefrontGenerationSlot: vi.fn()
   };
 });
+
+vi.mock("next/server", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next/server")>(),
+  after: mocks.after
+}));
+
+vi.mock("@/lib/generation-jobs", () => ({
+  getLatestGenerationJob: mocks.getLatestGenerationJob,
+  createGenerationJob: mocks.createGenerationJob,
+  claimGenerationJob: mocks.claimGenerationJob,
+  finishGenerationJob: mocks.finishGenerationJob
+}));
 
 vi.mock("@/lib/admin", () => ({
   isCurrentUserAdmin: mocks.isCurrentUserAdmin
@@ -108,11 +125,20 @@ function generatedStorefront(content = sampleStorefrontContent) {
   };
 }
 
+const pendingJob = {
+  id: "job-id", idea: "small-batch hot sauce from Brooklyn", status: "queued",
+  createdAt: "2026-10-21T00:00:00Z", finishedAt: null, error: null, result: null
+};
+
 describe("storefront API", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
     mocks.isCurrentUserAdmin.mockResolvedValue(false);
+    mocks.getLatestGenerationJob.mockResolvedValue(null);
+    mocks.createGenerationJob.mockResolvedValue({ job: pendingJob, created: true });
+    mocks.claimGenerationJob.mockResolvedValue(true);
+    mocks.finishGenerationJob.mockResolvedValue(undefined);
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
     mocks.checkStorefrontGenerationRateLimit.mockReturnValue({
@@ -144,6 +170,79 @@ describe("storefront API", () => {
 
     expect(response.status).toBe(401);
     expect(payload).toEqual({ error: "Unauthorized" });
+  });
+
+  it("accepts a background job before running generation and completes it after the response", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.createStorefront.mockResolvedValue({ id: "new-storefront", slug: "new-storefront", content: sampleStorefrontContent });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const response = await POST(new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST", body: JSON.stringify({ idea: pendingJob.idea, background: true })
+    }));
+    expect(response.status).toBe(202);
+    expect((await response.json()).job).toMatchObject({ id: "job-id", status: "running" });
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.claimGenerationJob).toHaveBeenCalledWith("job-id", "generation-slot-id");
+    expect(mocks.after).toHaveBeenCalledTimes(1);
+    // No browser/client is involved once the response has been sent.
+    await mocks.after.mock.calls[0][0]();
+    expect(mocks.generateStorefront).toHaveBeenCalledTimes(1);
+    expect(mocks.finishGenerationJob).toHaveBeenCalledWith("job-id", { storefrontId: "new-storefront", warning: undefined });
+  });
+
+  it("reuses an active job across retries and tabs without another model call or quota reservation", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.getLatestGenerationJob.mockResolvedValue({ ...pendingJob, status: "running" });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const response = await POST(new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST", body: JSON.stringify({ idea: pendingJob.idea, background: true })
+    }));
+    expect(response.status).toBe(202);
+    expect(mocks.after).not.toHaveBeenCalled();
+    expect(mocks.createGenerationJob).not.toHaveBeenCalled();
+    expect(mocks.generateStorefront).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
+  });
+
+  it("does not run another worker when simultaneous requests race to create an active job", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.createGenerationJob.mockResolvedValue({ job: pendingJob, created: false });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const response = await POST(new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST", body: JSON.stringify({ idea: pendingJob.idea, background: true })
+    }));
+    expect(response.status).toBe(202);
+    expect(mocks.after).not.toHaveBeenCalled();
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
+  });
+
+  it("records background failures without returning provider error details", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.generateStorefront.mockRejectedValue(new Error("private provider diagnostics"));
+    const { POST } = await import("@/app/api/storefronts/route");
+    await POST(new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST", body: JSON.stringify({ idea: pendingJob.idea, background: true })
+    }));
+    await mocks.after.mock.calls[0][0]();
+    expect(mocks.releaseStorefrontGenerationSlot).toHaveBeenCalledWith("generation-slot-id");
+    expect(mocks.finishGenerationJob).toHaveBeenCalledWith("job-id", { error: "Unable to generate this storefront. Please try again." });
+  });
+
+  it("reads status only for the authenticated owner and does not cache it", async () => {
+    mocks.auth.mockResolvedValue({ userId: "user_123" });
+    mocks.getLatestGenerationJob.mockResolvedValue(pendingJob);
+    const { GET } = await import("@/app/api/storefront-jobs/route");
+    const response = await GET();
+    expect(mocks.getLatestGenerationJob).toHaveBeenCalledWith("user_123");
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(await response.json()).toEqual({ job: pendingJob });
+  });
+
+  it("rejects unauthenticated job recovery", async () => {
+    mocks.auth.mockResolvedValue({ userId: null });
+    const { GET } = await import("@/app/api/storefront-jobs/route");
+    expect((await GET()).status).toBe(401);
+    expect(mocks.getLatestGenerationJob).not.toHaveBeenCalled();
   });
 
   it("generates and persists a storefront for the Clerk user", async () => {

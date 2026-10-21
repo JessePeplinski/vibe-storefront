@@ -80,8 +80,9 @@ After the dev server is running:
 3. Confirm `See all storefronts` opens the public storefront gallery.
 4. Confirm the signed-out homepage prompts for sign-in instead of submitting public generation.
 5. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation creates saved storefronts.
-6. Try to generate a sixth different storefront from the same signed-in account and confirm the five-storefront limit blocks it without another generation.
-7. Open the generated share URL in a signed-out browser and confirm the public share page renders.
+6. During generation, refresh `/dashboard`, then close the tab and reopen it while signed in. Confirm the same job, idea, elapsed time and skeleton return, or that the finished storefront appears. This must not create another generation or consume a second quota slot. Confirm failure/timeout messages allow an explicit retry.
+7. Try to generate a sixth different storefront from the same signed-in account and confirm the five-storefront limit blocks it without another generation.
+8. Open the generated share URL in a signed-out browser and confirm the public share page renders.
 
 To reset a local Clerk development user while testing, remove that user's local generation slots and storefront rows from Supabase Studio or the local SQL editor:
 
@@ -114,3 +115,13 @@ npx playwright install chromium
 Set the server-only `ADMIN_EMAIL` environment variable to the admin account's email address. Clerk must confirm that it is the signed-in user's verified primary email. The dashboard and generation API then bypass the five-storefront cap and generation slot reservations for that account. Other accounts retain the five-storefront limit. The short-term generation rate limit still applies to everyone.
 
 After changing this value, restart the local server or redeploy through the normal production workflow. Keep the actual admin email in environment configuration, not source control. Verify that the admin can generate with at least five saved storefronts and that a regular account is still blocked at five.
+
+## Background Generation Schema
+
+Apply pending migrations to the local stack before testing background generation:
+
+```bash
+supabase migration up --local
+```
+
+The `storefront_generation_jobs` table is service-role only, with RLS enabled and no anonymous/authenticated table grants. Clerk-authenticated server routes enforce owner access. No additional queue provider, credentials or cron configuration is required. Generation runs in Next.js `after()` within the existing function timeout; it is not a detached promise that relies on the tab remaining open.
