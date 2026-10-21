@@ -4,7 +4,8 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => {
   return {
-    auth: vi.fn(),
+    isCurrentUserAdmin: vi.fn(),
+  auth: vi.fn(),
     buildStorefrontSlug: vi.fn(),
     checkStorefrontGenerationRateLimit: vi.fn(),
     completeStorefrontGenerationSlot: vi.fn(),
@@ -19,6 +20,10 @@ const mocks = vi.hoisted(() => {
     reserveStorefrontGenerationSlot: vi.fn()
   };
 });
+
+vi.mock("@/lib/admin", () => ({
+  isCurrentUserAdmin: mocks.isCurrentUserAdmin
+}));
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: mocks.auth
@@ -107,6 +112,7 @@ describe("storefront API", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    mocks.isCurrentUserAdmin.mockResolvedValue(false);
     process.env.NEXT_PUBLIC_APP_URL = "https://vibe.example";
     mocks.buildStorefrontSlug.mockReturnValue("brooklyn-ember-co-image123");
     mocks.checkStorefrontGenerationRateLimit.mockReturnValue({
@@ -415,6 +421,29 @@ describe("storefront API", () => {
       shareUrl: "https://vibe.example/s/brooklyn-ember-co-abc123",
       status: "existing_prompt_storefront"
     });
+  });
+
+  it("allows admins past the account cap without consuming generation slots", async () => {
+    mocks.auth.mockResolvedValue({ userId: "admin_user" });
+    mocks.isCurrentUserAdmin.mockResolvedValue(true);
+    mocks.listStorefrontsForOwner.mockResolvedValue(Array(6).fill({ id: "existing" }));
+    mocks.reserveStorefrontGenerationSlot.mockResolvedValue(null);
+    mocks.createStorefront.mockResolvedValue({
+      id: "admin-storefront", slug: "admin-storefront", content: sampleStorefrontContent
+    });
+    const { POST } = await import("@/app/api/storefronts/route");
+    const response = await POST(new NextRequest("https://vibe.example/api/storefronts", {
+      method: "POST",
+      body: JSON.stringify({ idea: "tiny lamp kits for renters" })
+    }));
+
+    expect(response.status).toBe(201);
+    expect(mocks.createStorefront).toHaveBeenCalledWith(expect.objectContaining({
+      ownerClerkUserId: "admin_user"
+    }));
+    expect(mocks.reserveStorefrontGenerationSlot).not.toHaveBeenCalled();
+    expect(mocks.completeStorefrontGenerationSlot).not.toHaveBeenCalled();
+    expect(mocks.checkStorefrontGenerationRateLimit).toHaveBeenCalledWith("admin_user");
   });
 
   it("blocks a sixth different storefront for the same Clerk user", async () => {

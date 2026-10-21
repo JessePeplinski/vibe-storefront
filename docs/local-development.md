@@ -108,3 +108,9 @@ npm run verify
 ```bash
 npx playwright install chromium
 ```
+
+## Admin Generation Access
+
+Set the server-only `ADMIN_EMAIL` environment variable to the admin account's email address. Clerk must confirm that it is the signed-in user's verified primary email. The dashboard and generation API then bypass the five-storefront cap and generation slot reservations for that account. Other accounts retain the five-storefront limit. The short-term generation rate limit still applies to everyone.
+
+After changing this value, restart the local server or redeploy through the normal production workflow. Keep the actual admin email in environment configuration, not source control. Verify that the admin can generate with at least five saved storefronts and that a regular account is still blocked at five.

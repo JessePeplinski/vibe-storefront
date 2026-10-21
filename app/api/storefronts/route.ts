@@ -7,6 +7,7 @@ import {
   storefrontContentContainsBlockedTerms
 } from "@/lib/content-safety";
 import { generateStorefront } from "@/lib/codex-storefront";
+import { isCurrentUserAdmin } from "@/lib/admin";
 import { appBaseUrl } from "@/lib/env";
 import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import { deleteProductImage, generateProductImage } from "@/lib/product-images";
@@ -252,10 +253,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ownerStorefronts = await listStorefrontsForOwner(userId);
+    const isAdmin = await isCurrentUserAdmin();
 
-    if (ownerStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT) {
-      return generationQuotaExceededResponse(ownerStorefronts[0]);
+    if (!isAdmin) {
+      const ownerStorefronts = await listStorefrontsForOwner(userId);
+
+      if (ownerStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT) {
+        return generationQuotaExceededResponse(ownerStorefronts[0]);
+      }
     }
 
     const rateLimit = checkStorefrontGenerationRateLimit(userId);
@@ -272,9 +277,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const reservation = await reserveStorefrontGenerationSlot(userId);
+    const reservation = isAdmin
+      ? null
+      : await reserveStorefrontGenerationSlot(userId);
 
-    if (!reservation) {
+    if (!isAdmin && !reservation) {
       return generationQuotaExceededResponse();
     }
 
@@ -304,18 +311,22 @@ export async function POST(request: NextRequest) {
           warning
         };
       } catch (caught) {
-        await releaseReservedGenerationSlot(reservation.id);
+        if (reservation) {
+          await releaseReservedGenerationSlot(reservation.id);
+        }
         throw caught;
       }
     })();
 
-    try {
-      await completeStorefrontGenerationSlot({
-        reservationId: reservation.id,
-        storefrontId: generatedStorefront.storefront.id
-      });
-    } catch {
-      // The reserved pending slot still blocks repeat generation.
+    if (reservation) {
+      try {
+        await completeStorefrontGenerationSlot({
+          reservationId: reservation.id,
+          storefrontId: generatedStorefront.storefront.id
+        });
+      } catch {
+        // The reserved pending slot still blocks repeat generation.
+      }
     }
 
     return NextResponse.json(

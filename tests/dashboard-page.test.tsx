@@ -4,8 +4,13 @@ import { sampleStorefrontContent } from "@/lib/storefront-schema";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
 const mocks = vi.hoisted(() => ({
+  isCurrentUserAdmin: vi.fn(),
   auth: vi.fn(),
   listStorefrontsForOwner: vi.fn()
+}));
+
+vi.mock("@/lib/admin", () => ({
+  isCurrentUserAdmin: mocks.isCurrentUserAdmin
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -18,12 +23,15 @@ vi.mock("@/lib/storefronts", () => ({
 
 vi.mock("@/components/storefront-studio", () => ({
   StorefrontStudio: ({
-    initialStorefronts
+    initialStorefronts,
+    isAdmin
   }: {
     initialStorefronts: StorefrontRecord[];
+    isAdmin: boolean;
   }) => (
     <div data-testid="storefront-studio">
       Studio storefronts: {initialStorefronts.length}
+      {isAdmin && " Admin enabled"}
     </div>
   )
 }));
@@ -45,6 +53,7 @@ function storefront(): StorefrontRecord {
 describe("dashboard page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.isCurrentUserAdmin.mockResolvedValue(false);
   });
 
   it("renders the studio directly for signed-in users", async () => {
@@ -66,6 +75,16 @@ describe("dashboard page", () => {
     expect(screen.getByTestId("storefront-studio")).toHaveTextContent(
       "Studio storefronts: 1"
     );
+  });
+
+  it("passes server-resolved admin access to the studio", async () => {
+    mocks.auth.mockResolvedValue({ userId: "admin_user" });
+    mocks.isCurrentUserAdmin.mockResolvedValue(true);
+    mocks.listStorefrontsForOwner.mockResolvedValue([]);
+    const Page = (await import("@/app/(app)/dashboard/page")).default;
+
+    render(await Page());
+    expect(screen.getByTestId("storefront-studio")).toHaveTextContent("Admin enabled");
   });
 
   it("does not fetch storefronts when signed out", async () => {

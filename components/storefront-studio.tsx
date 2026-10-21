@@ -37,12 +37,14 @@ type DeleteStorefrontResponse = {
 };
 
 type StorefrontStudioProps = {
+  isAdmin?: boolean;
   initialStorefronts?: StorefrontRecord[];
   mode?: "signed-in" | "guest";
 };
 
 export function StorefrontStudio({
   initialStorefronts = [],
+  isAdmin = false,
   mode = "signed-in"
 }: StorefrontStudioProps) {
   const { openSignIn } = useClerk();
@@ -158,6 +160,7 @@ export function StorefrontStudio({
   const isGuestMode = mode === "guest";
   const accountGenerationLimitReached =
     !isGuestMode &&
+    !isAdmin &&
     recentStorefronts.length >= SIGNED_IN_STOREFRONT_GENERATION_LIMIT;
   const remainingGenerations = Math.max(
     0,
@@ -330,9 +333,15 @@ export function StorefrontStudio({
           </h1>
           {!isGuestMode && (
             <p className="mx-auto mt-3 max-w-xl text-sm font-bold leading-6 text-slate-600">
-              Signed-in accounts can generate up to{" "}
-              {SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts.{" "}
-              {generationLimitSummary}
+              {isAdmin ? (
+                "Admin account: unlimited storefront generations."
+              ) : (
+                <>
+                  Signed-in accounts can generate up to{" "}
+                  {SIGNED_IN_STOREFRONT_GENERATION_LIMIT} storefronts.{" "}
+                  {generationLimitSummary}
+                </>
+              )}
             </p>
           )}
         </div>
