@@ -9,6 +9,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StorefrontCardSkeleton } from "@/components/storefront-card-skeleton";
 import { StorefrontCard } from "@/components/storefront-card";
 import { StorefrontGenerationForm } from "@/components/storefront-generation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,8 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  useStorefrontGeneration,
-  type StorefrontGenerationResult
+  StorefrontGenerationProvider,
+  useGenerationSession
 } from "@/components/use-storefront-generation";
 import { SIGNED_IN_STOREFRONT_GENERATION_LIMIT } from "@/lib/generation-quota";
 import { DRAFT_IDEA_STORAGE_KEY } from "@/lib/studio-ideas";
@@ -42,7 +43,20 @@ type StorefrontStudioProps = {
   mode?: "signed-in" | "guest";
 };
 
-export function StorefrontStudio({
+export function StorefrontStudio(props: StorefrontStudioProps) {
+  const session = useGenerationSession();
+
+  // Standalone/guest studios own a session; the app layout keeps signed-in sessions alive.
+  return session ? (
+    <StorefrontStudioContent {...props} />
+  ) : (
+    <StorefrontGenerationProvider mode={props.mode}>
+      <StorefrontStudioContent {...props} />
+    </StorefrontGenerationProvider>
+  );
+}
+
+function StorefrontStudioContent({
   initialStorefronts = [],
   isAdmin = false,
   mode = "signed-in"
@@ -57,7 +71,7 @@ export function StorefrontStudio({
   >(null);
   const [storefrontPendingDelete, setStorefrontPendingDelete] =
     useState<StorefrontRecord | null>(null);
-  const [recentStorefronts, setRecentStorefronts] =
+  const [savedStorefronts, setSavedStorefronts] =
     useState(initialStorefronts);
   const {
     clearResult,
@@ -70,10 +84,23 @@ export function StorefrontStudio({
     progress: generationProgress,
     result,
     setIdea
-  } = useStorefrontGeneration({
-    mode,
-    onStorefrontReady: showCreatedStorefront
-  });
+  } = useGenerationSession()!;
+  const [lastResult, setLastResult] = useState<typeof result>(null);
+  const recentStorefronts = result
+    ? [
+        result.storefront,
+        ...savedStorefronts.filter((storefront) => storefront.id !== result.storefront.id)
+      ]
+    : savedStorefronts;
+
+  if (result !== lastResult) {
+    setLastResult(result);
+    if (result) {
+      setDeleteError(null);
+      setDeleteStatusMessage(null);
+      setSavedStorefronts(recentStorefronts);
+    }
+  }
 
   useEffect(() => {
     const draftIdea = window.localStorage
@@ -87,17 +114,6 @@ export function StorefrontStudio({
       return () => window.clearTimeout(timeoutId);
     }
   }, [setIdea]);
-
-  function showCreatedStorefront(created: StorefrontGenerationResult) {
-    setDeleteError(null);
-    setDeleteStatusMessage(null);
-    setRecentStorefronts((currentStorefronts) => [
-      created.storefront,
-      ...currentStorefronts.filter(
-        (storefront) => storefront.id !== created.storefront.id
-      )
-    ]);
-  }
 
   function requestDeleteStorefront(storefront: StorefrontRecord) {
     if (deletingStorefrontId) {
@@ -136,7 +152,7 @@ export function StorefrontStudio({
         throw new Error(payload.error ?? "Unable to delete storefront.");
       }
 
-      setRecentStorefronts((currentStorefronts) =>
+      setSavedStorefronts((currentStorefronts) =>
         currentStorefronts.filter(
           (currentStorefront) => currentStorefront.id !== storefront.id
         )
@@ -357,10 +373,6 @@ export function StorefrontStudio({
           onIdeaChange={setIdea}
           onSubmit={handleSubmit}
           progress={generationProgress}
-          secondaryAction={{
-            href: "/storefronts",
-            label: "See all storefronts"
-          }}
           showLabel={false}
           showOverallEstimate={false}
           textareaId="studio-product-idea"
@@ -393,8 +405,9 @@ export function StorefrontStudio({
               </AlertDescription>
             </Alert>
           )}
-          {recentStorefronts.length > 0 ? (
+          {isGenerating || recentStorefronts.length > 0 ? (
             <div className="grid gap-2">
+              {isGenerating && <StorefrontCardSkeleton />}
               {recentStorefronts.map((storefront) => (
                 <StorefrontCard
                   deleteDisabled={Boolean(deletingStorefrontId)}

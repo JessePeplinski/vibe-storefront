@@ -7,6 +7,7 @@ import {
   within
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { StorefrontGenerationProvider } from "@/components/use-storefront-generation";
 import { StorefrontStudio } from "@/components/storefront-studio";
 import { Toaster } from "@/components/ui/sonner";
 import { DRAFT_IDEA_STORAGE_KEY, STARTER_IDEAS } from "@/lib/studio-ideas";
@@ -552,6 +553,37 @@ describe("StorefrontStudio", () => {
     expect(screen.queryByText("Storefront saved.")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /open share url/i }))
       .not.toBeInTheDocument();
+  });
+
+  it.each([false, true])("keeps generation across page navigation (completes while away: %s)", async (finishWhileAway) => {
+    let finish!: (response: unknown) => void;
+    const fetchMock = vi.fn().mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
+    const view = (showStudio: boolean) => (
+      <StorefrontGenerationProvider>
+        {showStudio ? <StorefrontStudio /> : <p>All storefronts</p>}
+      </StorefrontGenerationProvider>
+    );
+    const { rerender } = render(view(true));
+    fireEvent.change(screen.getByLabelText("Storefront idea"), { target: { value: STARTER_IDEAS[0] } });
+    fireEvent.click(screen.getByRole("button", { name: "Generate storefront" }));
+    expect(screen.getByRole("status", { name: "Generating your storefront" })).toBeInTheDocument();
+    expect(screen.queryByText("Saved storefronts will appear here.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "See all storefronts" })).not.toBeInTheDocument();
+    rerender(view(false));
+    if (!finishWhileAway) {
+      rerender(view(true));
+      expect(screen.getByRole("status", { name: "Generating your storefront" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Generating storefront" })).toBeDisabled();
+    }
+    await act(async () => {
+      finish({ ok: true, json: async () => ({ storefront: storefront(), shareUrl: "/s/test" }) });
+    });
+    if (finishWhileAway) rerender(view(true));
+    expect(await screen.findByText("Storefront saved.")).toBeInTheDocument();
+    expect(screen.getByText("Brooklyn Ember Co.")).toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Generating your storefront" })).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("frames repeated signed-in prompts as reusing the existing storefront", async () => {
