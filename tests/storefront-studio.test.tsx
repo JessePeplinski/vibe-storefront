@@ -246,6 +246,16 @@ describe("StorefrontStudio", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps admin generation enabled beyond five saved storefronts", () => {
+    render(<StorefrontStudio isAdmin initialStorefronts={Array.from({ length: 6 }, (_, index) =>
+      storefront({ id: `storefront-${index}` })
+    )} />);
+
+    expect(screen.getByRole("button", { name: "Generate storefront" })).not.toBeDisabled();
+    expect(screen.getByText("Admin account: unlimited storefront generations.")).toBeInTheDocument();
+    expect(screen.queryByText("Generation limit reached.")).not.toBeInTheDocument();
+  });
+
   it("disables signed-in generation after five saved storefronts", () => {
     render(
       <StorefrontStudio
