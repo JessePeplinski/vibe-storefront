@@ -81,6 +81,8 @@ function StorefrontStudioContent({
     handleSubmit,
     idea,
     isGenerating,
+    isRecovering,
+    statusUnavailable,
     progress: generationProgress,
     result,
     setIdea
@@ -375,8 +377,16 @@ function StorefrontStudioContent({
           progress={generationProgress}
           showLabel={false}
           showOverallEstimate={false}
+          textareaDisabled={isGenerating || isRecovering}
           textareaId="studio-product-idea"
         />
+        {isGenerating && (
+          <p className="mt-3 text-center text-sm text-muted-foreground" role="status">
+            {statusUnavailable
+              ? "Connection interrupted. We’ll keep checking your generation status."
+              : "Once started, generation continues if you refresh or close this tab."}
+          </p>
+        )}
       </section>
 
       <div className="mx-auto w-full max-w-5xl">

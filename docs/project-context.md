@@ -12,9 +12,11 @@ If generation fails with quota errors, check the OpenAI project tied to `CODEX_A
 
 ## Generation Navigation
 
-A client provider in the root layout owns the active generation request, idea, progress, and result. Navigating between pages through app links keeps that session alive. Returning to the dashboard shows a pending card first in Your storefronts, or the completed storefront if it finished while away. Changing the signed-in user resets the client session.
+The dashboard submits `POST /api/storefronts` with `background: true`. The server authenticates the owner, checks content safety, deduplication, quota and rate limits, creates a private `storefront_generation_jobs` row, reserves quota for non-admin users, and returns HTTP 202. Next.js `after()` runs generation after the response so client disconnects do not cancel the work. The legacy synchronous request format remains supported.
 
-This session lasts for the current document only. Refreshing, closing the tab, or navigating to another website does not preserve client progress; generation still uses the synchronous POST route rather than a durable background job.
+`GET /api/storefront-jobs` returns only the signed-in owner's latest job with `Cache-Control: no-store`. The client checks it on sign-in/page load and polls every two seconds while pending. Refreshing or closing the tab loses no server job state; reopening while signed in restores the idea, elapsed time and skeleton, or the saved result. An active-job unique index and an atomic queued-to-running claim prevent duplicate workers across tabs or repeated submissions. Changing the signed-in user resets client state.
+
+This uses the existing 180-second function runtime, not an unbounded queue or automatic model retries. Jobs still pending after four minutes are reconciled on status reads: an already saved storefront is recovered as completed; otherwise the job is marked failed and its reserved quota released. A timeout or host failure requires an explicit retry rather than silently incurring more model spend. Completed jobs resolve their saved storefront from the database; deleted storefronts are not restored from job history. Model failure details are not exposed in job responses.
 
 ## Data And Access Boundaries
 
@@ -34,7 +36,7 @@ Regular signed-in accounts are limited to five storefronts per Clerk user. The s
 
 Generated product images are uploaded server-side to the public Supabase Storage bucket `storefront-product-images`. Each storefront stores the durable public image URL in `content.product.image`.
 
-Product image generation is part of the synchronous storefront creation path. The app waits for the OpenAI image request and does not impose an additional image deadline beyond the hosting platform's function runtime limit. If all image attempts fail, the storefront is still saved without an image so the generated copy is not lost.
+Product image generation is part of the server-side storefront generation worker (or the legacy synchronous request path). The app waits for the OpenAI image request and does not impose an additional image deadline beyond the hosting platform's function runtime limit. If all image attempts fail, the storefront is still saved without an image so the generated copy is not lost.
 
 Existing storefronts can be backfilled after the storage migration is applied:
 

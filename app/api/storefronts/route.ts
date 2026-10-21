@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import {
@@ -20,6 +20,8 @@ import {
   releaseStorefrontGenerationSlot,
   reserveStorefrontGenerationSlot
 } from "@/lib/storefronts";
+import { claimGenerationJob, createGenerationJob, finishGenerationJob, getLatestGenerationJob } from "@/lib/generation-jobs";
+import { isPendingGenerationJob } from "@/lib/generation-job";
 import { checkStorefrontGenerationRateLimit } from "@/lib/generation-rate-limit";
 import type {
   StorefrontContent,
@@ -46,7 +48,8 @@ const GENERATION_RATE_LIMIT_ERROR =
   "Too many generation attempts. Try again shortly.";
 
 const createStorefrontRequestSchema = z.object({
-  idea: z.string().trim().min(6)
+  idea: z.string().trim().min(6),
+  background: z.boolean().default(false)
 });
 
 type ProductImageGenerationResult = {
@@ -207,6 +210,75 @@ async function releaseReservedGenerationSlot(reservationId: string) {
   }
 }
 
+async function executeGeneration(userId: string, idea: string, reservation: { id: string } | null) {
+  const generatedStorefront = await (async () => {
+    try {
+      const { content, slug, usageCost, warning } =
+        await generateStorefrontWithOptionalProductImage(idea);
+      const publicUsageCost = toPublicUsageCost(usageCost);
+      const storefront = await createGeneratedStorefront({
+        ownerClerkUserId: userId,
+        idea,
+        content,
+        generationCost: publicUsageCost,
+        slug
+      });
+      const storefrontWithUsageCost = publicUsageCost
+        ? {
+            ...storefront,
+            generation_cost: publicUsageCost
+          }
+        : storefront;
+
+      return {
+        publicUsageCost,
+        storefront,
+        storefrontWithUsageCost,
+        warning
+      };
+    } catch (caught) {
+      if (reservation) {
+        await releaseReservedGenerationSlot(reservation.id);
+      }
+      throw caught;
+    }
+  })();
+
+  if (reservation) {
+    try {
+      await completeStorefrontGenerationSlot({
+        reservationId: reservation.id,
+        storefrontId: generatedStorefront.storefront.id
+      });
+    } catch {
+      // The reserved pending slot still blocks repeat generation.
+    }
+  }
+
+  return {
+    storefront: generatedStorefront.storefrontWithUsageCost,
+    shareUrl: shareUrlForSlug(generatedStorefront.storefront.slug),
+    status: "created" as const,
+    usageCost: generatedStorefront.publicUsageCost,
+    warning: generatedStorefront.warning
+  };
+}
+
+async function runBackgroundGeneration(jobId: string, userId: string, idea: string, reservation: { id: string } | null) {
+  let generated;
+  try {
+    generated = await executeGeneration(userId, idea, reservation);
+  } catch (caught) {
+    const message = caught instanceof Error && caught.message === CONTENT_CANNOT_BE_GENERATED_ERROR
+      ? CONTENT_CANNOT_BE_GENERATED_ERROR
+      : "Unable to generate this storefront. Please try again.";
+    await finishGenerationJob(jobId, { error: message });
+    return;
+  }
+  // If this write fails, status recovery finds the already saved storefront.
+  await finishGenerationJob(jobId, { storefrontId: generated.storefront.id, warning: generated.warning });
+}
+
 export async function GET() {
   const { userId } = await auth();
 
@@ -242,6 +314,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (parsed.data.background) {
+      const activeJob = await getLatestGenerationJob(userId);
+      if (activeJob && isPendingGenerationJob(activeJob)) {
+        return NextResponse.json({ job: activeJob }, { status: 202 });
+      }
+    }
     const existingStorefront = await getStorefrontByOwnerAndIdea({
       ownerClerkUserId: userId,
       idea: parsed.data.idea
@@ -277,68 +355,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const reservation = isAdmin
-      ? null
-      : await reserveStorefrontGenerationSlot(userId);
-
-    if (!isAdmin && !reservation) {
-      return generationQuotaExceededResponse();
-    }
-
-    const generatedStorefront = await (async () => {
+    if (parsed.data.background) {
+      const { job, created } = await createGenerationJob(userId, parsed.data.idea);
+      if (!created) return NextResponse.json({ job }, { status: 202 });
+      let reservation: { id: string } | null = null;
       try {
-        const { content, slug, usageCost, warning } =
-          await generateStorefrontWithOptionalProductImage(parsed.data.idea);
-        const publicUsageCost = toPublicUsageCost(usageCost);
-        const storefront = await createGeneratedStorefront({
-          ownerClerkUserId: userId,
-          idea: parsed.data.idea,
-          content,
-          generationCost: publicUsageCost,
-          slug
-        });
-        const storefrontWithUsageCost = publicUsageCost
-          ? {
-              ...storefront,
-              generation_cost: publicUsageCost
-            }
-          : storefront;
-
-        return {
-          publicUsageCost,
-          storefront,
-          storefrontWithUsageCost,
-          warning
-        };
-      } catch (caught) {
-        if (reservation) {
-          await releaseReservedGenerationSlot(reservation.id);
+        reservation = isAdmin ? null : await reserveStorefrontGenerationSlot(userId);
+        if (!isAdmin && !reservation) {
+          await finishGenerationJob(job.id, { error: GENERATION_QUOTA_EXCEEDED_ERROR });
+          return generationQuotaExceededResponse();
         }
+        if (!await claimGenerationJob(job.id, reservation?.id ?? null)) {
+          throw new Error("Unable to start generation worker.");
+        }
+        const reservedSlot = reservation;
+        after(async () => {
+          try {
+            await runBackgroundGeneration(job.id, userId, parsed.data.idea, reservedSlot);
+          } catch {
+            // A killed worker or failed status write is reconciled by the status endpoint.
+            console.error("storefront_generation_job_status_unavailable");
+          }
+        });
+        return NextResponse.json({ job: { ...job, status: "running" } }, { status: 202 });
+      } catch (caught) {
+        if (reservation) await releaseReservedGenerationSlot(reservation.id);
+        await finishGenerationJob(job.id, { error: "Unable to start generation. Please try again." });
         throw caught;
       }
-    })();
-
-    if (reservation) {
-      try {
-        await completeStorefrontGenerationSlot({
-          reservationId: reservation.id,
-          storefrontId: generatedStorefront.storefront.id
-        });
-      } catch {
-        // The reserved pending slot still blocks repeat generation.
-      }
     }
 
-    return NextResponse.json(
-      {
-        storefront: generatedStorefront.storefrontWithUsageCost,
-        shareUrl: shareUrlForSlug(generatedStorefront.storefront.slug),
-        status: "created",
-        usageCost: generatedStorefront.publicUsageCost,
-        warning: generatedStorefront.warning
-      },
-      { status: 201 }
-    );
+    const reservation = isAdmin ? null : await reserveStorefrontGenerationSlot(userId);
+    if (!isAdmin && !reservation) return generationQuotaExceededResponse();
+    return NextResponse.json(await executeGeneration(userId, parsed.data.idea, reservation), { status: 201 });
+
   } catch (caught) {
     const message =
       caught instanceof Error ? caught.message : "Unable to generate storefront.";
