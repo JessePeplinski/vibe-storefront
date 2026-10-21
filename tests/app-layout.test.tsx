@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
   signedIn: true
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard",
+  useRouter: () => ({ push: vi.fn() })
+}));
+
 vi.mock("@clerk/nextjs", () => ({
   Show: ({
     children,

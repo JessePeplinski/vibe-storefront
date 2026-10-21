@@ -81,8 +81,9 @@ After the dev server is running:
 4. Confirm the signed-out homepage prompts for sign-in instead of submitting public generation.
 5. Sign in with a Clerk development user, open `/dashboard`, and confirm signed-in generation creates saved storefronts.
 6. During generation, refresh `/dashboard`, then close the tab and reopen it while signed in. Confirm the same job, idea, elapsed time and skeleton return, or that the finished storefront appears. This must not create another generation or consume a second quota slot. Confirm failure/timeout messages allow an explicit retry.
-7. Try to generate a sixth different storefront from the same signed-in account and confirm the five-storefront limit blocks it without another generation.
-8. Open the generated share URL in a signed-out browser and confirm the public share page renders.
+7. While generation is pending, open the gallery and use the navigation's generating indicator to check the idea, elapsed time and estimated steps. Confirm completion removes the indicator and shows one toast with the storefront name and an `Open storefront` action. Check this at desktop and mobile widths. Completing on the dashboard or restoring an already completed job should not produce an extra toast.
+8. Try to generate a sixth different storefront from the same signed-in account and confirm the five-storefront limit blocks it without another generation.
+9. Open the generated share URL in a signed-out browser and confirm the public share page renders.
 
 To reset a local Clerk development user while testing, remove that user's local generation slots and storefront rows from Supabase Studio or the local SQL editor:
 
