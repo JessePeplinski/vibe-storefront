@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { createContext, useContext, useState, type FormEvent, type ReactNode } from "react";
 import { useGenerationProgress } from "@/components/use-generation-countdown";
 import type { StorefrontRecord } from "@/lib/storefront-schema";
 
@@ -48,7 +48,6 @@ type CreateStorefrontErrorResponse = {
 type UseStorefrontGenerationParams = {
   disableAfterResult?: boolean;
   mode?: StorefrontGenerationMode;
-  onStorefrontReady?: (result: StorefrontGenerationResult) => void;
 };
 
 function formatDuration(seconds: number): string {
@@ -72,8 +71,7 @@ function buildFinishedResult(
 
 export function useStorefrontGeneration({
   disableAfterResult = false,
-  mode = "signed-in",
-  onStorefrontReady
+  mode = "signed-in"
 }: UseStorefrontGenerationParams = {}) {
   const [idea, setIdea] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -90,7 +88,6 @@ export function useStorefrontGeneration({
 
   function showResult(nextResult: StorefrontGenerationResult) {
     setResult(nextResult);
-    onStorefrontReady?.(nextResult);
   }
 
   async function generateFromIdea(nextIdea = idea) {
@@ -185,4 +182,26 @@ export function useStorefrontGeneration({
     result,
     setIdea
   };
+}
+
+const GenerationContext = createContext<ReturnType<typeof useStorefrontGeneration> | null>(null);
+
+export function useGenerationSession() {
+  return useContext(GenerationContext);
+}
+
+export function StorefrontGenerationProvider({
+  children,
+  mode = "signed-in"
+}: {
+  children: ReactNode;
+  mode?: StorefrontGenerationMode;
+}) {
+  const generation = useStorefrontGeneration({ mode });
+
+  return (
+    <GenerationContext.Provider value={generation}>
+      {children}
+    </GenerationContext.Provider>
+  );
 }
