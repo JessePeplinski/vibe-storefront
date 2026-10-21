@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Show, useClerk, useUser, UserButton } from "@clerk/nextjs";
 import { ChevronRight, LogOut, Menu, UserRound } from "lucide-react";
 import Link from "next/link";
+import { GenerationCompletionNotification } from "@/components/generation-completion-notification";
 import { AuthButtons } from "@/components/auth-buttons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export function AppHeaderNav() {
   return (
     <div className="flex min-w-0 items-center justify-end gap-2">
       <Show when="signed-in">
+        <GenerationCompletionNotification />
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button

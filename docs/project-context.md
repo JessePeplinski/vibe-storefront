@@ -18,6 +18,8 @@ The dashboard submits `POST /api/storefronts` with `background: true`. The serve
 
 This uses the existing 180-second function runtime, not an unbounded queue or automatic model retries. Jobs still pending after four minutes are reconciled on status reads: an already saved storefront is recovered as completed; otherwise the job is marked failed and its reserved quota released. A timeout or host failure requires an explicit retry rather than silently incurring more model spend. Completed jobs resolve their saved storefront from the database; deleted storefronts are not restored from job history. Model failure details are not exposed in job responses.
 
+When an observed pending job completes while another page is open, the shared navigation shows a bell with an unread badge. Its panel names the storefront and links directly to the share page. Viewing the dashboard/result or dismissing the notification clears it. Notifications are session-local; restoring an already completed historical job on sign-in does not produce a new alert.
+
 ## Data And Access Boundaries
 
 Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables Row Level Security, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key.
