@@ -10,6 +10,12 @@ The Codex generation route must run in the Node.js runtime because the Codex SDK
 
 If generation fails with quota errors, check the OpenAI project tied to `CODEX_API_KEY` and `OPENAI_API_KEY` before changing persistence code.
 
+## Generation Navigation
+
+A client provider in the root layout owns the active generation request, idea, progress, and result. Navigating between pages through app links keeps that session alive. Returning to the dashboard shows a pending card first in Your storefronts, or the completed storefront if it finished while away. Changing the signed-in user resets the client session.
+
+This session lasts for the current document only. Refreshing, closing the tab, or navigating to another website does not preserve client progress; generation still uses the synchronous POST route rather than a durable background job.
+
 ## Data And Access Boundaries
 
 Supabase schema lives in `supabase/migrations`. The applied schema creates `public.storefronts`, enables Row Level Security, allows public reads only for published storefronts, and keeps writes behind server routes using the service role key.
